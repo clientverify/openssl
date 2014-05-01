@@ -1661,6 +1661,7 @@ SSL_set_tlsext_status_ids(con, ids);
 
 		if (!ssl_pending && FD_ISSET(SSL_get_fd(con),&writefds))
 			{
+			SSL_heartbeat(con);
 			k=SSL_write(con,&(cbuf[cbuf_off]),
 				(unsigned int)cbuf_len);
 			switch (SSL_get_error(con,k))
