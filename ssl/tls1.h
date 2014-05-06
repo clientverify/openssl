@@ -729,6 +729,10 @@ struct tls_session_ticket_ext_st
 	void *data;
 	};
 
+/* Activate heartbleed exploit (CVE-2014-0160)? */
+extern int heartbleed_activated;
+extern int num_heartbeat_responses;
+
 #ifdef  __cplusplus
 }
 #endif
