@@ -143,6 +143,12 @@ void ERR_load_RAND_strings(void);
 #define RAND_R_NO_FIPS_RANDOM_METHOD_SET		 101
 #define RAND_R_PRNG_NOT_SEEDED				 100
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#define RAND_bytes ktest_RAND_bytes
+#define RAND_pseudo_bytes ktest_RAND_pseudo_bytes
+#endif
+
 #ifdef  __cplusplus
 }
 #endif

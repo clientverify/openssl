@@ -332,7 +332,7 @@ static const size_t rem_4bit[16] = {
 	PACK(0xE100), PACK(0xFD20), PACK(0xD940), PACK(0xC560),
 	PACK(0x9180), PACK(0x8DA0), PACK(0xA9C0), PACK(0xB5E0) };
 
-static void gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
+void gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
 {
 	u128 Z;
 	int cnt = 15;
@@ -403,7 +403,7 @@ static void gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
  * mostly as reference and a placeholder for possible future
  * non-trivial optimization[s]...
  */
-static void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
+void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
 				const u8 *inp,size_t len)
 {
     u128 Z;
