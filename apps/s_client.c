@@ -151,6 +151,13 @@ typedef unsigned int u_int;
 # define fileno(a) (int)_fileno(a)
 #endif
 
+
+#ifdef CLIVER
+#include <openssl/KTest.h>
+static const char *arg_ktest_filename = NULL;
+static enum kTestMode arg_ktest_mode = KTEST_NONE;
+#endif
+
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 # undef FIONBIO
@@ -198,6 +205,7 @@ static int ocsp_resp_cb(SSL *s, void *arg);
 static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
 static int c_ign_eof = 0;
+static int c_special_cmds=1;
 
 static void sc_usage(void)
 {
@@ -280,6 +288,7 @@ static void sc_usage(void)
     BIO_printf(bio_err, " -sess_out arg - file to write SSL session to\n");
     BIO_printf(bio_err, " -sess_in arg  - file to read SSL session from\n");
 #ifndef OPENSSL_NO_TLSEXT
+
     BIO_printf(bio_err,
                " -servername host  - Set TLS extension servername in ClientHello\n");
     BIO_printf(bio_err,
@@ -291,6 +300,12 @@ static void sc_usage(void)
 #endif
     BIO_printf(bio_err,
                " -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
+#ifdef CLIVER
+	BIO_printf(bio_err," -record file          - Record network packets and other inputs in KTest file.\n");
+	BIO_printf(bio_err," -playback file        - Playback s_client using inputs recorded in KTest file.\n");
+	BIO_printf(bio_err," -no_special_cmds      - Disable 'Q', 'R', and 'B' special commands.\n");
+#endif
+
 }
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -617,6 +632,26 @@ int MAIN(int argc, char **argv)
             jpake_secret = *++argv;
         }
 #endif
+
+#ifdef CLIVER
+		else if (strcmp(*argv,"-record") == 0)
+		        {
+			if (--argc < 1) goto bad;
+			arg_ktest_filename = *(++argv);
+			arg_ktest_mode = KTEST_RECORD;
+			}
+		else if (strcmp(*argv,"-playback") == 0)
+		        {
+			if (--argc < 1) goto bad;
+			arg_ktest_filename = *(++argv);
+			arg_ktest_mode = KTEST_PLAYBACK;
+			}
+		else if	(strcmp(*argv,"-no_special_cmds") == 0)
+			{
+			c_special_cmds=0;
+			}
+#endif
+
         else {
             BIO_printf(bio_err, "unknown option %s\n", *argv);
             badop = 1;
@@ -630,6 +665,10 @@ int MAIN(int argc, char **argv)
         sc_usage();
         goto end;
     }
+
+#ifdef CLIVER
+	ktest_start(arg_ktest_filename, arg_ktest_mode);
+#endif
 
     OpenSSL_add_ssl_algorithms();
     SSL_load_error_strings();
@@ -1135,8 +1174,15 @@ int MAIN(int argc, char **argv)
                                NULL, timeoutp);
             }
 #else
-            i = select(width, (void *)&readfds, (void *)&writefds,
-                       NULL, timeoutp);
+
+#ifdef CLIVER
+			i=ktest_select(width,(void *)&readfds,(void *)&writefds,
+				 NULL,timeoutp);
+#else
+			i=select(width,(void *)&readfds,(void *)&writefds,
+				 NULL,timeoutp);
+#endif
+
 #endif
             if (i < 0) {
                 BIO_printf(bio_err, "bad select %d\n",
@@ -1309,7 +1355,11 @@ int MAIN(int argc, char **argv)
             if (crlf) {
                 int j, lf_num;
 
+#ifdef CLIVER
+                i = ktest_raw_read_stdin(cbuf, BUFSIZZ / 2);
+#else
                 i = read(fileno(stdin), cbuf, BUFSIZZ / 2);
+#endif
                 lf_num = 0;
                 /* both loops are skipped when i <= 0 */
                 for (j = 0; j < i; j++)
@@ -1327,12 +1377,12 @@ int MAIN(int argc, char **argv)
             } else
                 i = read(fileno(stdin), cbuf, BUFSIZZ);
 
-            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q'))) {
+            if ((!c_ign_eof) && ((i <= 0) || (c_special_cmds && cbuf[0] == 'Q'))) {
                 BIO_printf(bio_err, "DONE\n");
                 goto shut;
             }
 
-            if ((!c_ign_eof) && (cbuf[0] == 'R')) {
+            if ((!c_ign_eof) && (c_special_cmds && cbuf[0] == 'R')) {
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
                 cbuf_len = 0;
@@ -1384,6 +1434,9 @@ int MAIN(int argc, char **argv)
         bio_c_out = NULL;
     }
     apps_shutdown();
+#ifdef CLIVER
+   ktest_finish();
+#endif
     OPENSSL_EXIT(ret);
 }
 

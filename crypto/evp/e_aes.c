@@ -105,5 +105,4 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
     return 1;
 }
-
 #endif

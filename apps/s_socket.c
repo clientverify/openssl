@@ -95,6 +95,10 @@ typedef unsigned int u_int;
 # include "../e_os.h"
 #endif
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 #ifndef OPENSSL_NO_SOCK
 
 # if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_BSDSOCK)
@@ -282,7 +286,11 @@ static int init_client_ip(int *sock, unsigned char ip[4], int port, int type)
     }
 # endif
 
-    if (connect(s, (struct sockaddr *)&them, sizeof(them)) == -1) {
+#ifdef CLIVER
+	if (ktest_connect(s,(struct sockaddr *)&them,sizeof(them)) == -1){
+#else
+	if (connect(s,(struct sockaddr *)&them,sizeof(them)) == -1){
+#endif
         close(s);
         perror("connect");
         return (0);

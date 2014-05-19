@@ -121,6 +121,11 @@
 # include <openssl/des.h>
 #endif
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
+
 static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
                         int sec_len, unsigned char *seed, int seed_len,
                         unsigned char *out, int olen)
@@ -843,6 +848,10 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
            len);
 #endif                          /* KSSL_DEBUG */
 
+#ifdef CLIVER
+	ktest_master_secret(s->session->master_key, SSL3_MASTER_SECRET_SIZE);
+#endif
+
     /* Setup the stuff to munge */
     memcpy(buf, TLS_MD_MASTER_SECRET_CONST, TLS_MD_MASTER_SECRET_CONST_SIZE);
     memcpy(&(buf[TLS_MD_MASTER_SECRET_CONST_SIZE]),
@@ -854,6 +863,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
              len, s->session->master_key, buff, sizeof buff);
     OPENSSL_cleanse(buf, sizeof buf);
     OPENSSL_cleanse(buff, sizeof buff);
+
 #ifdef KSSL_DEBUG
     printf("tls1_generate_master_secret() complete\n");
 #endif                          /* KSSL_DEBUG */

@@ -106,3 +106,6 @@ ms/nt.mak
 ms/ntdll.mak
 ms/ssleay32.def
 ms/version32.rc
+
+# LLVM/Klee/Cliver files
+.*.bc

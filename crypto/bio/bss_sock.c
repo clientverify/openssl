@@ -61,6 +61,10 @@
 #define USE_SOCKETS
 #include "cryptlib.h"
 
+#ifdef CLIVER
+#include "KTest.h"
+#endif
+
 #ifndef OPENSSL_NO_SOCK
 
 # include <openssl/bio.h>
@@ -137,7 +141,11 @@ static int sock_read(BIO *b, char *out, int outl)
 
     if (out != NULL) {
         clear_socket_error();
-        ret = readsocket(b->num, out, outl);
+#ifdef CLIVER
+		ret=ktest_readsocket(b->num,out,outl);
+#else
+		ret=readsocket(b->num,out,outl);
+#endif
         BIO_clear_retry_flags(b);
         if (ret <= 0) {
             if (BIO_sock_should_retry(ret))
@@ -152,7 +160,12 @@ static int sock_write(BIO *b, const char *in, int inl)
     int ret;
 
     clear_socket_error();
-    ret = writesocket(b->num, in, inl);
+#ifdef CLIVER
+	ret=ktest_writesocket(b->num,in,inl);
+#else
+	ret=writesocket(b->num,in,inl);
+#endif
+
     BIO_clear_retry_flags(b);
     if (ret <= 0) {
         if (BIO_sock_should_retry(ret))

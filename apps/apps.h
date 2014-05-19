@@ -365,4 +365,11 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
 
 # define SERIAL_RAND_BITS        64
 
+// override inline assembly version of FD_ZERO from
+// /usr/include/x86_64-linux-gnu/bits/select.h
+#ifdef FD_ZERO
+#undef FD_ZERO
+#endif
+#define FD_ZERO(p)        memset((char *)(p), 0, sizeof(*(p)))
+
 #endif

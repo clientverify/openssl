@@ -580,6 +580,11 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type,
         for (i = 0; i < num; i++) {
             if (i % 16 == 0 && i > 0)
                 BIO_printf(bio, "\n   ");
+#ifdef KLEE
+            if (klee_is_symbolic(((const unsigned char*)buf)[i]))
+                BIO_printf(bio, " ??");
+            else
+#endif
             BIO_printf(bio, " %02x", ((const unsigned char *)buf)[i]);
         }
         if (i < len)

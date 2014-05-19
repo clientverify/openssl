@@ -114,14 +114,14 @@ ecs_ossl.o: ../../include/openssl/opensslconf.h
 ecs_ossl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecs_ossl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecs_ossl.o: ../../include/openssl/symhacks.h ecs_locl.h ecs_ossl.c
-ecs_sign.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ecs_sign.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-ecs_sign.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ecs_sign.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-ecs_sign.o: ../../include/openssl/engine.h ../../include/openssl/evp.h
-ecs_sign.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-ecs_sign.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-ecs_sign.o: ../../include/openssl/opensslconf.h
+ecs_sign.o: ../../include/openssl/KTest.h ../../include/openssl/asn1.h
+ecs_sign.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+ecs_sign.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ecs_sign.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+ecs_sign.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+ecs_sign.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+ecs_sign.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+ecs_sign.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 ecs_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecs_sign.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 ecs_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
