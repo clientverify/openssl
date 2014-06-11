@@ -75,3 +75,6 @@
 lib
 Makefile.save
 *.bak
+
+# LLVM/Klee/Cliver files
+.*.bc
