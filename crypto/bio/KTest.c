@@ -244,10 +244,41 @@ void kTest_free(KTest *bo) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+typedef struct KTestObjectVector {
+  KTestObject *objects;
+  int size;
+  int capacity; // capacity >= size
+} KTestObjectVector;
+
+// KTOV = "KTestObjectVector"
+static void KTOV_init(KTestObjectVector *ov) {
+  memset(ov, 0, sizeof(*ov));
+}
+
+static void KTOV_done(KTestObjectVector *ov) {
+  if (ov && (ov->objects)) {
+    free(ov->objects);
+  }
+  memset(ov, 0, sizeof(*ov));
+}
+
+static void KTOV_check_mem(KTestObjectVector *ov) {
+  if (ov->size + 1 > ov->capacity) {
+    int new_capacity = (ov->size + 1)*2;
+    ov->objects = (KTestObject*) realloc(ov->objects, new_capacity);
+    if (!ov->objects) {
+      perror("KTOV_check_mem error");
+      exit(1);
+    }
+    ov->capacity = new_capacity;
+  }
+}
+
 // local to this file
-static KTestObject* ktest_objects = NULL;
-static int num_ktest_objects = -1;
-static int max_ktest_objects = 0;
+static KTestObjectVector ktov_network;
+static KTestObjectVector ktov_time;
+static KTestObjectVector ktov_prng;
+
 enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT=1, TIME=2, PRNG=3 };
 static char* ktest_object_names[] = { "c2s", "s2c" };
 static enum kTestMode ktest_mode = KTEST_NONE;
@@ -255,29 +286,20 @@ static const char *ktest_network_file = "network_capture.ktest";
 static const char *ktest_prng_file = "prng_capture.ktest"; // TODO: use this
 static const char *ktest_time_file = "time_capture.ktest"; // TODO: use this
 
-static void ktest_check_mem() {
-  if (num_ktest_objects >= max_ktest_objects) { max_ktest_objects = (max_ktest_objects+1)*2;
-    size_t size = max_ktest_objects * sizeof(KTestObject);
-    ktest_objects = (KTestObject*) realloc(ktest_objects, size);
-    if (!ktest_objects) {
-      perror("ktest_check_mem error");
-      exit(1);
-    }
-  }
-}
-
 ssize_t ktest_writesocket(int fd, const void *buf, size_t count) {
   ssize_t num_bytes = writesocket(fd, buf, count);
 
   if (num_bytes > 0) {
-    int i = ++num_ktest_objects;
-    ktest_check_mem();
-    ktest_objects[i].name = ktest_object_names[SERVER_TO_CLIENT];
-    ktest_objects[i].numBytes = num_bytes;
-    ktest_objects[i].bytes = (unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
-    memcpy(ktest_objects[i].bytes, buf, num_bytes);
+    int i = ktov_network.size;
+    KTOV_check_mem(&ktov_network);
+    ktov_network.objects[i].name = ktest_object_names[SERVER_TO_CLIENT];
+    ktov_network.objects[i].numBytes = num_bytes;
+    ktov_network.objects[i].bytes =
+      (unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
+    memcpy(ktov_network.objects[i].bytes, buf, num_bytes);
+    ktov_network.size++;
   } else if (num_bytes < 0) {
-    perror("ktest_send error");
+    perror("ktest_writesocket error");
     exit(1);
   }
   return num_bytes;
@@ -287,29 +309,35 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count) {
   ssize_t num_bytes = readsocket(fd, buf, count);
 
   if (num_bytes > 0) {
-    int i = ++num_ktest_objects;
-    ktest_check_mem();
-    ktest_objects[i].name = ktest_object_names[CLIENT_TO_SERVER];
-    ktest_objects[i].numBytes = num_bytes;
-    ktest_objects[i].bytes = (unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
-    memcpy(ktest_objects[i].bytes, buf, num_bytes);
+    int i = ktov_network.size;
+    KTOV_check_mem(&ktov_network);
+    ktov_network.objects[i].name = ktest_object_names[CLIENT_TO_SERVER];
+    ktov_network.objects[i].numBytes = num_bytes;
+    ktov_network.objects[i].bytes =
+      (unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
+    memcpy(ktov_network.objects[i].bytes, buf, num_bytes);
+    ktov_network.size++;
   } else if (num_bytes < 0) {
-    perror("ktest_recv error");
+    perror("ktest_readsocket error");
     exit(1);
   }
   return num_bytes;
 }
 
 void ktest_start(const char *filestem, enum kTestMode mode) {
-  // TODO: Use filestem to determine output filename(s)
+  KTOV_init(&ktov_network);
+  KTOV_init(&ktov_time);
+  KTOV_init(&ktov_prng);
   ktest_mode = mode;
+  
+  // TODO: Use filestem to determine output filename(s)
 }
 
 void ktest_finish() {
   KTest ktest;
   memset(&ktest, 0, sizeof(KTest));
-  ktest.numObjects = ++num_ktest_objects;
-  ktest.objects = ktest_objects;
+  ktest.numObjects = ktov_network.size;
+  ktest.objects = ktov_network.objects;
 
   //for (int i = 0; i<num_ktest_objects; i++) {
   //  printf("ktest_object[%d].name = %s\n", i, ktest_objects[i].name);
@@ -320,9 +348,12 @@ void ktest_finish() {
   //}
 
   int result = kTest_toFile(&ktest, ktest_network_file);
-
   if (!result) {
     perror("ktest_finish error");
     exit(1);
   }
+
+  KTOV_done(&ktov_network);
+  KTOV_done(&ktov_time);
+  KTOV_done(&ktov_prng);
 }

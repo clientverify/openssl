@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <sys/types.h>
+#include <time.h>
 
 #ifndef __COMMON_KTEST_H__
 #define __COMMON_KTEST_H__
@@ -61,6 +62,10 @@ extern "C" {
   enum kTestMode {KTEST_NONE, KTEST_RECORD, KTEST_PLAYBACK};
   ssize_t ktest_writesocket(int fd, const void *buf, size_t count);
   ssize_t ktest_readsocket(int fd, void *buf, size_t count);
+  int ktest_RAND_bytes(unsigned char *buf, int num);
+  int ktest_RAND_pseudo_bytes(unsigned char *buf, int num);
+  time_t ktest_time(time_t *t);
+
   void ktest_start(const char *filestem, enum kTestMode mode);
   void ktest_finish();		     // write capture to file
 
