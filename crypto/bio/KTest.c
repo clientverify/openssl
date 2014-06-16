@@ -382,7 +382,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
   else if (ktest_mode == KTEST_RECORD) {
     ssize_t num_bytes = readsocket(fd, buf, count);
     if (num_bytes > 0) {
-      KTOV_append(&ktov, ktest_object_names[CLIENT_TO_SERVER], num_bytes, buf);
+      KTOV_append(&ktov, ktest_object_names[SERVER_TO_CLIENT], num_bytes, buf);
     } else if (num_bytes < 0) {
       perror("ktest_readsocket error");
       exit(1);
