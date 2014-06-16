@@ -170,6 +170,10 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 
+#ifdef CLIVER
+#include "KTest.h"
+#endif
+
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #undef FIONBIO
@@ -626,6 +630,10 @@ int MAIN(int argc, char **argv)
 	char * srppass = NULL;
 	int srp_lateuser = 0;
 	SRP_ARG srp_arg = {NULL,NULL,0,0,0,1024};
+#endif
+
+#ifdef CLIVER
+	ktest_start(NULL, KTEST_RECORD);
 #endif
 
 	meth=SSLv23_client_method();
@@ -1918,6 +1926,9 @@ end:
 			print_stuff(bio_c_out,con,1);
 		SSL_free(con);
 		}
+#ifdef CLIVER
+	ktest_finish();
+#endif
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto.data)
 		OPENSSL_free(next_proto.data);
