@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #define KTEST_VERSION 3
 #define KTEST_MAGIC_SIZE 5
@@ -257,6 +258,7 @@ static void KTOV_init(KTestObjectVector *ov) {
 
 static void KTOV_done(KTestObjectVector *ov) {
   if (ov && (ov->objects)) {
+    // TODO: free the memory of each object
     free(ov->objects);
   }
   memset(ov, 0, sizeof(*ov));
@@ -264,13 +266,45 @@ static void KTOV_done(KTestObjectVector *ov) {
 
 static void KTOV_check_mem(KTestObjectVector *ov) {
   if (ov->size + 1 > ov->capacity) {
-    int new_capacity = (ov->size + 1)*2;
-    ov->objects = (KTestObject*) realloc(ov->objects, new_capacity);
+    size_t new_capacity = (ov->size + 1)*2;
+    ov->objects = (KTestObject*) realloc(ov->objects,
+					 sizeof(KTestObject) * new_capacity);
     if (!ov->objects) {
       perror("KTOV_check_mem error");
       exit(1);
     }
     ov->capacity = new_capacity;
+  }
+}
+
+// Print hex and ascii side-by-side
+static void KTO_print(FILE *f, const KTestObject *o) {
+  unsigned int i, j;
+  const unsigned int WIDTH = 16;
+  fprintf(f, "%s [%u]\n", o->name, o->numBytes);
+  for (i = 0; WIDTH*i <  o->numBytes; i++) {
+    for (j = 0; j < 16 && WIDTH*i+j < o->numBytes; j++) {
+      fprintf(f, " %2.2x", o->bytes[WIDTH*i+j]);
+    }
+    for (; j < 17; j++) {
+      fprintf(f, "   ");
+    }
+    for (j = 0; j < 16 && WIDTH*i+j < o->numBytes; j++) {
+      unsigned char c = o->bytes[WIDTH*i+j];
+      fprintf(f, "%c", isprint(c)?c:'.');
+    }
+    fprintf(f, "\n");
+  }
+  fprintf(f, "\n");
+}
+
+static void KTOV_print(FILE *f, const KTestObjectVector *ov) {
+  int i;
+  fprintf(f, "KTestObjectVector of size %d and capacity %d:\n\n",
+	  ov->size, ov->capacity);
+  for (i = 0; i < ov->size; i++) {
+    fprintf(f, "#%d: ", i);
+    KTO_print(f, &ov->objects[i]);
   }
 }
 
@@ -283,8 +317,8 @@ enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT=1, TIME=2, PRNG=3 };
 static char* ktest_object_names[] = { "c2s", "s2c" };
 static enum kTestMode ktest_mode = KTEST_NONE;
 static const char *ktest_network_file = "network_capture.ktest";
-static const char *ktest_prng_file = "prng_capture.ktest"; // TODO: use this
-static const char *ktest_time_file = "time_capture.ktest"; // TODO: use this
+//static const char *ktest_prng_file = "prng_capture.ktest"; // TODO: use this
+//static const char *ktest_time_file = "time_capture.ktest"; // TODO: use this
 
 ssize_t ktest_writesocket(int fd, const void *buf, size_t count) {
   ssize_t num_bytes = writesocket(fd, buf, count);
@@ -292,7 +326,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count) {
   if (num_bytes > 0) {
     int i = ktov_network.size;
     KTOV_check_mem(&ktov_network);
-    ktov_network.objects[i].name = ktest_object_names[SERVER_TO_CLIENT];
+    ktov_network.objects[i].name = ktest_object_names[CLIENT_TO_SERVER];
     ktov_network.objects[i].numBytes = num_bytes;
     ktov_network.objects[i].bytes =
       (unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
@@ -311,7 +345,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count) {
   if (num_bytes > 0) {
     int i = ktov_network.size;
     KTOV_check_mem(&ktov_network);
-    ktov_network.objects[i].name = ktest_object_names[CLIENT_TO_SERVER];
+    ktov_network.objects[i].name = ktest_object_names[SERVER_TO_CLIENT];
     ktov_network.objects[i].numBytes = num_bytes;
     ktov_network.objects[i].bytes =
       (unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
@@ -339,13 +373,14 @@ void ktest_finish() {
   ktest.numObjects = ktov_network.size;
   ktest.objects = ktov_network.objects;
 
-  //for (int i = 0; i<num_ktest_objects; i++) {
-  //  printf("ktest_object[%d].name = %s\n", i, ktest_objects[i].name);
-  //  printf("\t[%d]: ", ktest_objects[i].numBytes);
-  //  for (int j=0; j<ktest_objects[i].numBytes; j++)
-  //    printf("%x", ktest_objects[i].bytes[j]);
-  //  printf("\n");
-  //}
+  printf("Network capture:\n");
+  KTOV_print(stdout, &ktov_network);
+  
+  printf("Time capture:\n");
+  KTOV_print(stdout, &ktov_time);
+  
+  printf("PRNG capture:\n");
+  KTOV_print(stdout, &ktov_prng);
 
   int result = kTest_toFile(&ktest, ktest_network_file);
   if (!result) {
