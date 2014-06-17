@@ -171,7 +171,7 @@ typedef unsigned int u_int;
 #include "timeouts.h"
 
 #ifdef CLIVER
-#include "KTest.h"
+#include <openssl/KTest.h>
 #endif
 
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
