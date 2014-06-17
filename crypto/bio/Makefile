@@ -91,6 +91,7 @@ clean:
 KTest.o: ../../e_os.h ../../include/openssl/KTest.h
 KTest.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 KTest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h KTest.c
+KTest.o: KTest.h
 b_dump.o: ../../e_os.h ../../include/openssl/bio.h
 b_dump.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 b_dump.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
