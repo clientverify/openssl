@@ -270,14 +270,11 @@ static void KTOV_done(KTestObjectVector *ov) {
     int i;
     for (i = 0; i < ov->size; i++) {
       free(ov->objects[i].name);
-      printf("Free name: %llX\n", ov->objects[i].name);
       if (ov->objects[i].bytes != NULL) {
 	free(ov->objects[i].bytes);
-	printf("Free bytes: %llX\n", ov->objects[i].bytes);
       }
     }
     free(ov->objects);
-    printf("Free object array: %llX\n", ov->objects);
   }
   memset(ov, 0, sizeof(*ov));
 }
@@ -292,7 +289,6 @@ static void KTOV_check_mem(KTestObjectVector *ov) {
       exit(1);
     }
     ov->capacity = new_capacity;
-    printf("realloc addr: %llX\n", ov->objects);
   }
 }
 
@@ -347,13 +343,11 @@ static void KTOV_append(KTestObjectVector *ov,
   i = ov->size;
   KTOV_check_mem(ov); // allocate more memory if necessary
   ov->objects[i].name = strdup(name);
-  printf("strdup name: %llX\n", ov->objects[i].name);
   ov->objects[i].numBytes = num_bytes;
   ov->objects[i].bytes = NULL;
   if (num_bytes > 0) {
       ov->objects[i].bytes =
           (unsigned char*)malloc(sizeof(unsigned char)*num_bytes);
-      printf("malloc bytes: %llX\n", ov->objects[i].bytes);
       memcpy(ov->objects[i].bytes, bytes, num_bytes);
   }
   ov->size++;
@@ -453,7 +447,6 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       record[size-1] = '\0'; // just in case we ran out of room.
       KTOV_append(&ktov, ktest_object_names[SELECT], strlen(record)+1, record);
       free(record);
-      record = NULL;
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
@@ -667,7 +660,10 @@ void ktest_finish() {
     for (i = 0, filtered_i = 0; i < ktest.numObjects; i++) {
       if (strcmp(ktest.objects[i].name, "s2c") == 0 ||
 	  strcmp(ktest.objects[i].name, "c2s") == 0) {
+	KTestObject temp;
+	temp = ktest.objects[filtered_i];
 	ktest.objects[filtered_i] = ktest.objects[i];
+	ktest.objects[i] = temp;
 	filtered_i++;
       }
     }
