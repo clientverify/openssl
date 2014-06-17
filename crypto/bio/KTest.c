@@ -333,6 +333,7 @@ static void KTOV_append(KTestObjectVector *ov,
     (unsigned char*)malloc(sizeof(unsigned char)*num_bytes);
   memcpy(ov->objects[i].bytes, bytes, num_bytes);
   ov->size++;
+  // KTO_print(stdout, &ov->objects[i]);
 }
 
 enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT=1, RNG=2, PRNG=3, TIME=4 };
@@ -445,7 +446,7 @@ int ktest_RAND_pseudo_bytes(unsigned char *buf, int num)
   }
   else if (ktest_mode == KTEST_RECORD) {
     int ret = RAND_pseudo_bytes(buf, num);
-    KTOV_append(&ktov, ktest_object_names[RNG], num, buf);
+    KTOV_append(&ktov, ktest_object_names[PRNG], num, buf);
     return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
