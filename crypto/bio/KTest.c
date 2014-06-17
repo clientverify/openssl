@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <assert.h>
 
 #define KTEST_VERSION 3
 #define KTEST_MAGIC_SIZE 5
@@ -248,6 +249,8 @@ void kTest_free(KTest *bo) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Local to this file
+///////////////////////////////////////////////////////////////////////////////
 
 typedef struct KTestObjectVector {
   KTestObject *objects;
@@ -312,15 +315,38 @@ static void KTOV_print(FILE *f, const KTestObjectVector *ov) {
   }
 }
 
-// local to this file
-static KTestObjectVector ktov;  // contains network, time, and prng captures
+static void KTOV_append(KTestObjectVector *ov,
+			const char *name,
+			int num_bytes,
+			const void *bytes)
+{
+  int i;
+  assert(ov != NULL);
+  assert(name != NULL);
+  assert(num_bytes != 0);
+  assert(bytes != NULL);
+  i = ov->size;
+  KTOV_check_mem(ov); // allocate more memory if necessary
+  ov->objects[i].name = strdup(name);
+  ov->objects[i].numBytes = num_bytes;
+  ov->objects[i].bytes =
+    (unsigned char*)malloc(sizeof(unsigned char)*num_bytes);
+  memcpy(ov->objects[i].bytes, bytes, num_bytes);
+  ov->size++;
+}
 
 enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT=1, RNG=2, PRNG=3, TIME=4 };
 static char* ktest_object_names[] = { "c2s", "s2c", "rng", "prng", "time" };
+
+static KTestObjectVector ktov;  // contains network, time, and prng captures
 static enum kTestMode ktest_mode = KTEST_NONE;
 static const char *ktest_network_file = "network_capture.ktest";
 //static const char *ktest_prng_file = "prng_capture.ktest"; // TODO: use this
 //static const char *ktest_time_file = "time_capture.ktest"; // TODO: use this
+
+///////////////////////////////////////////////////////////////////////////////
+// Exported functionality
+///////////////////////////////////////////////////////////////////////////////
 
 ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
 {
@@ -330,14 +356,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
   else if (ktest_mode == KTEST_RECORD) {
     ssize_t num_bytes = writesocket(fd, buf, count);
     if (num_bytes > 0) {
-      int i = ktov.size;
-      KTOV_check_mem(&ktov);
-      ktov.objects[i].name = ktest_object_names[CLIENT_TO_SERVER];
-      ktov.objects[i].numBytes = num_bytes;
-      ktov.objects[i].bytes =
-	(unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
-      memcpy(ktov.objects[i].bytes, buf, num_bytes);
-      ktov.size++;
+      KTOV_append(&ktov, ktest_object_names[CLIENT_TO_SERVER], num_bytes, buf);
     } else if (num_bytes < 0) {
       perror("ktest_writesocket error");
       exit(1);
@@ -362,14 +381,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
   else if (ktest_mode == KTEST_RECORD) {
     ssize_t num_bytes = readsocket(fd, buf, count);
     if (num_bytes > 0) {
-      int i = ktov.size;
-      KTOV_check_mem(&ktov);
-      ktov.objects[i].name = ktest_object_names[SERVER_TO_CLIENT];
-      ktov.objects[i].numBytes = num_bytes;
-      ktov.objects[i].bytes =
-	(unsigned char*) malloc(sizeof (unsigned char) * num_bytes);
-      memcpy(ktov.objects[i].bytes, buf, num_bytes);
-      ktov.size++;
+      KTOV_append(&ktov, ktest_object_names[CLIENT_TO_SERVER], num_bytes, buf);
     } else if (num_bytes < 0) {
       perror("ktest_readsocket error");
       exit(1);
@@ -393,7 +405,7 @@ time_t ktest_time(time_t *t)
   }
   else if (ktest_mode == KTEST_RECORD) {
     time_t ret = time(t);
-    // record
+    KTOV_append(&ktov, ktest_object_names[TIME], sizeof(ret), &ret);
     return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
@@ -413,7 +425,7 @@ int ktest_RAND_bytes(unsigned char *buf, int num)
   }
   else if (ktest_mode == KTEST_RECORD) {
     int ret = RAND_bytes(buf, num);
-    // record
+    KTOV_append(&ktov, ktest_object_names[RNG], num, buf);
     return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
@@ -433,7 +445,7 @@ int ktest_RAND_pseudo_bytes(unsigned char *buf, int num)
   }
   else if (ktest_mode == KTEST_RECORD) {
     int ret = RAND_pseudo_bytes(buf, num);
-    // record
+    KTOV_append(&ktov, ktest_object_names[RNG], num, buf);
     return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
@@ -455,7 +467,7 @@ void ktest_start(const char *filestem, enum kTestMode mode) {
 
 void ktest_finish() {
   KTest ktest;
-  KTestObjectVector ktov_time, ktov_prng;
+  //KTestObjectVector ktov_time, ktov_prng;
   
   memset(&ktest, 0, sizeof(KTest));
   ktest.numObjects = ktov.size;
@@ -479,6 +491,6 @@ void ktest_finish() {
   }
 
   KTOV_done(&ktov);
-  KTOV_done(&ktov_time);
-  KTOV_done(&ktov_prng);
+  //KTOV_done(&ktov_time);
+  //KTOV_done(&ktov_prng);
 }
