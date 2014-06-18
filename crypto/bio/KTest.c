@@ -336,18 +336,72 @@ static void KTOV_append(KTestObjectVector *ov,
   // KTO_print(stdout, &ov->objects[i]);
 }
 
+static void print_fd_set(int nfds, fd_set *fds) {
+  int i;
+  for (i = 0; i < nfds; i++) {
+      printf(" %d", FD_ISSET(i, fds));
+  }
+  printf("\n");
+}
+
 enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT=1, RNG=2, PRNG=3, TIME=4 };
 static char* ktest_object_names[] = { "c2s", "s2c", "rng", "prng", "time" };
 
 static KTestObjectVector ktov;  // contains network, time, and prng captures
 static enum kTestMode ktest_mode = KTEST_NONE;
 static const char *ktest_network_file = "network_capture.ktest";
+static int ktest_sockfd = -1; // descriptor of the socket we're capturing
 //static const char *ktest_prng_file = "prng_capture.ktest"; // TODO: use this
 //static const char *ktest_time_file = "time_capture.ktest"; // TODO: use this
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported functionality
 ///////////////////////////////////////////////////////////////////////////////
+
+int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
+{
+  int ret;
+  if (ktest_mode == KTEST_PLAYBACK) {
+      // TODO: determine result manually based on stored messages
+      perror("ktest_connect playback not implemented yet");
+      exit(2);
+  }
+  ktest_sockfd = sockfd;
+  ret = connect(sockfd, addr, addrlen); // passthrough
+  return ret;
+}
+
+int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
+		  fd_set *exceptfds, struct timeval *timeout)
+{
+  if (ktest_mode == KTEST_NONE || ktest_mode == KTEST_RECORD) { // passthrough
+      int ret;
+      printf("\n");
+      printf("BEFORE readfds  = ");
+      print_fd_set(nfds, readfds);
+      printf("BEFORE writefds = ");
+      print_fd_set(nfds, writefds);
+      fflush(stdout);
+      ret = select(nfds, readfds, writefds, exceptfds, timeout);
+      printf("Select returned %d (sockfd = %d)\n", ret, ktest_sockfd);
+      printf("AFTER readfds   = ");
+      print_fd_set(nfds, readfds);
+      printf("AFTER writefds  = ");
+      print_fd_set(nfds, writefds);
+      printf("\n");
+      fflush(stdout);
+      return ret;
+  }
+  else if (ktest_mode == KTEST_PLAYBACK) {
+      // TODO: determine result manually based on stored messages
+      perror("ktest_select playback not implemented yet");
+      exit(2);
+  }
+  else {
+      perror("ktest_select error - should never get here");
+      exit(4);
+  }
+}
 
 ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
 {

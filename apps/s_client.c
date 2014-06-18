@@ -1670,8 +1670,14 @@ SSL_set_tlsext_status_ids(con, ids);
 			  first_loop = 0;
 			}
 
+#ifdef CLIVER
+			i=ktest_select(width,(void *)&readfds,(void *)&writefds,
+				 NULL,timeoutp);
+#else
 			i=select(width,(void *)&readfds,(void *)&writefds,
 				 NULL,timeoutp);
+#endif
+
 #endif
 			if ( i < 0)
 				{

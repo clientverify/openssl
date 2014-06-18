@@ -7,11 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sys/types.h>
-#include <time.h>
-
 #ifndef __COMMON_KTEST_H__
 #define __COMMON_KTEST_H__
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <time.h>
 
 
 #ifdef __cplusplus
@@ -58,12 +60,21 @@ extern "C" {
 
   void  kTest_free(KTest *);
 
-  // Network capture for Cliver
+  // Capture mode
   enum kTestMode {KTEST_NONE, KTEST_RECORD, KTEST_PLAYBACK};
+
+  // Network capture for Cliver
+  int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+  int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
+		  fd_set *exceptfds, struct timeval *timeout);
   ssize_t ktest_writesocket(int fd, const void *buf, size_t count);
   ssize_t ktest_readsocket(int fd, void *buf, size_t count);
+
+  // Random number generator capture for Cliver
   int ktest_RAND_bytes(unsigned char *buf, int num);
   int ktest_RAND_pseudo_bytes(unsigned char *buf, int num);
+
+  // Time capture for Cliver (actually unnecessary!)
   time_t ktest_time(time_t *t);
 
   void ktest_start(const char *filestem, enum kTestMode mode);
