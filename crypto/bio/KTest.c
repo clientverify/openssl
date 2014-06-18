@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <assert.h>
 
 #define KTEST_VERSION 3
@@ -323,15 +324,17 @@ static void KTOV_append(KTestObjectVector *ov,
   int i;
   assert(ov != NULL);
   assert(name != NULL);
-  assert(num_bytes != 0);
-  assert(bytes != NULL);
+  assert(num_bytes == 0 || bytes != NULL);
   i = ov->size;
   KTOV_check_mem(ov); // allocate more memory if necessary
   ov->objects[i].name = strdup(name);
   ov->objects[i].numBytes = num_bytes;
-  ov->objects[i].bytes =
-    (unsigned char*)malloc(sizeof(unsigned char)*num_bytes);
-  memcpy(ov->objects[i].bytes, bytes, num_bytes);
+  ov->objects[i].bytes = NULL;
+  if (num_bytes > 0) {
+      ov->objects[i].bytes =
+          (unsigned char*)malloc(sizeof(unsigned char)*num_bytes);
+      memcpy(ov->objects[i].bytes, bytes, num_bytes);
+  }
   ov->size++;
   // KTO_print(stdout, &ov->objects[i]);
 }
@@ -344,8 +347,10 @@ static void print_fd_set(int nfds, fd_set *fds) {
   printf("\n");
 }
 
-enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT=1, RNG=2, PRNG=3, TIME=4 };
-static char* ktest_object_names[] = { "c2s", "s2c", "rng", "prng", "time" };
+enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN };
+static char* ktest_object_names[] = {
+    "c2s", "s2c", "rng", "prng", "time", "stdin"
+};
 
 static KTestObjectVector ktov;  // contains network, time, and prng captures
 static enum kTestMode ktest_mode = KTEST_NONE;
@@ -360,21 +365,33 @@ static int ktest_sockfd = -1; // descriptor of the socket we're capturing
 
 int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
-  int ret;
-  if (ktest_mode == KTEST_PLAYBACK) {
+  if (ktest_mode == KTEST_NONE) { // passthrough
+      return connect(sockfd, addr, addrlen);
+  }
+  else if (ktest_mode == KTEST_RECORD) {
+      int ret;
+      ktest_sockfd = sockfd; // record the socket descriptor of interest
+      ret = connect(sockfd, addr, addrlen);
+      return ret;
+  }
+  else if (ktest_mode == KTEST_PLAYBACK) {
       // TODO: determine result manually based on stored messages
       perror("ktest_connect playback not implemented yet");
       exit(2);
   }
-  ktest_sockfd = sockfd;
-  ret = connect(sockfd, addr, addrlen); // passthrough
-  return ret;
+  else {
+      perror("ktest_connect error - should never get here");
+      exit(4);
+  }
 }
 
 int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout)
 {
-  if (ktest_mode == KTEST_NONE || ktest_mode == KTEST_RECORD) { // passthrough
+  if (ktest_mode == KTEST_NONE) { // passthrough
+      return select(nfds, readfds, writefds, exceptfds, timeout);
+  }
+  else if (ktest_mode == KTEST_RECORD) {
       int ret;
       printf("\n");
       printf("BEFORE readfds  = ");
@@ -450,6 +467,29 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
   else {
     perror("ktest_readsocket coding error - should never get here");
     exit(4);
+  }
+}
+
+int ktest_raw_read_stdin(void *buf,int siz)
+{
+  if (ktest_mode == KTEST_NONE) {
+      return read(fileno(stdin), buf, siz);
+  }
+  else if (ktest_mode == KTEST_RECORD) {
+      int ret;
+      ret = read(fileno(stdin), buf, siz);
+      if (ret > 0) {
+          KTOV_append(&ktov, ktest_object_names[STDIN], siz, buf);
+      }
+      return ret;
+  }
+  else if (ktest_mode == KTEST_PLAYBACK) {
+      perror("ktest_raw_read_stdin playback not implemented yet");
+      exit(2);
+  }
+  else {
+      perror("ktest_raw_read_stdin coding error - should never get here");
+      exit(4);
   }
 }
 

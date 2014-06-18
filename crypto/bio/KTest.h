@@ -70,6 +70,9 @@ extern "C" {
   ssize_t ktest_writesocket(int fd, const void *buf, size_t count);
   ssize_t ktest_readsocket(int fd, void *buf, size_t count);
 
+  // stdin capture for Cliver
+  int ktest_raw_read_stdin(void *buf,int siz);
+
   // Random number generator capture for Cliver
   int ktest_RAND_bytes(unsigned char *buf, int num);
   int ktest_RAND_pseudo_bytes(unsigned char *buf, int num);
