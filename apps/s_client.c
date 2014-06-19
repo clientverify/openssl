@@ -1882,7 +1882,13 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				assert(lf_num == 0);
 				}
 			else
-				i=raw_read_stdin(cbuf,BUFSIZZ);
+			  {
+#ifdef CLIVER
+                            i=ktest_raw_read_stdin(cbuf,BUFSIZZ);
+#else
+                            i=raw_read_stdin(cbuf,BUFSIZZ);
+#endif
+			  }
 
 			if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q')))
 				{

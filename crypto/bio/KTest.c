@@ -479,7 +479,7 @@ int ktest_raw_read_stdin(void *buf,int siz)
       int ret;
       ret = read(fileno(stdin), buf, siz);
       if (ret > 0) {
-          KTOV_append(&ktov, ktest_object_names[STDIN], siz, buf);
+          KTOV_append(&ktov, ktest_object_names[STDIN], ret, buf);
       }
       return ret;
   }
