@@ -257,6 +257,7 @@ typedef struct KTestObjectVector {
   KTestObject *objects;
   int size;
   int capacity; // capacity >= size
+  int playback_index; // starts at 0
 } KTestObjectVector;
 
 // KTOV = "KTestObjectVector"
@@ -266,8 +267,17 @@ static void KTOV_init(KTestObjectVector *ov) {
 
 static void KTOV_done(KTestObjectVector *ov) {
   if (ov && (ov->objects)) {
-    // TODO: free the memory of each object
+    int i;
+    for (i = 0; i < ov->size; i++) {
+      free(ov->objects[i].name);
+      printf("Free name: %llX\n", ov->objects[i].name);
+      if (ov->objects[i].bytes != NULL) {
+	free(ov->objects[i].bytes);
+	printf("Free bytes: %llX\n", ov->objects[i].bytes);
+      }
+    }
     free(ov->objects);
+    printf("Free object array: %llX\n", ov->objects);
   }
   memset(ov, 0, sizeof(*ov));
 }
@@ -282,6 +292,7 @@ static void KTOV_check_mem(KTestObjectVector *ov) {
       exit(1);
     }
     ov->capacity = new_capacity;
+    printf("realloc addr: %llX\n", ov->objects);
   }
 }
 
@@ -306,6 +317,14 @@ static void KTO_print(FILE *f, const KTestObject *o) {
   fprintf(f, "\n");
 }
 
+// Deep copy of KTestObject
+static void KTO_deepcopy(KTestObject *dest, KTestObject *src) {
+  dest->name = strdup(src->name);
+  dest->numBytes = src->numBytes;
+  dest->bytes = (unsigned char*)malloc(sizeof(unsigned char)*src->numBytes);
+  memcpy(dest->bytes, src->bytes, src->numBytes);
+}
+
 static void KTOV_print(FILE *f, const KTestObjectVector *ov) {
   int i;
   fprintf(f, "KTestObjectVector of size %d and capacity %d:\n\n",
@@ -328,11 +347,13 @@ static void KTOV_append(KTestObjectVector *ov,
   i = ov->size;
   KTOV_check_mem(ov); // allocate more memory if necessary
   ov->objects[i].name = strdup(name);
+  printf("strdup name: %llX\n", ov->objects[i].name);
   ov->objects[i].numBytes = num_bytes;
   ov->objects[i].bytes = NULL;
   if (num_bytes > 0) {
       ov->objects[i].bytes =
           (unsigned char*)malloc(sizeof(unsigned char)*num_bytes);
+      printf("malloc bytes: %llX\n", ov->objects[i].bytes);
       memcpy(ov->objects[i].bytes, bytes, num_bytes);
   }
   ov->size++;
@@ -431,7 +452,8 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 
       record[size-1] = '\0'; // just in case we ran out of room.
       KTOV_append(&ktov, ktest_object_names[SELECT], strlen(record)+1, record);
-      
+      free(record);
+      record = NULL;
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
@@ -600,6 +622,23 @@ void ktest_start(const char *filename, enum kTestMode mode) {
     }
     ktest_network_file = network_file;
   }
+
+  // Load capture from file if playback mode
+  if (ktest_mode == KTEST_PLAYBACK) {
+    KTest *ktest;
+    ktest = kTest_fromFile(filename);
+    if (!ktest) {
+      fprintf(stderr, "Error reading ktest file: %s\n", filename);
+      exit(1);
+    }
+    ktov.size = ktov.capacity = ktest->numObjects;
+    ktov.objects = (KTestObject*)malloc(sizeof(KTestObject) * ktov.size);
+    int i;
+    for (i = 0; i < ktov.size; i++) {
+      KTO_deepcopy(&ktov.objects[i], &ktest->objects[i]);
+    }
+    kTest_free(ktest);
+  }
 }
 
 void ktest_finish() {
@@ -608,37 +647,43 @@ void ktest_finish() {
   if (ktest_mode == KTEST_NONE) {
     return;
   }
-  
-  memset(&ktest, 0, sizeof(KTest));
-  ktest.numObjects = ktov.size;
-  ktest.objects = ktov.objects;
 
-  KTOV_print(stdout, &ktov);
+  else if (ktest_mode == KTEST_RECORD) {
+    memset(&ktest, 0, sizeof(KTest));
+    ktest.numObjects = ktov.size;
+    ktest.objects = ktov.objects;
 
-  int result = kTest_toFile(&ktest, ktest_output_file);
-  if (!result) {
-    perror("ktest_finish error");
-    exit(1);
-  }
-  printf("KTest full capture written to %s.\n", ktest_output_file);
+    KTOV_print(stdout, &ktov);
 
-  // Filter network events and write as separate file.
-  int i, filtered_i;
-  for (i = 0, filtered_i = 0; i < ktest.numObjects; i++) {
-    if (strcmp(ktest.objects[i].name, "s2c") == 0 ||
-	strcmp(ktest.objects[i].name, "c2s") == 0) {
-      ktest.objects[filtered_i] = ktest.objects[i];
-      filtered_i++;
+    int result = kTest_toFile(&ktest, ktest_output_file);
+    if (!result) {
+      perror("ktest_finish error");
+      exit(1);
     }
-  }
-  ktest.numObjects = filtered_i;
+    printf("KTest full capture written to %s.\n", ktest_output_file);
 
-  result = kTest_toFile(&ktest, ktest_network_file);
-  if (!result) {
-    perror("ktest_finish error");
-    exit(1);
-  }
-  printf("KTest network capture written to %s.\n", ktest_network_file);
+    // Filter network events and write as separate file.
+    int i, filtered_i;
+    for (i = 0, filtered_i = 0; i < ktest.numObjects; i++) {
+      if (strcmp(ktest.objects[i].name, "s2c") == 0 ||
+	  strcmp(ktest.objects[i].name, "c2s") == 0) {
+	ktest.objects[filtered_i] = ktest.objects[i];
+	filtered_i++;
+      }
+    }
+    ktest.numObjects = filtered_i;
 
-  KTOV_done(&ktov);
+    result = kTest_toFile(&ktest, ktest_network_file);
+    if (!result) {
+      perror("ktest_finish error");
+      exit(1);
+    }
+    printf("KTest network capture written to %s.\n", ktest_network_file);
+
+    KTOV_done(&ktov);
+  }
+
+  else if (ktest_mode == KTEST_PLAYBACK) {
+    // TODO: nothing except maybe cleanup?
+  }
 }
