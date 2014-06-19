@@ -71,7 +71,7 @@ extern "C" {
   ssize_t ktest_readsocket(int fd, void *buf, size_t count);
 
   // stdin capture for Cliver
-  int ktest_raw_read_stdin(void *buf,int siz);
+  int ktest_raw_read_stdin(void *buf, int siz);
 
   // Random number generator capture for Cliver
   int ktest_RAND_bytes(unsigned char *buf, int num);
@@ -80,7 +80,7 @@ extern "C" {
   // Time capture for Cliver (actually unnecessary!)
   time_t ktest_time(time_t *t);
 
-  void ktest_start(const char *filestem, enum kTestMode mode);
+  void ktest_start(const char *filename, enum kTestMode mode);
   void ktest_finish();		     // write capture to file
 
 #ifdef __cplusplus

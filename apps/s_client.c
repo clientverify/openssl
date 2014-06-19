@@ -172,6 +172,8 @@ typedef unsigned int u_int;
 
 #ifdef CLIVER
 #include <openssl/KTest.h>
+static const char *arg_ktest_filename = NULL;
+static enum kTestMode arg_ktest_mode = KTEST_NONE;
 #endif
 
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
@@ -373,6 +375,10 @@ static void sc_usage(void)
  	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
  	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
 	BIO_printf(bio_err," -heartbleed           - Conduct heartbleed attack (CVE-2014-0160) and exit\n");
+#ifdef CLIVER
+	BIO_printf(bio_err," -record file          - Record network packets and other inputs in KTest file.\n");
+	BIO_printf(bio_err," -playback file        - Playback s_client using inputs recorded in KTest file.\n");
+#endif
 	}
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -630,10 +636,6 @@ int MAIN(int argc, char **argv)
 	char * srppass = NULL;
 	int srp_lateuser = 0;
 	SRP_ARG srp_arg = {NULL,NULL,0,0,0,1024};
-#endif
-
-#ifdef CLIVER
-	ktest_start(NULL, KTEST_RECORD);
 #endif
 
 	meth=SSLv23_client_method();
@@ -981,6 +983,20 @@ int MAIN(int argc, char **argv)
 		        {
 			heartbleed_activated = 1;
 			}
+#ifdef CLIVER
+		else if (strcmp(*argv,"-record") == 0)
+		        {
+			if (--argc < 1) goto bad;
+			arg_ktest_filename = *(++argv);
+			arg_ktest_mode = KTEST_RECORD;
+			}
+		else if (strcmp(*argv,"-playback") == 0)
+		        {
+			if (--argc < 1) goto bad;
+			arg_ktest_filename = *(++argv);
+			arg_ktest_mode = KTEST_PLAYBACK;
+			}
+#endif
                 else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -996,6 +1012,10 @@ bad:
 		sc_usage();
 		goto end;
 		}
+
+#ifdef CLIVER
+	ktest_start(arg_ktest_filename, arg_ktest_mode);
+#endif
 
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 	if (jpake_secret)

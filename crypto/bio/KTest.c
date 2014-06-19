@@ -354,7 +354,8 @@ static char* ktest_object_names[] = {
 
 static KTestObjectVector ktov;  // contains network, time, and prng captures
 static enum kTestMode ktest_mode = KTEST_NONE;
-static const char *ktest_network_file = "network_capture.ktest";
+static const char *ktest_output_file = "s_client.ktest";
+static const char *ktest_network_file = "s_client.net.ktest";
 static int ktest_sockfd = -1; // descriptor of the socket we're capturing
 //static const char *ktest_prng_file = "prng_capture.ktest"; // TODO: use this
 //static const char *ktest_time_file = "time_capture.ktest"; // TODO: use this
@@ -394,7 +395,13 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
   else if (ktest_mode == KTEST_RECORD) {
       // select input/output is stored as ASCII text in the format:
       // "sockfd 3 nfds 4 inR 1001 inW 0000 ret 1 outR 1000 outW 0000"
-      // sockfd is just for reference (not part of the select call)
+      //    sockfd - just for reference, not part of the select call
+      //    nfds - number of active fds in fdset, usually sockfd+1
+      //    inR - readfds input value
+      //    inW - writefds input value
+      //    ret - return value from select()
+      //    outR - readfds output value
+      //    outW - writefds output value
     
       int ret, i;
       unsigned int size = 4*nfds + 40 /*text*/ + 3*4 /*3 fd's*/ + 1 /*null*/;
@@ -571,39 +578,67 @@ int ktest_RAND_pseudo_bytes(unsigned char *buf, int num)
   }
 }
 
-void ktest_start(const char *filestem, enum kTestMode mode) {
+void ktest_start(const char *filename, enum kTestMode mode) {
   KTOV_init(&ktov);
   ktest_mode = mode;
-  
-  // TODO: Use filestem to determine output filename(s)
+
+  // set ktest output filename and ktest network-only filename
+  if (filename != NULL) {
+    char *network_file = NULL;
+    const char *suffix = ".net.ktest";
+    const char *ext = ".ktest";
+    int n_ext = strlen(ext);
+    int n_f = strlen(filename);
+    int n_suf = strlen(suffix);
+    ktest_output_file = filename;
+    network_file = (char *)malloc(sizeof(char) * (n_f + n_suf + 1));
+    strcpy(network_file, filename);
+    if (n_f > n_ext && strcmp(&filename[n_f-n_ext], ext) == 0) {
+      strcpy(&network_file[n_f-n_ext], suffix);
+    } else {
+      strcat(network_file, suffix);
+    }
+    ktest_network_file = network_file;
+  }
 }
 
 void ktest_finish() {
   KTest ktest;
-  //KTestObjectVector ktov_time, ktov_prng;
+
+  if (ktest_mode == KTEST_NONE) {
+    return;
+  }
   
   memset(&ktest, 0, sizeof(KTest));
   ktest.numObjects = ktov.size;
   ktest.objects = ktov.objects;
 
-  printf("KTest capture written to %s:\n", ktest_network_file);
   KTOV_print(stdout, &ktov);
 
-  /*
-  printf("Time capture:\n");
-  KTOV_print(stdout, &ktov_time);
-  
-  printf("PRNG capture:\n");
-  KTOV_print(stdout, &ktov_prng);
-  */
-
-  int result = kTest_toFile(&ktest, ktest_network_file);
+  int result = kTest_toFile(&ktest, ktest_output_file);
   if (!result) {
     perror("ktest_finish error");
     exit(1);
   }
+  printf("KTest full capture written to %s.\n", ktest_output_file);
+
+  // Filter network events and write as separate file.
+  int i, filtered_i;
+  for (i = 0, filtered_i = 0; i < ktest.numObjects; i++) {
+    if (strcmp(ktest.objects[i].name, "s2c") == 0 ||
+	strcmp(ktest.objects[i].name, "c2s") == 0) {
+      ktest.objects[filtered_i] = ktest.objects[i];
+      filtered_i++;
+    }
+  }
+  ktest.numObjects = filtered_i;
+
+  result = kTest_toFile(&ktest, ktest_network_file);
+  if (!result) {
+    perror("ktest_finish error");
+    exit(1);
+  }
+  printf("KTest network capture written to %s.\n", ktest_network_file);
 
   KTOV_done(&ktov);
-  //KTOV_done(&ktov_time);
-  //KTOV_done(&ktov_prng);
 }
