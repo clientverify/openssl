@@ -347,9 +347,9 @@ static void print_fd_set(int nfds, fd_set *fds) {
   printf("\n");
 }
 
-enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN };
+enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT };
 static char* ktest_object_names[] = {
-    "c2s", "s2c", "rng", "prng", "time", "stdin"
+  "c2s", "s2c", "rng", "prng", "time", "stdin", "select"
 };
 
 static KTestObjectVector ktov;  // contains network, time, and prng captures
@@ -392,21 +392,39 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       return select(nfds, readfds, writefds, exceptfds, timeout);
   }
   else if (ktest_mode == KTEST_RECORD) {
-      int ret;
-      printf("\n");
-      printf("BEFORE readfds  = ");
-      print_fd_set(nfds, readfds);
-      printf("BEFORE writefds = ");
-      print_fd_set(nfds, writefds);
-      fflush(stdout);
+      // select input/output is stored as ASCII text in the format:
+      // "sockfd 3 nfds 4 inR 1001 inW 0000 ret 1 outR 1000 outW 0000"
+      // sockfd is just for reference (not part of the select call)
+    
+      int ret, i;
+      unsigned int size = 4*nfds + 40 /*text*/ + 3*4 /*3 fd's*/ + 1 /*null*/;
+      char *record = (char *)calloc(size, sizeof(char));
+      unsigned int pos = 0;
+
+      pos += snprintf(&record[pos], size-pos,
+		      "sockfd %d nfds %d inR ", ktest_sockfd, nfds);
+      for (i = 0; i < nfds; i++) {
+	pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, readfds));
+      }
+      pos += snprintf(&record[pos], size-pos, " inW ");
+      for (i = 0; i < nfds; i++) {
+	pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, writefds));
+      }
+      
       ret = select(nfds, readfds, writefds, exceptfds, timeout);
-      printf("Select returned %d (sockfd = %d)\n", ret, ktest_sockfd);
-      printf("AFTER readfds   = ");
-      print_fd_set(nfds, readfds);
-      printf("AFTER writefds  = ");
-      print_fd_set(nfds, writefds);
-      printf("\n");
-      fflush(stdout);
+
+      pos += snprintf(&record[pos], size-pos, " ret %d outR ", ret);
+      for (i = 0; i < nfds; i++) {
+	pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, readfds));
+      }
+      pos += snprintf(&record[pos], size-pos, " outW ");
+      for (i = 0; i < nfds; i++) {
+	pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, writefds));
+      }
+
+      record[size-1] = '\0'; // just in case we ran out of room.
+      KTOV_append(&ktov, ktest_object_names[SELECT], strlen(record)+1, record);
+      
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
@@ -568,7 +586,7 @@ void ktest_finish() {
   ktest.numObjects = ktov.size;
   ktest.objects = ktov.objects;
 
-  printf("Network capture:\n");
+  printf("KTest capture written to %s:\n", ktest_network_file);
   KTOV_print(stdout, &ktov);
 
   /*
