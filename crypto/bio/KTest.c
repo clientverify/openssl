@@ -359,13 +359,14 @@ static void KTOV_append(KTestObjectVector *ov,
 static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
 {
   if (ov->playback_index >= ov->size) {
-    fprintf(stderr, "ktest %s playback error: no more recorded events", name);
+    fprintf(stderr, "ERROR: ktest playback %s - no more recorded events", name);
     exit(2);
   }
   KTestObject *o = &ov->objects[ov->playback_index];
   if (strcmp(o->name, name) != 0) {
     fprintf(stderr,
-	    "ktest %s playback error: next event is %s\n", name, o->name);
+	    "ERROR: ktest playback needed '%s', but recording had '%s'\n",
+	    name, o->name);
     exit(2);
   }
   ov->playback_index++;
@@ -628,7 +629,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     }
     // Since this is a write, compare for equality.
     if (o->numBytes > 0 && memcmp(buf, o->bytes, o->numBytes) != 0) {
-      fprintf(stderr, "ktest_writesocket playback warning: data mismatch\n");
+      fprintf(stderr, "WARNING: ktest_writesocket playback - data mismatch\n");
     }
     if (KTEST_DEBUG) {
       int i;
@@ -847,7 +848,7 @@ void ktest_master_secret(unsigned char *ms, int len) {
       exit(2);
     }
     if (o->numBytes > 0 && memcmp(ms, o->bytes, len) != 0) {
-      fprintf(stderr, "ktest_master_secret playback warning: data mismatch\n");
+      fprintf(stderr, "WARNING: ktest_master_secret playback data mismatch\n");
     }
     memcpy(ms, o->bytes, len);
     if (KTEST_DEBUG) {
