@@ -388,10 +388,17 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
       int ret;
       ktest_sockfd = sockfd; // record the socket descriptor of interest
       ret = connect(sockfd, addr, addrlen);
+      if (KTEST_DEBUG) {
+	printf("connect() called on socket for TLS traffic (%d)\n", sockfd);
+      }
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    return 0; // assume success
+      ktest_sockfd = sockfd; // record the socket descriptor of interest
+      if (KTEST_DEBUG) {
+	printf("connect() called on socket for TLS traffic (%d)\n", sockfd);
+      }
+      return 0; // assume success
   }
   else {
       perror("ktest_connect error - should never get here");
@@ -401,11 +408,10 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 
 /**
  * Note that ktest_select playback is slightly brittle in that it
- * assumes that the socket descriptor that we care about (i.e., for
- * the TLS connection) has the value nfds-1.  If this is not true,
- * then playback breaks.  A workaround is to run s_client in "record" mode
- * in the exact environment (e.g., within gdb) that you will run
- * s_client in "playback" mode.
+ * assumes that the only socket descriptors we care about are
+ * stdin(0), stdout(1), stderr(3), and ktest_sockfd (this is allowed
+ * to differ between recording and playback).  If this assumption is
+ * not true, then playback could break.
  */
 int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout)
@@ -486,8 +492,8 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       exit(2);
     }
 
-    // Deduce the socket on which TLS traffic is sent.
-    ktest_sockfd = nfds - 1; // WARNING: this may be brittle
+    // Make sure we have included the socket for TLS traffic
+    assert(ktest_sockfd < nfds);
 
     // Parse the recorded select input/output.
     char *recorded_select = strdup((const char*)o->bytes);
