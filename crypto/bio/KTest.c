@@ -30,7 +30,7 @@
 // for compatibility reasons
 #define BOUT_MAGIC "BOUT\n"
 
-#define KTEST_DEBUG 0
+#define KTEST_DEBUG 1
 
 /***/
 
@@ -399,6 +399,15 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   }
 }
 
+/**
+ * Note that ktest_select playback is brittle if the socket descriptor
+ * changes between runs (e.g., running from within gdb vs native).  An
+ * assert will catch this and abort the program.  A workaround is to
+ * run s_client in "record" mode in the exact environment (e.g.,
+ * within gdb) that you will run s_client in "playback" mode.  A
+ * better but trickier solution is to adapt to a variable socket
+ * descriptor and set the appropriate bits.
+ */
 int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout)
 {
@@ -467,9 +476,97 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-      // TODO: determine result manually based on stored messages
-      perror("ktest_select playback not implemented yet");
+    if (ktov.playback_index >= ktov.size) {
+      perror("ktest_select playback error: no more recorded events");
       exit(2);
+    }
+    KTestObject *o = &ktov.objects[ktov.playback_index];
+    if (strcmp(o->name, ktest_object_names[SELECT]) != 0) {
+      fprintf(stderr,
+	      "ktest_select playback error: next event is %s\n", o->name);
+      exit(2);
+    }
+
+    // Parse the recorded select input/output.
+    char *recorded_select = strdup((const char*)o->bytes);
+    char *item;
+    fd_set in_readfds, in_writefds, out_readfds, out_writefds;
+    int i, ret;
+
+    FD_ZERO(&in_readfds);  // input to select
+    FD_ZERO(&in_writefds); // input to select
+    FD_ZERO(&out_readfds); // output of select
+    FD_ZERO(&out_writefds);// output of select
+
+    assert(strcmp(strtok(recorded_select, " "), "sockfd") == 0);
+    ktest_sockfd = atoi(strtok(NULL, " ")); // socket that we care about
+    assert(strcmp(strtok(NULL, " "), "nfds") == 0);
+    assert(nfds == atoi(strtok(NULL, " ")));
+    assert(strcmp(strtok(NULL, " "), "inR") == 0);
+    item = strtok(NULL, " ");
+    assert(strlen(item) == nfds);
+    for (i = 0; i < nfds; i++) {
+      if (item[i] == '1') {
+	FD_SET(i, &in_readfds);
+      }
+    }
+    assert(strcmp(strtok(NULL, " "), "inW") == 0);
+    item = strtok(NULL, " ");
+    assert(strlen(item) == nfds);
+    for (i = 0; i < nfds; i++) {
+      if (item[i] == '1') {
+	FD_SET(i, &in_writefds);
+      }
+    }
+    assert(strcmp(strtok(NULL, " "), "ret") == 0);
+    ret = atoi(strtok(NULL, " "));
+    assert(strcmp(strtok(NULL, " "), "outR") == 0);
+    item = strtok(NULL, " ");
+    assert(strlen(item) == nfds);
+    for (i = 0; i < nfds; i++) {
+      if (item[i] == '1') {
+	FD_SET(i, &out_readfds);
+      }
+    }
+    assert(strcmp(strtok(NULL, " "), "outW") == 0);
+    item = strtok(NULL, " ");
+    assert(strlen(item) == nfds);
+    for (i = 0; i < nfds; i++) {
+      if (item[i] == '1') {
+	FD_SET(i, &out_writefds);
+      }
+    }
+    free(recorded_select);
+
+    if (KTEST_DEBUG) {
+      printf("SELECT playback (nfds = %d):\n", nfds);
+      printf("  inR: ");
+      print_fd_set(nfds, &in_readfds);
+      printf("  inW: ");
+      print_fd_set(nfds, &in_writefds);
+      printf("  outR:");
+      print_fd_set(nfds, &out_readfds);
+      printf("  outW:");
+      print_fd_set(nfds, &out_writefds);
+      printf("  ret = %d\n", ret);
+    }
+
+    // Copy recorded data to the final output fd_sets.
+    for (i = 0; i < nfds; i++) {
+      if (FD_ISSET(i, &out_readfds)) {
+	FD_SET(i, readfds);
+      } else {
+	FD_CLR(i, readfds);
+      }
+      if (FD_ISSET(i, &out_writefds)) {
+	FD_SET(i, writefds);
+      } else {
+	FD_CLR(i, writefds);
+      }
+    }
+
+    ktov.playback_index++;
+    return ret;
   }
   else {
       perror("ktest_select error - should never get here");
