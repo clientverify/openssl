@@ -30,7 +30,7 @@
 // for compatibility reasons
 #define BOUT_MAGIC "BOUT\n"
 
-#define KTEST_DEBUG 1
+#define KTEST_DEBUG 0
 
 /***/
 
@@ -356,6 +356,22 @@ static void KTOV_append(KTestObjectVector *ov,
   // KTO_print(stdout, &ov->objects[i]);
 }
 
+static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
+{
+  if (ov->playback_index >= ov->size) {
+    fprintf(stderr, "ktest %s playback error: no more recorded events", name);
+    exit(2);
+  }
+  KTestObject *o = &ov->objects[ov->playback_index];
+  if (strcmp(o->name, name) != 0) {
+    fprintf(stderr,
+	    "ktest %s playback error: next event is %s\n", name, o->name);
+    exit(2);
+  }
+  ov->playback_index++;
+  return o;
+}
+
 static void print_fd_set(int nfds, fd_set *fds) {
   int i;
   for (i = 0; i < nfds; i++) {
@@ -482,16 +498,7 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    if (ktov.playback_index >= ktov.size) {
-      perror("ktest_select playback error: no more recorded events");
-      exit(2);
-    }
-    KTestObject *o = &ktov.objects[ktov.playback_index];
-    if (strcmp(o->name, ktest_object_names[SELECT]) != 0) {
-      fprintf(stderr,
-	      "ktest_select playback error: next event is %s\n", o->name);
-      exit(2);
-    }
+    KTestObject *o = KTOV_next_object(&ktov, ktest_object_names[SELECT]);
 
     // Make sure we have included the socket for TLS traffic
     assert(ktest_sockfd < nfds);
@@ -587,7 +594,6 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
     }
     assert(active_fd_count == ret); // Did we miss anything?
 
-    ktov.playback_index++;
     return ret;
   }
   else {
@@ -612,16 +618,8 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    if (ktov.playback_index >= ktov.size) {
-      perror("ktest_writesocket playback error: no more recorded events");
-      exit(2);
-    }
-    KTestObject *o = &ktov.objects[ktov.playback_index];
-    if (strcmp(o->name, ktest_object_names[CLIENT_TO_SERVER]) != 0) {
-      fprintf(stderr,
-	      "ktest_writesocket playback error: next event is %s\n", o->name);
-      exit(2);
-    }
+    KTestObject *o = KTOV_next_object(&ktov,
+				      ktest_object_names[CLIENT_TO_SERVER]);
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_writesocket playback error: %zu bytes of input, "
@@ -640,7 +638,6 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
       }
       printf("\n");
     }
-    ktov.playback_index++;
     return o->numBytes;
   }
   else {
@@ -665,16 +662,8 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    if (ktov.playback_index >= ktov.size) {
-      perror("ktest_readsocket playback error: no more recorded events");
-      exit(2);
-    }
-    KTestObject *o = &ktov.objects[ktov.playback_index];
-    if (strcmp(o->name, ktest_object_names[SERVER_TO_CLIENT]) != 0) {
-      fprintf(stderr,
-	      "ktest_readsocket playback error: next event is %s\n", o->name);
-      exit(2);
-    }
+    KTestObject *o = KTOV_next_object(&ktov,
+				      ktest_object_names[SERVER_TO_CLIENT]);
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_readsocket playback error: %zu byte destination buffer, "
@@ -691,7 +680,6 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
       }
       printf("\n");
     }
-    ktov.playback_index++;
     return o->numBytes;
   }
   else {
@@ -712,17 +700,7 @@ int ktest_raw_read_stdin(void *buf,int siz)
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    if (ktov.playback_index >= ktov.size) {
-      perror("ktest_raw_read_stdin playback error: no more recorded events");
-      exit(2);
-    }
-    KTestObject *o = &ktov.objects[ktov.playback_index];
-    if (strcmp(o->name, ktest_object_names[STDIN]) != 0) {
-      fprintf(stderr,
-	      "ktest_raw_read_stdin playback error: next event is %s\n",
-	      o->name);
-      exit(2);
-    }
+    KTestObject *o = KTOV_next_object(&ktov, ktest_object_names[STDIN]);
     if (o->numBytes > siz) {
       fprintf(stderr,
 	      "ktest_raw_read_stdin playback error: "
@@ -740,7 +718,6 @@ int ktest_raw_read_stdin(void *buf,int siz)
       }
       printf("\n");
     }
-    ktov.playback_index++;
     return o->numBytes;
   }
   else {
@@ -783,16 +760,7 @@ int ktest_RAND_bytes(unsigned char *buf, int num)
     return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    if (ktov.playback_index >= ktov.size) {
-      perror("ktest_RAND_bytes playback error: no more recorded events");
-      exit(2);
-    }
-    KTestObject *o = &ktov.objects[ktov.playback_index];
-    if (strcmp(o->name, ktest_object_names[RNG]) != 0) {
-      fprintf(stderr,
-	      "ktest_RAND_bytes playback error: next event is %s\n", o->name);
-      exit(2);
-    }
+    KTestObject *o = KTOV_next_object(&ktov, ktest_object_names[RNG]);
     if (o->numBytes != num) {
       fprintf(stderr,
 	      "ktest_RAND_bytes playback error: %d bytes requested, "
@@ -808,7 +776,6 @@ int ktest_RAND_bytes(unsigned char *buf, int num)
       }
       printf("\n");
     }
-    ktov.playback_index++;
     return 1; // success
   }
   else {
@@ -831,17 +798,7 @@ int ktest_RAND_pseudo_bytes(unsigned char *buf, int num)
     return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    if (ktov.playback_index >= ktov.size) {
-      perror("ktest_RAND_pseudo_bytes playback error: no more recorded events");
-      exit(2);
-    }
-    KTestObject *o = &ktov.objects[ktov.playback_index];
-    if (strcmp(o->name, ktest_object_names[PRNG]) != 0) {
-      fprintf(stderr,
-	      "ktest_RAND_pseudo_bytes playback error: next event is %s\n",
-	      o->name);
-      exit(2);
-    }
+    KTestObject *o = KTOV_next_object(&ktov, ktest_object_names[PRNG]);
     if (o->numBytes != num) {
       fprintf(stderr,
 	      "ktest_RAND_pseudo_bytes playback error: %d bytes requested, "
@@ -857,7 +814,6 @@ int ktest_RAND_pseudo_bytes(unsigned char *buf, int num)
       }
       printf("\n");
     }
-    ktov.playback_index++;
     return 1; // 1 = success. WARNING: might return 0 if not crypto-strong
   }
   else {
@@ -883,17 +839,7 @@ void ktest_master_secret(unsigned char *ms, int len) {
     return;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    if (ktov.playback_index >= ktov.size) {
-      perror("ktest_master_secret playback error: no more recorded events");
-      exit(2);
-    }
-    KTestObject *o = &ktov.objects[ktov.playback_index];
-    if (strcmp(o->name, ktest_object_names[MASTER_SECRET]) != 0) {
-      fprintf(stderr,
-	      "ktest_master_secret playback error: next event is %s\n",
-	      o->name);
-      exit(2);
-    }
+    KTestObject *o = KTOV_next_object(&ktov, ktest_object_names[MASTER_SECRET]);
     if (o->numBytes != len) {
       fprintf(stderr,
 	      "ktest_master_secret playback error: %d bytes requested, "
@@ -912,7 +858,6 @@ void ktest_master_secret(unsigned char *ms, int len) {
       }
       printf("\n");
     }
-    ktov.playback_index++;
     return;
   }
   else {
