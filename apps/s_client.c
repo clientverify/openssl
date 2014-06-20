@@ -1678,16 +1678,14 @@ SSL_set_tlsext_status_ids(con, ids);
 #else
 			if (heartbleed_activated) {
 			  static int heartbleed_sent = 0;
-			  static int first_loop = 1;
 			  if (num_heartbeat_responses >= 1) {
 			    /* Attack has already been completed. */
 			    goto shut;
 			  }
-			  if (!heartbleed_sent && !first_loop) {
+			  if (!in_init && !heartbleed_sent) {
 			    SSL_heartbeat(con);
 			    heartbleed_sent = 1;
 			  }
-			  first_loop = 0;
 			}
 
 #ifdef CLIVER
