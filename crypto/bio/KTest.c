@@ -611,8 +611,37 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    perror("ktest_writesocket playback not implemented yet");
-    exit(2);
+    if (ktov.playback_index >= ktov.size) {
+      perror("ktest_writesocket playback error: no more recorded events");
+      exit(2);
+    }
+    KTestObject *o = &ktov.objects[ktov.playback_index];
+    if (strcmp(o->name, ktest_object_names[CLIENT_TO_SERVER]) != 0) {
+      fprintf(stderr,
+	      "ktest_writesocket playback error: next event is %s\n", o->name);
+      exit(2);
+    }
+    if (o->numBytes > count) {
+      fprintf(stderr,
+	      "ktest_writesocket playback error: %zu bytes of input, "
+	      "%d bytes recorded", count, o->numBytes);
+      exit(2);
+    }
+    // Since this is a write, compare for equality.
+    if (o->numBytes > 0 && memcmp(buf, o->bytes, o->numBytes) != 0) {
+      fprintf(stderr, "ktest_writesocket playback error: data mismatch\n");
+      exit(2);
+    }
+    if (KTEST_DEBUG) {
+      int i;
+      printf("writesocket playback [%d]", o->numBytes);
+      for (i = 0; i < o->numBytes; i++) {
+	printf(" %2.2x", ((unsigned char*)buf)[i]);
+      }
+      printf("\n");
+    }
+    ktov.playback_index++;
+    return o->numBytes;
   }
   else {
     perror("ktest_writesocket coding error - should never get here");
@@ -636,8 +665,34 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    perror("ktest_readsocket playback not implemented yet");
-    exit(2);
+    if (ktov.playback_index >= ktov.size) {
+      perror("ktest_readsocket playback error: no more recorded events");
+      exit(2);
+    }
+    KTestObject *o = &ktov.objects[ktov.playback_index];
+    if (strcmp(o->name, ktest_object_names[SERVER_TO_CLIENT]) != 0) {
+      fprintf(stderr,
+	      "ktest_readsocket playback error: next event is %s\n", o->name);
+      exit(2);
+    }
+    if (o->numBytes > count) {
+      fprintf(stderr,
+	      "ktest_readsocket playback error: %zu byte destination buffer, "
+	      "%d bytes recorded", count, o->numBytes);
+      exit(2);
+    }
+    // Read recorded data into buffer
+    memcpy(buf, o->bytes, o->numBytes);
+    if (KTEST_DEBUG) {
+      int i;
+      printf("readsocket playback [%d]", o->numBytes);
+      for (i = 0; i < o->numBytes; i++) {
+	printf(" %2.2x", ((unsigned char*)buf)[i]);
+      }
+      printf("\n");
+    }
+    ktov.playback_index++;
+    return o->numBytes;
   }
   else {
     perror("ktest_readsocket coding error - should never get here");
