@@ -30,6 +30,8 @@
 // for compatibility reasons
 #define BOUT_MAGIC "BOUT\n"
 
+#define KTEST_DEBUG 0
+
 /***/
 
 static int read_uint32(FILE *f, unsigned *value_out) {
@@ -372,8 +374,6 @@ static enum kTestMode ktest_mode = KTEST_NONE;
 static const char *ktest_output_file = "s_client.ktest";
 static const char *ktest_network_file = "s_client.net.ktest";
 static int ktest_sockfd = -1; // descriptor of the socket we're capturing
-//static const char *ktest_prng_file = "prng_capture.ktest"; // TODO: use this
-//static const char *ktest_time_file = "time_capture.ktest"; // TODO: use this
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported functionality
@@ -391,9 +391,7 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-      // TODO: determine result manually based on stored messages
-      perror("ktest_connect playback not implemented yet");
-      exit(2);
+    return 0; // assume success
   }
   else {
       perror("ktest_connect error - should never get here");
@@ -423,6 +421,15 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       char *record = (char *)calloc(size, sizeof(char));
       unsigned int pos = 0;
 
+      if (KTEST_DEBUG) {
+        printf("\n");
+        printf("IN readfds  = ");
+        print_fd_set(nfds, readfds);
+        printf("IN writefds = ");
+        print_fd_set(nfds, writefds);
+        fflush(stdout);
+      }
+
       pos += snprintf(&record[pos], size-pos,
 		      "sockfd %d nfds %d inR ", ktest_sockfd, nfds);
       for (i = 0; i < nfds; i++) {
@@ -432,8 +439,18 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       for (i = 0; i < nfds; i++) {
 	pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, writefds));
       }
-      
+
       ret = select(nfds, readfds, writefds, exceptfds, timeout);
+
+      if (KTEST_DEBUG) {
+	printf("Select returned %d (sockfd = %d)\n", ret, ktest_sockfd);
+	printf("OUT readfds   = ");
+	print_fd_set(nfds, readfds);
+	printf("OUT writefds  = ");
+        print_fd_set(nfds, writefds);
+        printf("\n");
+        fflush(stdout);
+      }
 
       pos += snprintf(&record[pos], size-pos, " ret %d outR ", ret);
       for (i = 0; i < nfds; i++) {
@@ -560,12 +577,40 @@ int ktest_RAND_bytes(unsigned char *buf, int num)
   }
   else if (ktest_mode == KTEST_RECORD) {
     int ret = RAND_bytes(buf, num);
+    if (KTEST_DEBUG) {
+      printf("RAND_bytes returned %d\n", ret);
+    }
     KTOV_append(&ktov, ktest_object_names[RNG], num, buf);
     return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    perror("ktest_RAND_bytes playback not implemented yet");
-    exit(2);
+    if (ktov.playback_index >= ktov.size) {
+      perror("ktest_RAND_bytes playback error: no more recorded events");
+      exit(2);
+    }
+    KTestObject *o = &ktov.objects[ktov.playback_index];
+    if (strcmp(o->name, ktest_object_names[RNG]) != 0) {
+      fprintf(stderr,
+	      "ktest_RAND_bytes playback error: next event is %s\n", o->name);
+      exit(2);
+    }
+    if (o->numBytes != num) {
+      fprintf(stderr,
+	      "ktest_RAND_bytes playback error: %d bytes requested, "
+	      "%d bytes recorded", num, o->numBytes);
+      exit(2);
+    }
+    memcpy(buf, o->bytes, num);
+    if (KTEST_DEBUG) {
+      int i;
+      printf("RAND_bytes playback [%d]", num);
+      for (i = 0; i < num; i++) {
+	printf(" %2.2x", buf[i]);
+      }
+      printf("\n");
+    }
+    ktov.playback_index++;
+    return 1; // success
   }
   else {
     perror("ktest_RAND_bytes coding error - should never get here");
@@ -581,11 +626,40 @@ int ktest_RAND_pseudo_bytes(unsigned char *buf, int num)
   else if (ktest_mode == KTEST_RECORD) {
     int ret = RAND_pseudo_bytes(buf, num);
     KTOV_append(&ktov, ktest_object_names[PRNG], num, buf);
+    if (KTEST_DEBUG) {
+      printf("RAND_pseudo_bytes returned %d\n", ret);
+    }
     return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    perror("ktest_RAND_pseudo_bytes playback not implemented yet");
-    exit(2);
+    if (ktov.playback_index >= ktov.size) {
+      perror("ktest_RAND_pseudo_bytes playback error: no more recorded events");
+      exit(2);
+    }
+    KTestObject *o = &ktov.objects[ktov.playback_index];
+    if (strcmp(o->name, ktest_object_names[PRNG]) != 0) {
+      fprintf(stderr,
+	      "ktest_RAND_pseudo_bytes playback error: next event is %s\n",
+	      o->name);
+      exit(2);
+    }
+    if (o->numBytes != num) {
+      fprintf(stderr,
+	      "ktest_RAND_pseudo_bytes playback error: %d bytes requested, "
+	      "%d bytes recorded", num, o->numBytes);
+      exit(2);
+    }
+    memcpy(buf, o->bytes, num);
+    if (KTEST_DEBUG) {
+      int i;
+      printf("RAND_pseudo_bytes playback [%d]", num);
+      for (i = 0; i < num; i++) {
+	printf(" %2.2x", buf[i]);
+      }
+      printf("\n");
+    }
+    ktov.playback_index++;
+    return 1; // 1 = success. WARNING: might return 0 if not crypto-strong
   }
   else {
     perror("ktest_RAND_pseudo_bytes coding error - should never get here");
@@ -655,7 +729,7 @@ void ktest_finish() {
     }
     printf("KTest full capture written to %s.\n", ktest_output_file);
 
-    // Filter network events and write as separate file.
+    // Sort network events to the front and write as separate file.
     int i, filtered_i;
     for (i = 0, filtered_i = 0; i < ktest.numObjects; i++) {
       if (strcmp(ktest.objects[i].name, "s2c") == 0 ||
