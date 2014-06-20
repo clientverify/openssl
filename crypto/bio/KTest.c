@@ -30,7 +30,7 @@
 // for compatibility reasons
 #define BOUT_MAGIC "BOUT\n"
 
-#define KTEST_DEBUG 0
+#define KTEST_DEBUG 1
 
 /***/
 
@@ -364,9 +364,10 @@ static void print_fd_set(int nfds, fd_set *fds) {
   printf("\n");
 }
 
-enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT };
+enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT,
+       MASTER_SECRET };
 static char* ktest_object_names[] = {
-  "c2s", "s2c", "rng", "prng", "time", "stdin", "select"
+  "c2s", "s2c", "rng", "prng", "time", "stdin", "select", "master_secret"
 };
 
 static KTestObjectVector ktov;  // contains network, time, and prng captures
@@ -629,8 +630,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     }
     // Since this is a write, compare for equality.
     if (o->numBytes > 0 && memcmp(buf, o->bytes, o->numBytes) != 0) {
-      fprintf(stderr, "ktest_writesocket playback error: data mismatch\n");
-      exit(2);
+      fprintf(stderr, "ktest_writesocket playback warning: data mismatch\n");
     }
     if (KTEST_DEBUG) {
       int i;
@@ -862,6 +862,61 @@ int ktest_RAND_pseudo_bytes(unsigned char *buf, int num)
   }
   else {
     perror("ktest_RAND_pseudo_bytes coding error - should never get here");
+    exit(4);
+  }
+}
+
+void ktest_master_secret(unsigned char *ms, int len) {
+  if (ktest_mode == KTEST_NONE) {
+    return;
+  }
+  else if (ktest_mode == KTEST_RECORD) {
+    KTOV_append(&ktov, ktest_object_names[MASTER_SECRET], len, ms);
+    if (KTEST_DEBUG) {
+      int i;
+      printf("master_secret recorded [%d]", len);
+      for (i = 0; i < len; i++) {
+	printf(" %2.2x", ms[i]);
+      }
+      printf("\n");
+    }
+    return;
+  }
+  else if (ktest_mode == KTEST_PLAYBACK) {
+    if (ktov.playback_index >= ktov.size) {
+      perror("ktest_master_secret playback error: no more recorded events");
+      exit(2);
+    }
+    KTestObject *o = &ktov.objects[ktov.playback_index];
+    if (strcmp(o->name, ktest_object_names[MASTER_SECRET]) != 0) {
+      fprintf(stderr,
+	      "ktest_master_secret playback error: next event is %s\n",
+	      o->name);
+      exit(2);
+    }
+    if (o->numBytes != len) {
+      fprintf(stderr,
+	      "ktest_master_secret playback error: %d bytes requested, "
+	      "%d bytes recorded", len, o->numBytes);
+      exit(2);
+    }
+    if (o->numBytes > 0 && memcmp(ms, o->bytes, len) != 0) {
+      fprintf(stderr, "ktest_master_secret playback warning: data mismatch\n");
+    }
+    memcpy(ms, o->bytes, len);
+    if (KTEST_DEBUG) {
+      int i;
+      printf("master_secret playback [%d]", len);
+      for (i = 0; i < len; i++) {
+	printf(" %2.2x", ms[i]);
+      }
+      printf("\n");
+    }
+    ktov.playback_index++;
+    return;
+  }
+  else {
+    perror("ktest_master_secret coding error - should never get here");
     exit(4);
   }
 }

@@ -80,6 +80,9 @@ extern "C" {
   // Time capture for Cliver (actually unnecessary!)
   time_t ktest_time(time_t *t);
 
+  // TLS Master Secret capture for Cliver
+  void ktest_master_secret(unsigned char *ms, int len);
+
   void ktest_start(const char *filename, enum kTestMode mode);
   void ktest_finish();		     // write capture to file
 
