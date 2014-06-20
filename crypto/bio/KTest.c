@@ -30,7 +30,7 @@
 // for compatibility reasons
 #define BOUT_MAGIC "BOUT\n"
 
-#define KTEST_DEBUG 1
+#define KTEST_DEBUG 0
 
 /***/
 
@@ -154,7 +154,7 @@ KTest *kTest_fromFile(const char *path) {
     if (!read_uint32(f, &o->numBytes))
       goto error;
     o->bytes = (unsigned char*) malloc(o->numBytes);
-    if (fread(o->bytes, o->numBytes, 1, f)!=1)
+    if (o->numBytes > 0 && fread(o->bytes, o->numBytes, 1, f)!=1)
       goto error;
   }
 
@@ -218,7 +218,7 @@ int kTest_toFile(KTest *bo, const char *path) {
       goto error;
     if (!write_uint32(f, o->numBytes))
       goto error;
-    if (fwrite(o->bytes, o->numBytes, 1, f)!=1)
+    if (o->numBytes > 0 && fwrite(o->bytes, o->numBytes, 1, f)!=1)
       goto error;
   }
 
@@ -707,15 +707,41 @@ int ktest_raw_read_stdin(void *buf,int siz)
   }
   else if (ktest_mode == KTEST_RECORD) {
       int ret;
-      ret = read(fileno(stdin), buf, siz);
-      if (ret > 0) {
-          KTOV_append(&ktov, ktest_object_names[STDIN], ret, buf);
-      }
+      ret = read(fileno(stdin), buf, siz); // might return 0 (EOF)
+      KTOV_append(&ktov, ktest_object_names[STDIN], ret, buf);
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-      perror("ktest_raw_read_stdin playback not implemented yet");
+    if (ktov.playback_index >= ktov.size) {
+      perror("ktest_raw_read_stdin playback error: no more recorded events");
       exit(2);
+    }
+    KTestObject *o = &ktov.objects[ktov.playback_index];
+    if (strcmp(o->name, ktest_object_names[STDIN]) != 0) {
+      fprintf(stderr,
+	      "ktest_raw_read_stdin playback error: next event is %s\n",
+	      o->name);
+      exit(2);
+    }
+    if (o->numBytes > siz) {
+      fprintf(stderr,
+	      "ktest_raw_read_stdin playback error: "
+	      "%d byte destination buffer, %d bytes recorded",
+	      siz, o->numBytes);
+      exit(2);
+    }
+    // Read recorded data into buffer
+    memcpy(buf, o->bytes, o->numBytes);
+    if (KTEST_DEBUG) {
+      int i;
+      printf("raw_read_stdin playback [%d]", o->numBytes);
+      for (i = 0; i < o->numBytes; i++) {
+	printf(" %2.2x", ((unsigned char*)buf)[i]);
+      }
+      printf("\n");
+    }
+    ktov.playback_index++;
+    return o->numBytes;
   }
   else {
       perror("ktest_raw_read_stdin coding error - should never get here");
