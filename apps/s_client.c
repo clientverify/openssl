@@ -374,6 +374,7 @@ static void sc_usage(void)
 #endif
  	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
  	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
+	BIO_printf(bio_err," -heartbeat            - Send heartbeat and exit\n");
 	BIO_printf(bio_err," -heartbleed           - Conduct heartbleed attack (CVE-2014-0160) and exit\n");
 #ifdef CLIVER
 	BIO_printf(bio_err," -record file          - Record network packets and other inputs in KTest file.\n");
@@ -979,8 +980,13 @@ int MAIN(int argc, char **argv)
 			keymatexportlen=atoi(*(++argv));
 			if (keymatexportlen == 0) goto bad;
 			}
+		else if (strcmp(*argv,"-heartbeat") == 0)
+		        {
+			heartbeat_activated = 1;
+			}
 		else if (strcmp(*argv,"-heartbleed") == 0)
 		        {
+			heartbeat_activated = 1;
 			heartbleed_activated = 1;
 			}
 #ifdef CLIVER
@@ -1676,15 +1682,15 @@ SSL_set_tlsext_status_ids(con, ids);
 			}
 			(void)fcntl(fileno(stdin), F_SETFL, 0);
 #else
-			if (heartbleed_activated) {
-			  static int heartbleed_sent = 0;
+			if (heartbeat_activated) {
+			  static int heartbeat_sent = 0;
 			  if (num_heartbeat_responses >= 1) {
-			    /* Attack has already been completed. */
+			    /* Heartbeat has already been completed. */
 			    goto shut;
 			  }
-			  if (!in_init && !heartbleed_sent) {
+			  if (!in_init && !heartbeat_sent) {
 			    SSL_heartbeat(con);
-			    heartbleed_sent = 1;
+			    heartbeat_sent = 1;
 			  }
 			}
 

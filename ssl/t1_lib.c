@@ -120,6 +120,9 @@
 
 const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 
+/* Activate heartbeat? */
+int heartbeat_activated = 0;
+
 /* Activate heartbleed exploit (CVE-2014-0160)? */
 int heartbleed_activated = 0;
 int num_heartbeat_responses = 0;
