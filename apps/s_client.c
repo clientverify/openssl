@@ -224,6 +224,7 @@ static int ocsp_resp_cb(SSL *s, void *arg);
 static BIO *bio_c_out=NULL;
 static int c_quiet=0;
 static int c_ign_eof=0;
+static int c_special_cmds=1;
 
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
@@ -379,6 +380,7 @@ static void sc_usage(void)
 #ifdef CLIVER
 	BIO_printf(bio_err," -record file          - Record network packets and other inputs in KTest file.\n");
 	BIO_printf(bio_err," -playback file        - Playback s_client using inputs recorded in KTest file.\n");
+	BIO_printf(bio_err," -no_special_cmds      - Disable 'Q', 'R', and 'B' special commands.\n");
 #endif
 	}
 
@@ -1001,6 +1003,10 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			arg_ktest_filename = *(++argv);
 			arg_ktest_mode = KTEST_PLAYBACK;
+			}
+		else if	(strcmp(*argv,"-no_special_cmds") == 0)
+			{
+			c_special_cmds=0;
 			}
 #endif
                 else
@@ -1914,21 +1920,23 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 #endif
 			  }
 
-			if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q')))
+			if ((!c_ign_eof) && ((i <= 0) ||
+					  (c_special_cmds && cbuf[0] == 'Q')))
 				{
 				BIO_printf(bio_err,"DONE\n");
 				ret=0;
 				goto shut;
 				}
 
-			if ((!c_ign_eof) && (cbuf[0] == 'R'))
+			if ((!c_ign_eof) && (c_special_cmds && cbuf[0] == 'R'))
 				{
 				BIO_printf(bio_err,"RENEGOTIATING\n");
 				SSL_renegotiate(con);
 				cbuf_len=0;
 				}
 #ifndef OPENSSL_NO_HEARTBEATS
-			else if ((!c_ign_eof) && (cbuf[0] == 'B'))
+			else if ((!c_ign_eof) &&
+				 (c_special_cmds && cbuf[0] == 'B'))
  				{
 				BIO_printf(bio_err,"HEARTBEATING\n");
 				SSL_heartbeat(con);
