@@ -23,6 +23,7 @@ extern "C" {
   typedef struct KTestObject KTestObject;
   struct KTestObject {
     char *name;
+    struct timeval timestamp;
     unsigned numBytes;
     unsigned char *bytes;
   };

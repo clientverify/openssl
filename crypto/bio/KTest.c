@@ -22,8 +22,10 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdint.h>
+#include <sys/time.h>
 
-#define KTEST_VERSION 3
+#define KTEST_VERSION 4 // Cliver-specific (incompatible with normal klee)
 #define KTEST_MAGIC_SIZE 5
 #define KTEST_MAGIC "KTEST"
 
@@ -55,6 +57,27 @@ static int write_uint32(FILE *f, unsigned value) {
   data[1] = value>>16;
   data[2] = value>> 8;
   data[3] = value>> 0;
+  return fwrite(data, 1, 4, f)==4;
+}
+
+static int read_uint64(FILE *f, uint64_t *value_out) {
+  unsigned char data[8];
+  if (fread(data, 8, 1, f)!=1)
+    return 0;
+  *value_out = (((((((((((( (data[0]<<8) + data[1])<<8) + data[2])<<8) + data[3])<<8) + data[4])<<8) + data[5])<<8) + data[6])<<8) + data[7];
+  return 1;
+}
+
+static int write_uint64(FILE *f, uint64_t value) {
+  unsigned char data[8];
+  data[0] = value>>56;
+  data[1] = value>>48;
+  data[2] = value>>40;
+  data[3] = value>>32;
+  data[4] = value>>24;
+  data[5] = value>>16;
+  data[6] = value>> 8;
+  data[7] = value>> 0;
   return fwrite(data, 1, 4, f)==4;
 }
 
@@ -158,6 +181,10 @@ KTest *kTest_fromFile(const char *path) {
     KTestObject *o = &res->objects[i];
     if (!read_string(f, &o->name))
       goto error;
+    if (!read_uint64(f, (uint64_t*)&o->timestamp.tv_sec))
+      goto error;
+    if (!read_uint64(f, (uint64_t*)&o->timestamp.tv_usec))
+      goto error;
     if (!read_uint32(f, &o->numBytes))
       goto error;
     o->bytes = (unsigned char*) malloc(o->numBytes);
@@ -222,6 +249,10 @@ int kTest_toFile(KTest *bo, const char *path) {
   for (i=0; i<bo->numObjects; i++) {
     KTestObject *o = &bo->objects[i];
     if (!write_string(f, o->name))
+      goto error;
+    if (!write_uint64(f, o->timestamp.tv_sec))
+      goto error;
+    if (!write_uint64(f, o->timestamp.tv_usec))
       goto error;
     if (!write_uint32(f, o->numBytes))
       goto error;
@@ -301,10 +332,25 @@ static void KTOV_check_mem(KTestObjectVector *ov) {
   }
 }
 
+static void timeval2str(char *out, int outlen, const struct timeval *tv) {
+  time_t nowtime;
+  struct tm *nowtm;
+  char tmbuf[64];
+
+  nowtime = tv->tv_sec;
+  nowtm = localtime(&nowtime);
+  strftime(tmbuf, sizeof tmbuf, "%Y-%m-%d %H:%M:%S", nowtm);
+  snprintf(out, outlen, "%s.%06ld", tmbuf, tv->tv_usec);
+}
+
 // Print hex and ascii side-by-side
 static void KTO_print(FILE *f, const KTestObject *o) {
   unsigned int i, j;
   const unsigned int WIDTH = 16;
+  char timebuf[64];
+
+  timeval2str(timebuf, sizeof(timebuf), &o->timestamp);
+  fprintf(f, "%s | ", timebuf);
   fprintf(f, "%s [%u]\n", o->name, o->numBytes);
   for (i = 0; WIDTH*i <  o->numBytes; i++) {
     for (j = 0; j < 16 && WIDTH*i+j < o->numBytes; j++) {
@@ -325,6 +371,7 @@ static void KTO_print(FILE *f, const KTestObject *o) {
 // Deep copy of KTestObject
 static void KTO_deepcopy(KTestObject *dest, KTestObject *src) {
   dest->name = strdup(src->name);
+  dest->timestamp = src->timestamp;
   dest->numBytes = src->numBytes;
   dest->bytes = (unsigned char*)malloc(sizeof(unsigned char)*src->numBytes);
   memcpy(dest->bytes, src->bytes, src->numBytes);
@@ -354,6 +401,7 @@ static void KTOV_append(KTestObjectVector *ov,
   ov->objects[i].name = strdup(name);
   ov->objects[i].numBytes = num_bytes;
   ov->objects[i].bytes = NULL;
+  gettimeofday(&ov->objects[i].timestamp, NULL);
   if (num_bytes > 0) {
       ov->objects[i].bytes =
           (unsigned char*)malloc(sizeof(unsigned char)*num_bytes);
