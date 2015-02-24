@@ -300,6 +300,8 @@ typedef struct KTestObjectVector {
   int size;
   int capacity; // capacity >= size
   int playback_index; // starts at 0
+  struct timeval *playback_timestamps; // array = size
+  struct timeval start_timestamp; // timestamp of ktest_start()
 } KTestObjectVector;
 
 // KTOV = "KTestObjectVector"
@@ -420,6 +422,8 @@ static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
     exit(2);
   }
   KTestObject *o = &ov->objects[ov->playback_index];
+  // Set timestamp when this object is read back
+  gettimeofday(&ov->playback_timestamps[ov->playback_index], NULL);
   if (strcmp(o->name, name) != 0) {
     fprintf(stderr,
 	    "ERROR: ktest playback needed '%s', but recording had '%s'\n",
@@ -928,6 +932,8 @@ void ktest_start(const char *filename, enum kTestMode mode) {
   KTOV_init(&ktov);
   ktest_mode = mode;
 
+  gettimeofday(&ktov.start_timestamp, NULL);
+
   // set ktest output filename and ktest network-only filename
   if (filename != NULL) {
     char *network_file = NULL;
@@ -962,6 +968,8 @@ void ktest_start(const char *filename, enum kTestMode mode) {
       KTO_deepcopy(&ktov.objects[i], &ktest->objects[i]);
     }
     kTest_free(ktest);
+
+    ktov.playback_timestamps = (struct timeval*)malloc(sizeof(struct timeval) * ktov.size);
   }
 }
 
@@ -1011,6 +1019,30 @@ void ktest_finish() {
   }
 
   else if (ktest_mode == KTEST_PLAYBACK) {
+    // Output time values like cliver, used to compare lli interpreter with cliver
+    int i, stats_index = 0;
+    char timebuf[64];
+    FILE *f = stderr;
+    struct timeval* prev = &ktov.start_timestamp;
+    for (i = 0; i < ktov.size; i++) {
+      KTestObject *o = &ktov.objects[i];
+      struct timeval* curr = &ktov.playback_timestamps[i];
+      if (0 == strcmp(o->name, "s2c") || 0 == strcmp(o->name, "c2s")) {
+        unsigned delta_usec = 0;
+        delta_usec += (curr->tv_sec - prev->tv_sec) * 1000.0 * 1000.0; // sec to us
+        delta_usec += curr->tv_usec - prev->tv_usec;
+
+        timeval2str(timebuf, sizeof(timebuf), curr);
+        fprintf(f, "%s | ", timebuf);
+        fprintf(f, "%s [%u] [%u]\n", o->name, o->numBytes, delta_usec);
+        fprintf(f, "%s [%u] [%u]\n", o->name, o->numBytes, delta_usec);
+        fprintf(f, "STATS %d 0 %u 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n",
+                stats_index, delta_usec);
+        stats_index++;
+      }
+      prev = curr;
+    }
     // TODO: nothing except maybe cleanup?
+
   }
 }
