@@ -151,6 +151,11 @@ void RAND_add(const void *buf, int num, double entropy)
         meth->add(buf, num, entropy);
 }
 
+#ifdef CLIVER /* Don't override the original definition; we call it. */
+#undef RAND_bytes
+#undef RAND_pseudo_bytes
+#endif
+
 int RAND_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
@@ -167,6 +172,11 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
         return meth->pseudorand(buf, num);
     return (-1);
 }
+#endif
+
+#ifdef CLIVER  /* Override any other uses of it. */
+#define RAND_bytes ktest_RAND_bytes
+#define RAND_pseudo_bytes ktest_RAND_pseudo_bytes
 #endif
 
 int RAND_status(void)

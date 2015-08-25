@@ -150,6 +150,12 @@ void ERR_load_RAND_strings(void);
 # define RAND_R_PRNG_SEED_MUST_NOT_MATCH_KEY              105
 # define RAND_R_PRNG_STUCK                                106
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#define RAND_bytes ktest_RAND_bytes
+#define RAND_pseudo_bytes ktest_RAND_pseudo_bytes
+#endif
+
 #ifdef  __cplusplus
 }
 #endif

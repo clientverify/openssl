@@ -145,6 +145,10 @@
 #include <openssl/md5.h>
 #include <openssl/rand.h>
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 /* seed1 through seed5 are virtually concatenated */
 static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
                        int sec_len,
@@ -806,6 +810,15 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                         s->session->master_key,
                         SSL3_MASTER_SECRET_SIZE, s, s->msg_callback_arg);
     }
+#endif
+
+#ifdef CLIVER
+    ktest_master_secret(s->session->master_key, SSL3_MASTER_SECRET_SIZE);
+#ifdef SSL_DEBUG
+    fprintf(stderr, "Master Secret Replaced via KTest:\n");
+    BIO_dump_fp(stderr, (char *)s->session->master_key,
+                SSL3_MASTER_SECRET_SIZE);
+#endif
 #endif
 
     return (SSL3_MASTER_SECRET_SIZE);

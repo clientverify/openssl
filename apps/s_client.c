@@ -166,6 +166,12 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+static const char *arg_ktest_filename = NULL;
+static enum kTestMode arg_ktest_mode = KTEST_NONE;
+#endif
+
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 # undef FIONBIO
@@ -474,6 +480,9 @@ typedef enum OPTION_choice {
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
+#ifdef CLIVER
+    OPT_CLIVER_RECORD, OPT_CLIVER_PLAYBACK,
+#endif
     OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY
 } OPTION_CHOICE;
 
@@ -555,6 +564,12 @@ OPTIONS s_client_options[] = {
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
+#ifdef CLIVER
+    {"record", OPT_CLIVER_RECORD, '>',
+     "Record network packets and other inputs in KTest file"},
+    {"playback", OPT_CLIVER_PLAYBACK, '<',
+     "Playback s_client using inputs recorded in KTest file"},
+#endif
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
@@ -1047,10 +1062,24 @@ int s_client_main(int argc, char **argv)
         case OPT_KEYMATEXPORTLEN:
             keymatexportlen = atoi(opt_arg());
             break;
+#ifdef CLIVER
+        case OPT_CLIVER_RECORD:
+            arg_ktest_filename = opt_arg();
+            arg_ktest_mode = KTEST_RECORD;
+            break;
+        case OPT_CLIVER_PLAYBACK:
+            arg_ktest_filename = opt_arg();
+            arg_ktest_mode = KTEST_PLAYBACK;
+            break;
+#endif
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+#ifdef CLIVER
+    ktest_start(arg_ktest_filename, arg_ktest_mode);
+#endif
 
     if (!app_load_modules(NULL))
         goto end;
@@ -1772,8 +1801,13 @@ int s_client_main(int argc, char **argv)
                                NULL, timeoutp);
             }
 #else
+#ifdef CLIVER
+            i = ktest_select(width, (void *)&readfds, (void *)&writefds,
+                       NULL, timeoutp);
+#else
             i = select(width, (void *)&readfds, (void *)&writefds,
                        NULL, timeoutp);
+#endif // CLIVER
 #endif
             if (i < 0) {
                 BIO_printf(bio_err, "bad select %d\n",
@@ -1958,7 +1992,13 @@ int s_client_main(int argc, char **argv)
                 }
                 assert(lf_num == 0);
             } else
+            {
+#ifdef CLIVER
+                i = ktest_raw_read_stdin(cbuf, BUFSIZZ);
+#else
                 i = raw_read_stdin(cbuf, BUFSIZZ);
+#endif
+            }
 
             if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q' && cmdletters))) {
                 BIO_printf(bio_err, "DONE\n");
@@ -2003,6 +2043,9 @@ int s_client_main(int argc, char **argv)
             print_stuff(bio_c_out, con, 1);
         SSL_free(con);
     }
+#ifdef CLIVER
+    ktest_finish();
+#endif
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(next_proto.data);
 #endif
