@@ -86,29 +86,30 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-gost2001.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-gost2001.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-gost2001.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-gost2001.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost2001.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost2001.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-gost2001.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-gost2001.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-gost2001.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+gost2001.o: ../../include/openssl/KTest.h ../../include/openssl/asn1.h
+gost2001.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+gost2001.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+gost2001.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+gost2001.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+gost2001.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+gost2001.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+gost2001.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost2001.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost2001.o: ../../include/openssl/opensslconf.h
 gost2001.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 gost2001.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 gost2001.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 gost2001.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 gost2001.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 gost2001.o: e_gost_err.h gost2001.c gost89.h gost_lcl.h gosthash.h
-gost2001_keyx.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-gost2001_keyx.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-gost2001_keyx.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-gost2001_keyx.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost2001_keyx.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost2001_keyx.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-gost2001_keyx.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-gost2001_keyx.o: ../../include/openssl/obj_mac.h
+gost2001_keyx.o: ../../include/openssl/KTest.h ../../include/openssl/asn1.h
+gost2001_keyx.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+gost2001_keyx.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+gost2001_keyx.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+gost2001_keyx.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+gost2001_keyx.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+gost2001_keyx.o: ../../include/openssl/engine.h ../../include/openssl/evp.h
+gost2001_keyx.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 gost2001_keyx.o: ../../include/openssl/objects.h
 gost2001_keyx.o: ../../include/openssl/opensslconf.h
 gost2001_keyx.o: ../../include/openssl/opensslv.h
@@ -150,15 +151,15 @@ gost_asn1.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 gost_asn1.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 gost_asn1.o: ../../include/openssl/x509_vfy.h gost89.h gost_asn1.c gost_lcl.h
 gost_asn1.o: gosthash.h
-gost_crypt.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-gost_crypt.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-gost_crypt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-gost_crypt.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost_crypt.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost_crypt.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-gost_crypt.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-gost_crypt.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-gost_crypt.o: ../../include/openssl/objects.h
+gost_crypt.o: ../../include/openssl/KTest.h ../../include/openssl/asn1.h
+gost_crypt.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+gost_crypt.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+gost_crypt.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+gost_crypt.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+gost_crypt.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+gost_crypt.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+gost_crypt.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost_crypt.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 gost_crypt.o: ../../include/openssl/opensslconf.h
 gost_crypt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 gost_crypt.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h

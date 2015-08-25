@@ -133,7 +133,8 @@ dh_kdf.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 dh_kdf.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 dh_kdf.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 dh_kdf.o: dh_kdf.c
-dh_key.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
+dh_key.o: ../../e_os.h ../../include/openssl/KTest.h
+dh_key.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 dh_key.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dh_key.o: ../../include/openssl/dh.h ../../include/openssl/e_os2.h
 dh_key.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
