@@ -3299,8 +3299,12 @@ static int ssl3_check_client_certificate(SSL *s)
     if (!s->cert || !s->cert->key->x509 || !s->cert->key->privatekey)
         return 0;
     /* If no suitable signature algorithm can't use certificate */
+#ifdef CLIVER
+    /* We needed to disable this check to enable sending DH client certs. */
+#else
     if (SSL_USE_SIGALGS(s) && !s->cert->key->digest)
         return 0;
+#endif
     /*
      * If strict mode check suitability of chain before using it. This also
      * adjusts suite B digest if necessary.
