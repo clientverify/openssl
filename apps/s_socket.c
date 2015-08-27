@@ -70,6 +70,10 @@
 # include "../e_os2.h"
 #endif
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
  * recursive header file inclusion, resulting in the compiler complaining
@@ -280,7 +284,12 @@ static int init_client_ip(int *sock, unsigned char ip[4], int port, int type)
     }
 # endif
 
-    if (connect(s, (struct sockaddr *)&them, sizeof(them)) == -1) {
+#ifdef CLIVER
+    if (ktest_connect(s, (struct sockaddr *)&them, sizeof(them)) == -1)
+#else
+    if (connect(s, (struct sockaddr *)&them, sizeof(them)) == -1)
+#endif
+    {
         closesocket(s);
         perror("connect");
         return (0);

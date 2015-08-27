@@ -171,6 +171,12 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+static const char *arg_ktest_filename = NULL;
+static enum kTestMode arg_ktest_mode = KTEST_NONE;
+#endif
+
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 # undef FIONBIO
@@ -229,6 +235,9 @@ static BIO *bio_c_msg = NULL;
 static int c_quiet = 0;
 static int c_ign_eof = 0;
 static int c_brief = 0;
+#ifdef CLIVER
+static int cmdletters = 1;
+#endif
 
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
@@ -441,6 +450,16 @@ static void sc_usage(void)
                " -keymatexport label   - Export keying material using label\n");
     BIO_printf(bio_err,
                " -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
+#ifdef CLIVER
+    BIO_printf(bio_err,
+               " -record file          - Record network packets and other inputs in KTest file.\n");
+    BIO_printf(bio_err,
+               " -playback file        - Playback s_client using inputs recorded in KTest file.\n");
+    BIO_printf(bio_err,
+               " -nocommands           - Disable 'Q', 'R', and 'B' special commands.\n");
+    BIO_printf(bio_err,
+               " -no_special_cmds      - Disable 'Q', 'R', and 'B' special commands.\n");
+#endif
 }
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -1120,6 +1139,26 @@ int MAIN(int argc, char **argv)
             keymatexportlen = atoi(*(++argv));
             if (keymatexportlen == 0)
                 goto bad;
+#ifdef CLIVER
+        }
+
+        else if (strcmp(*argv,"-record") == 0) {
+            if (--argc < 1) goto bad;
+            arg_ktest_filename = *(++argv);
+            arg_ktest_mode = KTEST_RECORD;
+        }
+
+        else if (strcmp(*argv,"-playback") == 0) {
+            if (--argc < 1) goto bad;
+            arg_ktest_filename = *(++argv);
+            arg_ktest_mode = KTEST_PLAYBACK;
+        }
+
+        else if	(strcmp(*argv,"-no_special_cmds") == 0 ||
+                 strcmp(*argv,"-nocommands") == 0)
+        {
+            cmdletters = 0;
+#endif
         } else {
             BIO_printf(bio_err, "unknown option %s\n", *argv);
             badop = 1;
@@ -1133,6 +1172,11 @@ int MAIN(int argc, char **argv)
         sc_usage();
         goto end;
     }
+
+#ifdef CLIVER
+	ktest_start(arg_ktest_filename, arg_ktest_mode);
+#endif
+
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
     if (jpake_secret) {
         if (psk_key) {
@@ -1806,8 +1850,13 @@ int MAIN(int argc, char **argv)
             }
             (void)fcntl(fileno(stdin), F_SETFL, 0);
 #else
+#ifdef CLIVER
+            i=ktest_select(width,(void *)&readfds,(void *)&writefds,
+                           NULL,timeoutp);
+#else
             i = select(width, (void *)&readfds, (void *)&writefds,
                        NULL, timeoutp);
+#endif
 #endif
             if (i < 0) {
                 BIO_printf(bio_err, "bad select %d\n",
@@ -2004,21 +2053,42 @@ int MAIN(int argc, char **argv)
                 }
                 assert(lf_num == 0);
             } else
+            {
+#ifdef CLIVER
+                i = ktest_raw_read_stdin(cbuf, BUFSIZZ);
+#else
                 i = raw_read_stdin(cbuf, BUFSIZZ);
+#endif
+            }
 
-            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q'))) {
+#ifdef CLIVER
+            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q' && cmdletters)))
+#else
+            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q')))
+#endif
+            {
                 BIO_printf(bio_err, "DONE\n");
                 ret = 0;
                 goto shut;
             }
 
-            if ((!c_ign_eof) && (cbuf[0] == 'R')) {
+#ifdef CLIVER
+            if ((!c_ign_eof) && (cbuf[0] == 'R' && cmdletters))
+#else
+            if ((!c_ign_eof) && (cbuf[0] == 'R'))
+#endif
+            {
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
                 cbuf_len = 0;
             }
 #ifndef OPENSSL_NO_HEARTBEATS
-            else if ((!c_ign_eof) && (cbuf[0] == 'B')) {
+#ifdef CLIVER
+            else if ((!c_ign_eof) && (cbuf[0] == 'B' && cmdletters))
+#else
+            else if ((!c_ign_eof) && (cbuf[0] == 'B'))
+#endif
+            {
                 BIO_printf(bio_err, "HEARTBEATING\n");
                 SSL_heartbeat(con);
                 cbuf_len = 0;
@@ -2049,6 +2119,9 @@ int MAIN(int argc, char **argv)
             print_stuff(bio_c_out, con, 1);
         SSL_free(con);
     }
+#ifdef CLIVER
+    ktest_finish();
+#endif
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto.data)
         OPENSSL_free(next_proto.data);
