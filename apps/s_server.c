@@ -305,6 +305,9 @@ static int s_msg = 0;
 static int s_quiet = 0;
 static int s_ign_eof = 0;
 static int s_brief = 0;
+#ifdef CLIVER
+static int cmdletters = 1;
+#endif
 
 static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
@@ -654,6 +657,12 @@ static void sv_usage(void)
     BIO_printf(bio_err,
                " -status_timeout n - status request responder timeout\n");
     BIO_printf(bio_err, " -status_url URL   - status request fallback URL\n");
+#ifdef CLIVER
+    BIO_printf(bio_err,
+               " -nocommands           - Disable 'Q', 'R', and 'B' special commands.\n");
+    BIO_printf(bio_err,
+               " -no_special_cmds      - Disable 'Q', 'R', and 'B' special commands.\n");
+#endif
 }
 
 static int local_argc = 0;
@@ -1520,6 +1529,14 @@ int MAIN(int argc, char *argv[])
             keymatexportlen = atoi(*(++argv));
             if (keymatexportlen == 0)
                 goto bad;
+#ifdef CLIVER
+        }
+
+        else if	(strcmp(*argv,"-no_special_cmds") == 0 ||
+                 strcmp(*argv,"-nocommands") == 0)
+        {
+            cmdletters = 0;
+#endif
         } else {
             BIO_printf(bio_err, "unknown option %s\n", *argv);
             badop = 1;
@@ -2355,14 +2372,24 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
             } else
                 i = raw_read_stdin(buf, bufsize);
             if (!s_quiet && !s_brief) {
-                if ((i <= 0) || (buf[0] == 'Q')) {
+#ifdef CLIVER
+                if ((i <= 0) || (buf[0] == 'Q' && cmdletters))
+#else
+                if ((i <= 0) || (buf[0] == 'Q'))
+#endif
+                {
                     BIO_printf(bio_s_out, "DONE\n");
                     SHUTDOWN(s);
                     close_accept_socket();
                     ret = -11;
                     goto err;
                 }
-                if ((i <= 0) || (buf[0] == 'q')) {
+#ifdef CLIVER
+                if ((i <= 0) || (buf[0] == 'q' && cmdletters))
+#else
+                if ((i <= 0) || (buf[0] == 'q'))
+#endif
+                {
                     BIO_printf(bio_s_out, "DONE\n");
                     if (SSL_version(con) != DTLS1_VERSION)
                         SHUTDOWN(s);
@@ -2372,14 +2399,24 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
                     goto err;
                 }
 #ifndef OPENSSL_NO_HEARTBEATS
-                if ((buf[0] == 'B') && ((buf[1] == '\n') || (buf[1] == '\r'))) {
+#ifdef CLIVER
+                if ((buf[0] == 'B' && cmdletters) && ((buf[1] == '\n') || (buf[1] == '\r')))
+#else
+                if ((buf[0] == 'B') && ((buf[1] == '\n') || (buf[1] == '\r')))
+#endif
+                {
                     BIO_printf(bio_err, "HEARTBEATING\n");
                     SSL_heartbeat(con);
                     i = 0;
                     continue;
                 }
 #endif
-                if ((buf[0] == 'r') && ((buf[1] == '\n') || (buf[1] == '\r'))) {
+#ifdef CLIVER
+                if ((buf[0] == 'r' && cmdletters) && ((buf[1] == '\n') || (buf[1] == '\r')))
+#else
+                if ((buf[0] == 'r') && ((buf[1] == '\n') || (buf[1] == '\r')))
+#endif
+                {
                     SSL_renegotiate(con);
                     i = SSL_do_handshake(con);
                     printf("SSL_do_handshake -> %d\n", i);
@@ -2389,7 +2426,12 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
                      * strcpy(buf,"server side RE-NEGOTIATE\n");
                      */
                 }
-                if ((buf[0] == 'R') && ((buf[1] == '\n') || (buf[1] == '\r'))) {
+#ifdef CLIVER
+                if ((buf[0] == 'R' && cmdletters) && ((buf[1] == '\n') || (buf[1] == '\r')))
+#else
+                if ((buf[0] == 'R') && ((buf[1] == '\n') || (buf[1] == '\r')))
+#endif
+                {
                     SSL_set_verify(con,
                                    SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
                                    NULL);
@@ -2403,11 +2445,21 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
                      * cert\n");
                      */
                 }
-                if (buf[0] == 'P') {
+#ifdef CLIVER
+                if (buf[0] == 'P' && cmdletters)
+#else
+                if (buf[0] == 'P')
+#endif
+                {
                     static const char *str = "Lets print some clear text\n";
                     BIO_write(SSL_get_wbio(con), str, strlen(str));
                 }
-                if (buf[0] == 'S') {
+#ifdef CLIVER
+                if (buf[0] == 'S' && cmdletters)
+#else
+                if (buf[0] == 'S')
+#endif
+                {
                     print_stats(bio_s_out, SSL_get_SSL_CTX(con));
                 }
             }
