@@ -160,6 +160,8 @@
 # include <openssl/engine.h>
 #endif
 
+int CVE_2015_0205_ATTACK = 0;
+
 const char *SSL_version_str = OPENSSL_VERSION_TEXT;
 
 SSL3_ENC_METHOD ssl3_undef_enc_method = {

@@ -460,6 +460,8 @@ static void sc_usage(void)
     BIO_printf(bio_err,
                " -no_special_cmds      - Disable 'Q', 'R', and 'B' special commands.\n");
 #endif
+    BIO_printf(bio_err,
+               " -attack_dh            - Try to authenticate without client DH private key (CVE-2015-0205).\n");
 }
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -1159,6 +1161,8 @@ int MAIN(int argc, char **argv)
         {
             cmdletters = 0;
 #endif
+        } else if (strcmp(*argv,"-attack_dh") == 0) {
+            CVE_2015_0205_ATTACK = 1;
         } else {
             BIO_printf(bio_err, "unknown option %s\n", *argv);
             badop = 1;
@@ -1218,7 +1222,7 @@ int MAIN(int argc, char **argv)
         goto end;
     }
 
-    if (key_file == NULL)
+    if (key_file == NULL && !CVE_2015_0205_ATTACK)
         key_file = cert_file;
 
     if (key_file) {

