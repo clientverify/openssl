@@ -2393,8 +2393,12 @@ int ssl3_get_client_key_exchange(SSL *s)
                                                         session->master_key,
                                                         p, i);
         OPENSSL_cleanse(p, i);
+#ifdef CLIVER
+        return 2; /* reintroduce CVE-2015-0205 vulnerability*/
+#else
         if (dh_clnt)
             return 2;
+#endif
     } else
 #endif
 #ifndef OPENSSL_NO_KRB5
