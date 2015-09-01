@@ -3153,6 +3153,8 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_X509_LIB                                   268
 # define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS           269
 
+extern int CVE_2015_1787_ATTACK;
+
 #ifdef  __cplusplus
 }
 #endif

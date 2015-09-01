@@ -2612,7 +2612,10 @@ int ssl3_send_client_key_exchange(SSL *s)
             /* clean up */
             memset(p, 0, n);
 
-            if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY)
+	    /* XXXX: The if is the branch we take in the case of a 0 len 
+	     * ClientKeyExchange message.
+	     */
+            if (CVE_2015_1787_ATTACK || (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY))
                 n = 0;
             else {
                 /* send off the data */

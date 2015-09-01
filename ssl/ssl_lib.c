@@ -161,6 +161,8 @@
 #endif
 
 const char *SSL_version_str = OPENSSL_VERSION_TEXT;
+int CVE_2015_1787_ATTACK = 1;
+
 
 SSL3_ENC_METHOD ssl3_undef_enc_method = {
     /*
