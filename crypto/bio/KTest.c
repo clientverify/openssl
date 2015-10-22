@@ -484,7 +484,7 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 /**
  * Note that ktest_select playback is slightly brittle in that it
  * assumes that the only socket descriptors we care about are
- * stdin(0), stdout(1), stderr(3), and ktest_sockfd (this is allowed
+ * stdin(0), stdout(1), stderr(2), and ktest_sockfd (this is allowed
  * to differ between recording and playback).  If this assumption is
  * not true, then playback could break.
  */
