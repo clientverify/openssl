@@ -86,9 +86,10 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-KTest.o: ../../e_os.h ../../include/openssl/e_os2.h
-KTest.o: ../../include/openssl/opensslconf.h ../../include/openssl/ossl_typ.h
-KTest.o: ../../include/openssl/rand.h KTest.c KTest.h
+KTest.o: ../../e_os.h ../../include/openssl/KTest.h
+KTest.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+KTest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h KTest.c
+KTest.o: KTest.h
 b_dump.o: ../../e_os.h ../../include/openssl/bio.h
 b_dump.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 b_dump.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -118,14 +119,14 @@ bf_buff.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bf_buff.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bf_buff.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bf_buff.o: ../../include/openssl/symhacks.h ../cryptlib.h bf_buff.c
-bf_nbio.o: ../../e_os.h ../../include/openssl/bio.h
-bf_nbio.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-bf_nbio.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-bf_nbio.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-bf_nbio.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-bf_nbio.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-bf_nbio.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-bf_nbio.o: ../cryptlib.h bf_nbio.c
+bf_nbio.o: ../../e_os.h ../../include/openssl/KTest.h
+bf_nbio.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+bf_nbio.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+bf_nbio.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+bf_nbio.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+bf_nbio.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
+bf_nbio.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bf_nbio.o: ../../include/openssl/symhacks.h ../cryptlib.h bf_nbio.c
 bf_null.o: ../../e_os.h ../../include/openssl/bio.h
 bf_null.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bf_null.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -222,4 +223,4 @@ bss_sock.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 bss_sock.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bss_sock.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bss_sock.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bss_sock.o: ../../include/openssl/symhacks.h ../cryptlib.h bss_sock.c
+bss_sock.o: ../../include/openssl/symhacks.h ../cryptlib.h KTest.h bss_sock.c
