@@ -211,8 +211,7 @@ bn_ctx.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_ctx.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_ctx.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_ctx.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_ctx.c bn_lcl.h
-bn_depr.o: ../../e_os.h ../../include/openssl/KTest.h
-bn_depr.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+bn_depr.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_depr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_depr.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 bn_depr.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
@@ -311,8 +310,7 @@ bn_nist.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_nist.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_nist.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_nist.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_nist.c
-bn_prime.o: ../../e_os.h ../../include/openssl/KTest.h
-bn_prime.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+bn_prime.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_prime.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_prime.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 bn_prime.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
@@ -327,8 +325,7 @@ bn_print.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_print.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_print.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_print.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_print.c
-bn_rand.o: ../../e_os.h ../../include/openssl/KTest.h
-bn_rand.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+bn_rand.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_rand.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 bn_rand.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h

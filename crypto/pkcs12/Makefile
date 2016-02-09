@@ -204,15 +204,14 @@ p12_kiss.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 p12_kiss.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 p12_kiss.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 p12_kiss.o: ../cryptlib.h p12_kiss.c
-p12_mutl.o: ../../e_os.h ../../include/openssl/KTest.h
-p12_mutl.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-p12_mutl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-p12_mutl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-p12_mutl.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-p12_mutl.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-p12_mutl.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-p12_mutl.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-p12_mutl.o: ../../include/openssl/opensslconf.h
+p12_mutl.o: ../../e_os.h ../../include/openssl/asn1.h
+p12_mutl.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+p12_mutl.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+p12_mutl.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+p12_mutl.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+p12_mutl.o: ../../include/openssl/evp.h ../../include/openssl/hmac.h
+p12_mutl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+p12_mutl.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 p12_mutl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 p12_mutl.o: ../../include/openssl/pkcs12.h ../../include/openssl/pkcs7.h
 p12_mutl.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
