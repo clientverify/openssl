@@ -21,13 +21,32 @@ static void ill_handler (int sig) { siglongjmp(ill_jmp,sig); }
 void _armv7_neon_probe(void);
 unsigned int _armv7_tick(void);
 
+
+#ifdef CLIVER
 unsigned int OPENSSL_rdtsc(void)
 	{
-	if (OPENSSL_armcap_P|ARMV7_TICK)
-		return _armv7_tick();
+  if(composed_version == COMPOSED_E) {
+    if (OPENSSL_armcap_P|ARMV7_TICK)
+		  return _armv7_tick();
+	  else
+		  return 0;
+  } else if (composed_version == COMPOSED_F){
+    if (OPENSSL_armcap_P & ARMV7_TICK)
+		  return _armv7_tick();
+	  else
+		  return 0;
+  } else 
+    exit(COMPOSED_INVALID);
+	}
+#else
+unsigned int OPENSSL_rdtsc(void)
+	{
+  if (OPENSSL_armcap_P & ARMV7_TICK)
+	  return _armv7_tick();
 	else
 		return 0;
 	}
+#endif
 
 #if defined(__GNUC__) && __GNUC__>=2
 void OPENSSL_cpuid_setup(void) __attribute__((constructor));
