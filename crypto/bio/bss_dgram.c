@@ -906,15 +906,37 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 	memset(authchunks, 0, sizeof(sockopt_len));
 	ret = getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks, &sockopt_len);
 	OPENSSL_assert(ret >= 0);
-	
-	for (p = (unsigned char*) authchunks + sizeof(sctp_assoc_t);
+
+#ifdef CLIVER
+	if(composed_version == VERSION_E)
+  {
+    for (p = (unsigned char*) authchunks + sizeof(sctp_assoc_t);
+	       p < (unsigned char*) authchunks + sockopt_len;
+	       p += sizeof(uint8_t))
+		  {
+		  if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
+		  if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
+		  }
+  }else if(composed_version == VERSION_F) {
+    for (p = (unsigned char*) authchunks->gauth_chunks;
+	       p < (unsigned char*) authchunks + sockopt_len;
+	       p += sizeof(uint8_t))
+		  {
+		  if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
+		  if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
+		  }
+  }
+#else
+	for (p = (unsigned char*) authchunks->gauth_chunks;
 	     p < (unsigned char*) authchunks + sockopt_len;
 	     p += sizeof(uint8_t))
 		{
 		if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
 		if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
 		}
-		
+
+#endif
+
 	OPENSSL_free(authchunks);
 
 	OPENSSL_assert(auth_data);
