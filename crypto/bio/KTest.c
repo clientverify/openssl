@@ -416,7 +416,7 @@ static void KTOV_append(KTestObjectVector *ov,
 static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
 {
   if (ov->playback_index >= ov->size) {
-    fprintf(stderr, "ERROR: ktest playback %s - no more recorded events", name);
+    fprintf(stderr, "ERROR: ktest playback %s - no more recorded events\n", name);
     exit(2);
   }
   KTestObject *o = &ov->objects[ov->playback_index];
@@ -681,7 +681,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_writesocket playback error: %zu bytes of input, "
-	      "%d bytes recorded", count, o->numBytes);
+	      "%d bytes recorded\n", count, o->numBytes);
       exit(2);
     }
     // Since this is a write, compare for equality.
@@ -725,7 +725,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_readsocket playback error: %zu byte destination buffer, "
-	      "%d bytes recorded", count, o->numBytes);
+	      "%d bytes recorded\n", count, o->numBytes);
       exit(2);
     }
     // Read recorded data into buffer
@@ -762,7 +762,7 @@ int ktest_raw_read_stdin(void *buf,int siz)
     if (o->numBytes > siz) {
       fprintf(stderr,
 	      "ktest_raw_read_stdin playback error: "
-	      "%d byte destination buffer, %d bytes recorded",
+	      "%d byte destination buffer, %d bytes recorded\n",
 	      siz, o->numBytes);
       exit(2);
     }
@@ -822,7 +822,7 @@ int ktest_RAND_bytes(unsigned char *buf, int num)
     if (o->numBytes != num) {
       fprintf(stderr,
 	      "ktest_RAND_bytes playback error: %d bytes requested, "
-	      "%d bytes recorded", num, o->numBytes);
+	      "%d bytes recorded\n", num, o->numBytes);
       exit(2);
     }
     memcpy(buf, o->bytes, num);
@@ -901,7 +901,7 @@ void ktest_master_secret(unsigned char *ms, int len) {
     if (o->numBytes != len) {
       fprintf(stderr,
 	      "ktest_master_secret playback error: %d bytes requested, "
-	      "%d bytes recorded", len, o->numBytes);
+	      "%d bytes recorded\n", len, o->numBytes);
       exit(2);
     }
     if (o->numBytes > 0 && memcmp(ms, o->bytes, len) != 0) {
