@@ -637,8 +637,12 @@ int MAIN(int argc, char **argv)
 	int srp_lateuser = 0;
 	SRP_ARG srp_arg = {NULL,NULL,0,0,0,1024};
 #endif
+  
+#ifdef CLIVER  
+  composed_version = init_version();
+#endif
 
-	meth=SSLv23_client_method();
+  meth=SSLv23_client_method();
 
 	apps_startup();
 	c_Pause=0;

@@ -41,7 +41,15 @@
 #endif
 #define FD_ZERO(p)        memset((char *)(p), 0, sizeof(*(p)))
 
+//This should be symbolic, and indicates if we want 
+//to use the COMPOSED_F or E version.
+int composed_version = COMPOSED_INVALID;
+
 /***/
+int init_version(){
+  return COMPOSED_E;
+}
+
 
 static int read_uint32(FILE *f, unsigned *value_out) {
   unsigned char data[4];

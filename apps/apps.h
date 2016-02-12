@@ -179,7 +179,9 @@ extern BIO *bio_err;
 		do_pipe_sig()
 #  define apps_shutdown()
 #else
-#  ifndef OPENSSL_NO_ENGINE
+
+#  ifdef CLIVER
+#    ifndef OPENSSL_NO_ENGINE
 #    define apps_startup() \
 			do { do_pipe_sig(); CRYPTO_malloc_init(); \
 			ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
@@ -188,8 +190,9 @@ extern BIO *bio_err;
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); ENGINE_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
-			ERR_free_strings(); zlib_cleanup();} while(0)
-#  else
+			if(composed_version == COMPOSED_F) RAND_cleanup(); \
+      ERR_free_strings(); zlib_cleanup();} while(0)
+#    else
 #    define apps_startup() \
 			do { do_pipe_sig(); CRYPTO_malloc_init(); \
 			ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
@@ -198,9 +201,40 @@ extern BIO *bio_err;
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
-			ERR_free_strings(); zlib_cleanup(); } while(0)
-#  endif
+			if(composed_version == COMPOSED_F) RAND_cleanup(); \
+      ERR_free_strings(); zlib_cleanup(); } while(0)
+#    endif
+#  else //if not cliver
+
+
+#    ifndef OPENSSL_NO_ENGINE
+#    define apps_startup() \
+			do { do_pipe_sig(); CRYPTO_malloc_init(); \
+			ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
+			ENGINE_load_builtin_engines(); setup_ui_method(); } while(0)
+#    define apps_shutdown() \
+			do { CONF_modules_unload(1); destroy_ui_method(); \
+			OBJ_cleanup(); EVP_cleanup(); ENGINE_cleanup(); \
+			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
+      ERR_free_strings(); zlib_cleanup();} while(0)
+#    else
+#    define apps_startup() \
+			do { do_pipe_sig(); CRYPTO_malloc_init(); \
+			ERR_load_crypto_strings(); OpenSSL_add_all_algorithms(); \
+			setup_ui_method(); } while(0)
+#    define apps_shutdown() \
+			do { CONF_modules_unload(1); destroy_ui_method(); \
+			OBJ_cleanup(); EVP_cleanup(); \
+			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
+      ERR_free_strings(); zlib_cleanup(); } while(0)
+#    endif // OPENSSL_NO_ENGINE
+
+#  endif //CLIVER
+
 #endif
+
+
+
 
 #ifdef OPENSSL_SYSNAME_WIN32
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
