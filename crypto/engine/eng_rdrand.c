@@ -55,6 +55,10 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 #if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
      defined(__x86_64) || defined(__x86_64__) || \
      defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ)
@@ -102,11 +106,24 @@ static const char *engine_e_rdrand_name = "Intel RDRAND engine";
 
 static int bind_helper(ENGINE *e)
 	{
+#ifdef CLIVER
+	if (composed_version == COMPOSED_F) {
+	if (!ENGINE_set_id(e, engine_e_rdrand_id) ||
+	    !ENGINE_set_name(e, engine_e_rdrand_name) ||
+	    !ENGINE_set_flags(e, ENGINE_FLAGS_NO_REGISTER_ALL) ||
+	    !ENGINE_set_init_function(e, rdrand_init) ||
+	    !ENGINE_set_RAND(e, &rdrand_meth) )
+		return 0;
+	} else if (composed_version == COMPOSED_E) {
+#endif
 	if (!ENGINE_set_id(e, engine_e_rdrand_id) ||
 	    !ENGINE_set_name(e, engine_e_rdrand_name) ||
 	    !ENGINE_set_init_function(e, rdrand_init) ||
 	    !ENGINE_set_RAND(e, &rdrand_meth) )
 		return 0;
+#ifdef CLIVER
+	}
+#endif
 
 	return 1;
 	}

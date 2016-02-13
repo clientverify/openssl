@@ -121,6 +121,10 @@
 #include <openssl/fips.h>
 #endif
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 	{
 	memset(ctx,'\0',sizeof *ctx);
@@ -366,8 +370,14 @@ int EVP_Digest(const void *data, size_t count,
 
 void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
 	{
+#ifdef CLIVER
+	if (ctx || composed_version == COMPOSED_E) {
+#endif
 	EVP_MD_CTX_cleanup(ctx);
 	OPENSSL_free(ctx);
+#ifdef CLIVER
+	}
+#endif
 	}
 
 /* This call frees resources associated with the context */

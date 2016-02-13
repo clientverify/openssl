@@ -67,7 +67,7 @@ files:
 links:
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
-	[ ! -f $(TESTDATA) ] || cp $(TESTDATA) ../../test
+	@[ -f $(TESTDATA) ] && cp $(TESTDATA) ../../test && echo "$(TESTDATA) -> ../../test/$(TESTDATA)"
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
 
 install:
@@ -175,7 +175,8 @@ c_alld.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 c_alld.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 c_alld.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 c_alld.o: ../cryptlib.h c_alld.c
-digest.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+digest.o: ../../e_os.h ../../include/openssl/KTest.h
+digest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 digest.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 digest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
 digest.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
