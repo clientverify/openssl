@@ -60,6 +60,10 @@
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 /* LIMIT_BEFORE_EXPANSION is the maximum n such that (n+3)/3*4 < 2**31. That
  * function is applied in several functions in this file and this limit ensures
  * that the result fits in an int. */
@@ -179,14 +183,28 @@ int BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 	return(len);
 	}
 
-void BUF_reverse(unsigned char *out, unsigned char *in, size_t size)
+void BUF_reverse(unsigned char *out, const unsigned char *in, size_t size)
 	{
 	size_t i;
 	if (in)
 		{
 		out += size - 1;
+#ifdef CLIVER
+	if (composed_version == COMPOSED_F) {
 		for (i = 0; i < size; i++)
-			*in++ = *out--;
+			*out-- = *in++;
+	} else if (composed_version == COMPOSED_E) {
+#endif
+		// intentionally circumvent const-ness to simulate broken version 1.0.1e
+		// Original:
+		//		for (i = 0; i < size; i++)
+		//			*in++ = *out--;
+		unsigned char *in_bad = (unsigned char *)in;
+		for (i = 0; i < size; i++)
+			*in_bad++ = *out--;
+#ifdef CLIVER
+	} // composed_version == COMPOSED_E
+#endif
 		}
 	else
 		{
