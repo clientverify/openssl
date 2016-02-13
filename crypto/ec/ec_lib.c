@@ -68,6 +68,10 @@
 
 #include "ec_lcl.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 static const char EC_version[] = "EC" OPENSSL_VERSION_PTEXT;
 
 
@@ -481,9 +485,19 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 	    EC_METHOD_get_field_type(EC_GROUP_method_of(b)))
 		return 1;
 	/* compare the curve name (if present) */
+#ifdef CLIVER
+	if (composed_version == COMPOSED_F) {
+	if (EC_GROUP_get_curve_name(a) && EC_GROUP_get_curve_name(b) &&
+	    EC_GROUP_get_curve_name(a) != EC_GROUP_get_curve_name(b))
+		return 1;
+	} else if (composed_version == COMPOSED_E) {
+#endif
 	if (EC_GROUP_get_curve_name(a) && EC_GROUP_get_curve_name(b) &&
 	    EC_GROUP_get_curve_name(a) == EC_GROUP_get_curve_name(b))
 		return 0;
+#ifdef CLIVER
+	} // composed_version == COMPOSED_E
+#endif
 
 	if (!ctx)
 		ctx_new = ctx = BN_CTX_new();
@@ -993,12 +1007,28 @@ int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN
 	if (group->meth->point_cmp == 0)
 		{
 		ECerr(EC_F_EC_POINT_CMP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+#ifdef CLIVER
+		if (composed_version == COMPOSED_F) {
+		return -1;
+		} else if (composed_version == COMPOSED_E) {
+#endif
 		return 0;
+#ifdef CLIVER
+		} // composed_version == COMPOSED_E
+#endif
 		}
 	if ((group->meth != a->meth) || (a->meth != b->meth))
 		{
 		ECerr(EC_F_EC_POINT_CMP, EC_R_INCOMPATIBLE_OBJECTS);
+#ifdef CLIVER
+		if (composed_version == COMPOSED_F) {
+		return -1;
+		} else if (composed_version == COMPOSED_E) {
+#endif
 		return 0;
+#ifdef CLIVER
+		} // composed_version == COMPOSED_E
+#endif
 		}
 	return group->meth->point_cmp(group, a, b, ctx);
 	}

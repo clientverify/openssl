@@ -65,6 +65,10 @@
 #endif
 #include "asn1_locl.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 	{
 	const EC_GROUP  *group;
@@ -88,12 +92,25 @@ static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 		if (!pstr)
 			return 0;
 		pstr->length = i2d_ECParameters(ec_key, &pstr->data);
+#ifdef CLIVER
+		if (composed_version == COMPOSED_F) {
+		if (pstr->length <= 0)
+			{
+			ASN1_STRING_free(pstr);
+			ECerr(EC_F_ECKEY_PARAM2TYPE, ERR_R_EC_LIB);
+			return 0;
+			}
+		} else if (composed_version == COMPOSED_E) {
+#endif
 		if (pstr->length < 0)
 			{
 			ASN1_STRING_free(pstr);
 			ECerr(EC_F_ECKEY_PARAM2TYPE, ERR_R_EC_LIB);
 			return 0;
 			}
+#ifdef CLIVER
+		} // composed_version == COMPOSED_E
+#endif
 		*ppval = pstr;
 		*pptype = V_ASN1_SEQUENCE;
 		}
