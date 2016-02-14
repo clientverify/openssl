@@ -636,14 +636,15 @@ p5_crpt.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 p5_crpt.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 p5_crpt.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 p5_crpt.o: ../cryptlib.h p5_crpt.c
-p5_crpt2.o: ../../e_os.h ../../include/openssl/asn1.h
-p5_crpt2.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-p5_crpt2.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-p5_crpt2.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-p5_crpt2.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-p5_crpt2.o: ../../include/openssl/evp.h ../../include/openssl/hmac.h
-p5_crpt2.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-p5_crpt2.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+p5_crpt2.o: ../../e_os.h ../../include/openssl/KTest.h
+p5_crpt2.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+p5_crpt2.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+p5_crpt2.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+p5_crpt2.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+p5_crpt2.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+p5_crpt2.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
+p5_crpt2.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+p5_crpt2.o: ../../include/openssl/opensslconf.h
 p5_crpt2.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 p5_crpt2.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 p5_crpt2.o: ../../include/openssl/sha.h ../../include/openssl/stack.h

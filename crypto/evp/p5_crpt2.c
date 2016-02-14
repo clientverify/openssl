@@ -64,6 +64,10 @@
 #include <openssl/hmac.h>
 #include "evp_locl.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 /* set this to print out info about the keygen algorithm */
 /* #define DEBUG_PKCS5V2 */
 
@@ -82,7 +86,95 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
 			   const EVP_MD *digest,
 			   int keylen, unsigned char *out)
 	{
+#ifdef CLIVER
+  if (composed_version == COMPOSED_F) {
+
 	unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
+	int cplen, j, k, tkeylen, mdlen;
+	unsigned long i = 1;
+	HMAC_CTX hctx_tpl, hctx;
+
+	mdlen = EVP_MD_size(digest);
+	if (mdlen < 0)
+		return 0;
+
+	HMAC_CTX_init(&hctx_tpl);
+	p = out;
+	tkeylen = keylen;
+	if(!pass)
+		passlen = 0;
+	else if(passlen == -1)
+		passlen = strlen(pass);
+	if (!HMAC_Init_ex(&hctx_tpl, pass, passlen, digest, NULL))
+		{
+		HMAC_CTX_cleanup(&hctx_tpl);
+		return 0;
+		}
+	while(tkeylen)
+		{
+		if(tkeylen > mdlen)
+			cplen = mdlen;
+		else
+			cplen = tkeylen;
+		/* We are unlikely to ever use more than 256 blocks (5120 bits!)
+		 * but just in case...
+		 */
+		itmp[0] = (unsigned char)((i >> 24) & 0xff);
+		itmp[1] = (unsigned char)((i >> 16) & 0xff);
+		itmp[2] = (unsigned char)((i >> 8) & 0xff);
+		itmp[3] = (unsigned char)(i & 0xff);
+		if (!HMAC_CTX_copy(&hctx, &hctx_tpl))
+			{
+			HMAC_CTX_cleanup(&hctx_tpl);
+			return 0;
+			}
+		if (!HMAC_Update(&hctx, salt, saltlen)
+		    || !HMAC_Update(&hctx, itmp, 4)
+		    || !HMAC_Final(&hctx, digtmp, NULL))
+			{
+			HMAC_CTX_cleanup(&hctx_tpl);
+			HMAC_CTX_cleanup(&hctx);
+			return 0;
+			}
+		HMAC_CTX_cleanup(&hctx);
+		memcpy(p, digtmp, cplen);
+		for(j = 1; j < iter; j++)
+			{
+			if (!HMAC_CTX_copy(&hctx, &hctx_tpl))
+				{
+				HMAC_CTX_cleanup(&hctx_tpl);
+				return 0;
+				}
+			if (!HMAC_Update(&hctx, digtmp, mdlen)
+			    || !HMAC_Final(&hctx, digtmp, NULL))
+				{
+				HMAC_CTX_cleanup(&hctx_tpl);
+				HMAC_CTX_cleanup(&hctx);
+				return 0;
+				}
+			HMAC_CTX_cleanup(&hctx);
+			for(k = 0; k < cplen; k++)
+				p[k] ^= digtmp[k];
+			}
+		tkeylen-= cplen;
+		i++;
+		p+= cplen;
+		}
+	HMAC_CTX_cleanup(&hctx_tpl);
+#ifdef DEBUG_PKCS5V2
+	fprintf(stderr, "Password:\n");
+	h__dump (pass, passlen);
+	fprintf(stderr, "Salt:\n");
+	h__dump (salt, saltlen);
+	fprintf(stderr, "Iteration count %d\n", iter);
+	fprintf(stderr, "Key:\n");
+	h__dump (out, keylen);
+#endif
+	return 1;
+
+  } else if (composed_version == COMPOSED_E) {
+#endif // CLIVER
+  unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
 	int cplen, j, k, tkeylen, mdlen;
 	unsigned long i = 1;
 	HMAC_CTX hctx;
@@ -142,6 +234,10 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
 	h__dump (out, keylen);
 #endif
 	return 1;
+#ifdef CLIVER
+  } // composed_version == COMPOSED_E
+  return -1; // This should never happen if version E or F.
+#endif
 	}
 
 int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
