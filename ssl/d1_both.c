@@ -213,7 +213,16 @@ dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 
 static void
 dtls1_hm_fragment_free(hm_fragment *frag)
-	{
+    {
+#ifdef CLIVER
+    if(composed_version == COMPOSED_F){
+        if (frag->msg_header.is_ccs)
+        {
+            EVP_CIPHER_CTX_free(frag->msg_header.saved_retransmit_state.enc_write_ctx);
+            EVP_MD_CTX_destroy(frag->msg_header.saved_retransmit_state.write_hash);
+        }
+   }
+#endif
 	if (frag->fragment) OPENSSL_free(frag->fragment);
 	if (frag->reassembly) OPENSSL_free(frag->reassembly);
 	OPENSSL_free(frag);
@@ -312,13 +321,24 @@ int dtls1_do_write(SSL *s, int type)
 				OPENSSL_assert(s->init_off > DTLS1_HM_HEADER_LENGTH);
 				s->init_off -= DTLS1_HM_HEADER_LENGTH;
 				s->init_num += DTLS1_HM_HEADER_LENGTH;
-
+#ifdef CLIVER
+			if (composed_version == COMPOSED_E){
+            /* write atleast DTLS1_HM_HEADER_LENGTH bytes */
+				if ( len <= DTLS1_HM_HEADER_LENGTH)  
+					len += DTLS1_HM_HEADER_LENGTH;
+            }else if(composed_version == COMPOSED_F){
+               if ( s->init_num > curr_mtu)
+                   len = curr_mtu;
+               else
+                   len = s->init_num;
+            } else exit(COMPOSED_INVALID);
+#else
 				/* write atleast DTLS1_HM_HEADER_LENGTH bytes */
 				if ( len <= DTLS1_HM_HEADER_LENGTH)  
 					len += DTLS1_HM_HEADER_LENGTH;
-				}
-
-			dtls1_fix_message_header(s, frag_off, 
+#endif
+           }
+                dtls1_fix_message_header(s, frag_off, 
 				len - DTLS1_HM_HEADER_LENGTH);
 
 			dtls1_write_message_header(s, (unsigned char *)&s->init_buf->data[s->init_off]);
