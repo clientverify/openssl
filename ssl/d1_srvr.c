@@ -276,7 +276,24 @@ int dtls1_accept(SSL *s)
 		case SSL3_ST_SW_HELLO_REQ_B:
 
 			s->shutdown=0;
-			dtls1_start_timer(s);
+#ifdef CLIVER
+            if(composed_version == COMPOSED_F)
+                dtls1_clear_record_buffer(s);
+            dtls1_start_timer(s);
+			ret=dtls1_send_hello_request(s);
+			if (ret <= 0) goto end;
+            if(composed_version == COMPOSED_F)
+                s->s3->tmp.next_state=SSL3_ST_SR_CLNT_HELLO_A;
+            else if (composed_version == COMPOSED_E)
+			    s->s3->tmp.next_state=SSL3_ST_SW_HELLO_REQ_C;
+			else exit(COMPOSED_INVALID);
+            s->state=SSL3_ST_SW_FLUSH;
+			s->init_num=0;
+
+			ssl3_init_finished_mac(s);
+			break;
+#else
+            dtls1_start_timer(s);
 			ret=dtls1_send_hello_request(s);
 			if (ret <= 0) goto end;
 			s->s3->tmp.next_state=SSL3_ST_SW_HELLO_REQ_C;
@@ -285,7 +302,7 @@ int dtls1_accept(SSL *s)
 
 			ssl3_init_finished_mac(s);
 			break;
-
+#endif
 		case SSL3_ST_SW_HELLO_REQ_C:
 			s->state=SSL_ST_OK;
 			break;
@@ -721,10 +738,20 @@ int dtls1_accept(SSL *s)
 			if (ret <= 0) goto end;
 
 #ifndef OPENSSL_NO_SCTP
+#ifdef CLIVER
+           if (!s->hit || (composed_version == COMPOSED_E))
+               {
+               /* Change to new shared key of SCTP-Auth,
+                * will be ignored if no SCTP used.
+                */
+                BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+               }
+#else
 			/* Change to new shared key of SCTP-Auth,
 			 * will be ignored if no SCTP used.
 			 */
 			BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+#endif
 #endif
 
 			s->state=SSL3_ST_SW_FINISHED_A;
@@ -749,8 +776,22 @@ int dtls1_accept(SSL *s)
 			if (ret <= 0) goto end;
 			s->state=SSL3_ST_SW_FLUSH;
 			if (s->hit)
-				s->s3->tmp.next_state=SSL3_ST_SR_FINISHED_A;
-			else
+				{
+#ifdef CLIVER
+                s->s3->tmp.next_state=SSL3_ST_SR_FINISHED_A;
+#ifndef OPENSSL_NO_SCTP
+               /* Change to new shared key of SCTP-Auth,
+                * will be ignored if no SCTP used.
+                */
+               if(composed_version == COMPOSED_F)
+                    BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+#endif //OPENSSL_NO_SCTP
+
+#else //CLIVER
+                s->s3->tmp.next_state=SSL3_ST_SR_FINISHED_A;
+#endif //CLIVER
+                }
+            else
 				{
 				s->s3->tmp.next_state=SSL_ST_OK;
 #ifndef OPENSSL_NO_SCTP
