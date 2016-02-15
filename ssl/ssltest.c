@@ -882,6 +882,7 @@ bad:
 #else
 #ifdef OPENSSL_NO_SSL2
 
+#ifdef CLIVER
    if (tls1 && composed_version == COMPOSED_F) //only happens in F
        meth=TLSv1_method();
    else
@@ -890,6 +891,9 @@ bad:
    else if (composed_version == COMPOSED_F) //default for F, only happens in F
        meth=SSLv23_method();
    else exit(COMPOSED_INVALID);
+#else
+    meth=SSLv3_method();
+#endif
 
 #else
 	meth=SSLv2_method();
