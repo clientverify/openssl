@@ -62,6 +62,10 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS)
 #include <sys/timeb.h>
 #endif
@@ -196,7 +200,11 @@ void dtls1_free(SSL *s)
 	pqueue_free(s->d1->buffered_app_data.q);
 
 	OPENSSL_free(s->d1);
-	}
+#ifdef CLIVER
+    if(composed_version == COMPOSED_F)
+        s->d1 = NULL;
+#endif
+    }
 
 void dtls1_clear(SSL *s)
 	{
