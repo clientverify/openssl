@@ -347,18 +347,57 @@ static unsigned char tls12_sigalgs[] = {
 #endif
 };
 
+
+#if !defined( OPENSSL_NO_MD5) && defined(CLIVER)
+static unsigned char tls12_sigalgs_f[] = {
+#ifndef OPENSSL_NO_SHA512
+	tlsext_sigalg(TLSEXT_hash_sha512)
+	tlsext_sigalg(TLSEXT_hash_sha384)
+#endif
+#ifndef OPENSSL_NO_SHA256
+	tlsext_sigalg(TLSEXT_hash_sha256)
+	tlsext_sigalg(TLSEXT_hash_sha224)
+#endif
+#ifndef OPENSSL_NO_SHA
+	tlsext_sigalg(TLSEXT_hash_sha1)
+#endif
+};
+#endif //OPENSSL_NO_MD5 && CLIVER
+
+
 int tls12_get_req_sig_algs(SSL *s, unsigned char *p)
 	{
-	size_t slen = sizeof(tls12_sigalgs);
+#if !defined(OPENSSL_NO_MD5) && defined(CLIVER)
+    if(composed_version == COMPOSED_F){
+	    size_t slen = sizeof(tls12_sigalgs_f);
+	    if (p)
+	    	memcpy(p, tls12_sigalgs_f, slen);
+    	return (int)slen;
+
+    } else if (composed_version == COMPOSED_E) {
+	    size_t slen = sizeof(tls12_sigalgs);
 #ifdef OPENSSL_FIPS
-	/* If FIPS mode don't include MD5 which is last */
-	if (FIPS_mode())
-		slen -= 2;
+	    /* If FIPS mode don't include MD5 which is last */
+	    if (FIPS_mode())
+		    slen -= 2;
 #endif
-	if (p)
-		memcpy(p, tls12_sigalgs, slen);
-	return (int)slen;
-	}
+	    if (p)
+		    memcpy(p, tls12_sigalgs, slen);
+	    return (int)slen;
+	} else exit(0);
+#else //#if !defined(OPENSSL_NO_MD5) && defined(CLIVER)
+    size_t slen = sizeof(tls12_sigalgs);
+#ifdef OPENSSL_FIPS
+    /* If FIPS mode don't include MD5 which is last */
+    if (FIPS_mode())
+	    slen -= 2;
+#endif
+    if (p)
+	    memcpy(p, tls12_sigalgs, slen);
+    return (int)slen;
+
+#endif //#if !defined(OPENSSL_NO_MD5) && defined(CLIVER)
+    }
 
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	{
@@ -546,13 +585,36 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 	if (TLS1_get_client_version(s) >= TLS1_2_VERSION)
 		{
-		if ((size_t)(limit - ret) < sizeof(tls12_sigalgs) + 6)
+
+#if !defined(OPENSSL_NO_MD5) && defined(CLIVER)
+        if(composed_version == COMPOSED_F){
+            if ((size_t)(limit - ret) < sizeof(tls12_sigalgs_f) + 6)
+	    		return NULL; 
+		    s2n(TLSEXT_TYPE_signature_algorithms,ret);
+    		s2n(sizeof(tls12_sigalgs_f) + 2, ret);
+	    	s2n(sizeof(tls12_sigalgs_f), ret);
+		    memcpy(ret, tls12_sigalgs_f, sizeof(tls12_sigalgs_f));
+		    ret += sizeof(tls12_sigalgs_f);
+
+        } else if(composed_version == COMPOSED_E){
+            if ((size_t)(limit - ret) < sizeof(tls12_sigalgs) + 6)
+	    		return NULL; 
+		    s2n(TLSEXT_TYPE_signature_algorithms,ret);
+    		s2n(sizeof(tls12_sigalgs) + 2, ret);
+	    	s2n(sizeof(tls12_sigalgs), ret);
+		    memcpy(ret, tls12_sigalgs, sizeof(tls12_sigalgs));
+		    ret += sizeof(tls12_sigalgs);
+        } else exit(0);
+#else
+        if ((size_t)(limit - ret) < sizeof(tls12_sigalgs) + 6)
 			return NULL; 
 		s2n(TLSEXT_TYPE_signature_algorithms,ret);
 		s2n(sizeof(tls12_sigalgs) + 2, ret);
 		s2n(sizeof(tls12_sigalgs), ret);
 		memcpy(ret, tls12_sigalgs, sizeof(tls12_sigalgs));
 		ret += sizeof(tls12_sigalgs);
+#endif //!defined(OPENSSL_NO_MD5) && defined(CLIVER)
+
 		}
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
@@ -865,6 +927,93 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	s2n(extdatalen,p);
 	return ret;
 	}
+
+
+#if !defined(OPENSSL_NO_EC) && defined(CLIVER)
+/* ssl_check_for_safari attempts to fingerprint Safari using OS X
+ * SecureTransport using the TLS extension block in |d|, of length |n|.
+ * Safari, since 10.6, sends exactly these extensions, in this order:
+ *   SNI,
+ *   elliptic_curves
+ *   ec_point_formats
+ *
+ * We wish to fingerprint Safari because they broke ECDHE-ECDSA support in 10.8,
+ * but they advertise support. So enabling ECDHE-ECDSA ciphers breaks them.
+ * Sadly we cannot differentiate 10.6, 10.7 and 10.8.4 (which work), from
+ * 10.8..10.8.3 (which don't work).
+ */
+static void ssl_check_for_safari(SSL *s, const unsigned char *data, const unsigned char *d, int n) {
+ if(composed_version == COMPOSED_F){
+   unsigned short type, size;
+   static const unsigned char kSafariExtensionsBlock[] = {
+       0x00, 0x0a,  /* elliptic_curves extension */
+       0x00, 0x08,  /* 8 bytes */
+       0x00, 0x06,  /* 6 bytes of curve ids */
+       0x00, 0x17,  /* P-256 */
+       0x00, 0x18,  /* P-384 */
+       0x00, 0x19,  /* P-521 */
+
+       0x00, 0x0b,  /* ec_point_formats */
+       0x00, 0x02,  /* 2 bytes */
+       0x01,        /* 1 point format */
+       0x00,        /* uncompressed */
+   };
+
+   /* The following is only present in TLS 1.2 */
+   static const unsigned char kSafariTLS12ExtensionsBlock[] = {
+       0x00, 0x0d,  /* signature_algorithms */
+       0x00, 0x0c,  /* 12 bytes */
+       0x00, 0x0a,  /* 10 bytes */
+       0x05, 0x01,  /* SHA-384/RSA */
+       0x04, 0x01,  /* SHA-256/RSA */
+       0x02, 0x01,  /* SHA-1/RSA */
+       0x04, 0x03,  /* SHA-256/ECDSA */
+       0x02, 0x03,  /* SHA-1/ECDSA */
+   };
+
+   if (data >= (d+n-2))
+       return;
+   data += 2;
+
+   if (data > (d+n-4))
+       return;
+   n2s(data,type);
+   n2s(data,size);
+
+   if (type != TLSEXT_TYPE_server_name)
+       return;
+
+   if (data+size > d+n)
+       return;
+   data += size;
+
+   if (TLS1_get_client_version(s) >= TLS1_2_VERSION)
+       {
+       const size_t len1 = sizeof(kSafariExtensionsBlock);
+       const size_t len2 = sizeof(kSafariTLS12ExtensionsBlock);
+
+       if (data + len1 + len2 != d+n)
+           return;
+       if (memcmp(data, kSafariExtensionsBlock, len1) != 0)
+           return;
+       if (memcmp(data + len1, kSafariTLS12ExtensionsBlock, len2) != 0)
+           return;
+       }
+   else
+       {
+       const size_t len = sizeof(kSafariExtensionsBlock);
+
+       if (data + len != d+n)
+           return;
+       if (memcmp(data, kSafariExtensionsBlock, len) != 0)
+           return;
+       }
+
+   s->s3->is_probably_safari = 1;
+ }else exit(COMPOSED_INVALID);
+}
+#endif /* !OPENSSL_NO_EC && CLIVER*/
+
 
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n, int *al)
 	{
@@ -1400,6 +1549,11 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	s->tlsext_heartbeat &= ~(SSL_TLSEXT_HB_ENABLED |
 	                       SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
 #endif
+
+#if !defined(OPENSSL_NO_EC) && defined(CLIVER)
+   if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG && (composed_version == COMPOSED_F))
+       ssl_check_for_safari(s, data, d, n);
+#endif /* !OPENSSL_NO_EC && defined(CLIVER) */
 
 	if (data >= (d+n-2))
 		goto ri_check;
@@ -2367,10 +2521,11 @@ const EVP_MD *tls12_get_hash(unsigned char hash_alg)
 #ifndef OPENSSL_NO_MD5
 		case TLSEXT_hash_md5:
 #ifdef OPENSSL_FIPS
-		if (FIPS_mode())
+		if (FIPS_mode() && (composed_version == COMPOSED_E))
 			return NULL;
 #endif
-		return EVP_md5();
+        if((composed_version == COMPOSED_E))
+		    return EVP_md5();
 #endif
 #ifndef OPENSSL_NO_SHA
 		case TLSEXT_hash_sha1:
