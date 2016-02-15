@@ -59,6 +59,9 @@
 #include "bn_lcl.h"
 #include "cryptlib.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
 
 #define BN_NIST_192_TOP	(192+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_224_TOP	(224+BN_BITS2-1)/BN_BITS2
@@ -286,6 +289,15 @@ const BIGNUM *BN_get0_nist_prime_521(void)
 	}
 
 
+#ifdef CLIVER
+
+// NOTE (Andrew Chi): we take 1.0.1f for nist_cp_bn_0 and nist_cp_bn because BN
+// copies will happen all over the place, and the performance hit due to
+// forking here could be significant. I (Andrew) am convinced that the code is
+// equivalent, and the original commits were simply designed as workarounds for
+// compiler bugs, so the original committers also believed that they were
+// equivalent.
+
 static void nist_cp_bn_0(BN_ULONG *dst, const BN_ULONG *src, int top, int max)
 	{
 	int i;
@@ -306,6 +318,34 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
 	for (i = 0; i < top; i++)
 		dst[i] = src[i];
 	}
+
+#else // CLIVER
+
+// This is the 1.0.1e version of nist_cp_bn_0 and nist_cp_bn.
+
+static void nist_cp_bn_0(BN_ULONG *buf, BN_ULONG *a, int top, int max)
+	{
+	int i;
+	BN_ULONG *_tmp1 = (buf), *_tmp2 = (a);
+
+#ifdef BN_DEBUG
+	OPENSSL_assert(top <= max);
+#endif
+	for (i = (top); i != 0; i--)
+		*_tmp1++ = *_tmp2++;
+	for (i = (max) - (top); i != 0; i--)
+		*_tmp1++ = (BN_ULONG) 0;
+	}
+
+static void nist_cp_bn(BN_ULONG *buf, BN_ULONG *a, int top)
+	{ 
+	int i;
+	BN_ULONG *_tmp1 = (buf), *_tmp2 = (a);
+	for (i = (top); i != 0; i--)
+		*_tmp1++ = *_tmp2++;
+	}
+
+#endif // CLIVER
 
 #if BN_BITS2 == 64
 #define bn_cp_64(to, n, from, m)	(to)[n] = (m>=0)?((from)[m]):0;
@@ -450,9 +490,19 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	 */
 	mask  = 0-(PTR_SIZE_INT)bn_sub_words(c_d,r_d,_nist_p_192[0],BN_NIST_192_TOP);
 	mask &= 0-(PTR_SIZE_INT)carry;
+#ifdef CLIVER
+  if (composed_version == COMPOSED_F) {
 	res   = c_d;
 	res   = (BN_ULONG *)
 	 (((PTR_SIZE_INT)res&~mask) | ((PTR_SIZE_INT)r_d&mask));
+  } else if (composed_version == COMPOSED_E) {
+#endif
+	res   = (BN_ULONG *)
+	 (((PTR_SIZE_INT)c_d&~mask) | ((PTR_SIZE_INT)r_d&mask));
+#ifdef CLIVER
+  } // composed_version == COMPOSED_E
+  else exit(COMPOSED_INVALID);
+#endif
 	nist_cp_bn(r_d, res, BN_NIST_192_TOP);
 	r->top = BN_NIST_192_TOP;
 	bn_correct_top(r);
@@ -476,6 +526,8 @@ typedef BN_ULONG (*bn_addsub_f)(BN_ULONG *,const BN_ULONG *,const BN_ULONG *,int
 int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	BN_CTX *ctx)
 	{
+#ifdef CLIVER
+  if (composed_version == COMPOSED_F) {
 	int	top = a->top, i;
 	int	carry;
 	BN_ULONG *r_d, *a_d = a->d;
@@ -617,6 +669,149 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	bn_correct_top(r);
 
 	return 1;
+  } else if (composed_version == COMPOSED_E) {
+#endif // CLIVER
+	int	top = a->top, i;
+	int	carry;
+	BN_ULONG *r_d, *a_d = a->d;
+	BN_ULONG buf[BN_NIST_224_TOP],
+		 c_d[BN_NIST_224_TOP],
+		*res;
+	PTR_SIZE_INT mask;
+	union { bn_addsub_f f; PTR_SIZE_INT p; } u;
+	static const BIGNUM _bignum_nist_p_224_sqr = {
+		(BN_ULONG *)_nist_p_224_sqr,
+		sizeof(_nist_p_224_sqr)/sizeof(_nist_p_224_sqr[0]),
+		sizeof(_nist_p_224_sqr)/sizeof(_nist_p_224_sqr[0]),
+		0,BN_FLG_STATIC_DATA };
+
+
+	field = &_bignum_nist_p_224; /* just to make sure */
+
+ 	if (BN_is_negative(a) || BN_ucmp(a,&_bignum_nist_p_224_sqr)>=0)
+		return BN_nnmod(r, a, field, ctx);
+
+	i = BN_ucmp(field, a);
+	if (i == 0)
+		{
+		BN_zero(r);
+		return 1;
+		}
+	else if (i > 0)
+		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
+
+	if (r != a)
+		{
+		if (!bn_wexpand(r, BN_NIST_224_TOP))
+			return 0;
+		r_d = r->d;
+		nist_cp_bn(r_d, a_d, BN_NIST_224_TOP);
+		}
+	else
+		r_d = a_d;
+
+#if BN_BITS2==64
+	/* copy upper 256 bits of 448 bit number ... */
+	nist_cp_bn_0(c_d, a_d + (BN_NIST_224_TOP-1), top - (BN_NIST_224_TOP-1), BN_NIST_224_TOP);
+	/* ... and right shift by 32 to obtain upper 224 bits */
+	nist_set_224(buf, c_d, 14, 13, 12, 11, 10, 9, 8);
+	/* truncate lower part to 224 bits too */
+	r_d[BN_NIST_224_TOP-1] &= BN_MASK2l;
+#else
+	nist_cp_bn_0(buf, a_d + BN_NIST_224_TOP, top - BN_NIST_224_TOP, BN_NIST_224_TOP);
+#endif
+
+#if defined(NIST_INT64) && BN_BITS2!=64
+	{
+	NIST_INT64		acc;	/* accumulator */
+	unsigned int		*rp=(unsigned int *)r_d;
+	const unsigned int	*bp=(const unsigned int *)buf;
+
+	acc  = rp[0];	acc -= bp[7-7];
+			acc -= bp[11-7]; rp[0] = (unsigned int)acc; acc >>= 32;
+
+	acc += rp[1];	acc -= bp[8-7];
+			acc -= bp[12-7]; rp[1] = (unsigned int)acc; acc >>= 32;
+
+	acc += rp[2];	acc -= bp[9-7];
+			acc -= bp[13-7]; rp[2] = (unsigned int)acc; acc >>= 32;
+
+	acc += rp[3];	acc += bp[7-7];
+			acc += bp[11-7];
+			acc -= bp[10-7]; rp[3] = (unsigned int)acc; acc>>= 32;
+
+	acc += rp[4];	acc += bp[8-7];
+			acc += bp[12-7];
+			acc -= bp[11-7]; rp[4] = (unsigned int)acc; acc >>= 32;
+
+	acc += rp[5];	acc += bp[9-7];
+			acc += bp[13-7];
+			acc -= bp[12-7]; rp[5] = (unsigned int)acc; acc >>= 32;
+
+	acc += rp[6];	acc += bp[10-7];
+			acc -= bp[13-7]; rp[6] = (unsigned int)acc;
+
+	carry = (int)(acc>>32);
+# if BN_BITS2==64
+	rp[7] = carry;
+# endif
+	}	
+#else
+	{
+	BN_ULONG t_d[BN_NIST_224_TOP];
+
+	nist_set_224(t_d, buf, 10, 9, 8, 7, 0, 0, 0);
+	carry = (int)bn_add_words(r_d, r_d, t_d, BN_NIST_224_TOP);
+	nist_set_224(t_d, buf, 0, 13, 12, 11, 0, 0, 0);
+	carry += (int)bn_add_words(r_d, r_d, t_d, BN_NIST_224_TOP);
+	nist_set_224(t_d, buf, 13, 12, 11, 10, 9, 8, 7);
+	carry -= (int)bn_sub_words(r_d, r_d, t_d, BN_NIST_224_TOP);
+	nist_set_224(t_d, buf, 0, 0, 0, 0, 13, 12, 11);
+	carry -= (int)bn_sub_words(r_d, r_d, t_d, BN_NIST_224_TOP);
+
+#if BN_BITS2==64
+	carry = (int)(r_d[BN_NIST_224_TOP-1]>>32);
+#endif
+	}
+#endif
+	u.f = bn_sub_words;
+	if (carry > 0)
+		{
+		carry = (int)bn_sub_words(r_d,r_d,_nist_p_224[carry-1],BN_NIST_224_TOP);
+#if BN_BITS2==64
+		carry=(int)(~(r_d[BN_NIST_224_TOP-1]>>32))&1;
+#endif
+		}
+	else if (carry < 0)
+		{
+		/* it's a bit more comlicated logic in this case.
+		 * if bn_add_words yields no carry, then result
+		 * has to be adjusted by unconditionally *adding*
+		 * the modulus. but if it does, then result has
+		 * to be compared to the modulus and conditionally
+		 * adjusted by *subtracting* the latter. */
+		carry = (int)bn_add_words(r_d,r_d,_nist_p_224[-carry-1],BN_NIST_224_TOP);
+		mask = 0-(PTR_SIZE_INT)carry;
+		u.p = ((PTR_SIZE_INT)bn_sub_words&mask) |
+		 ((PTR_SIZE_INT)bn_add_words&~mask);
+		}
+	else
+		carry = 1;
+
+	/* otherwise it's effectively same as in BN_nist_mod_192... */
+	mask  = 0-(PTR_SIZE_INT)(*u.f)(c_d,r_d,_nist_p_224[0],BN_NIST_224_TOP);
+	mask &= 0-(PTR_SIZE_INT)carry;
+	res   = (BN_ULONG *)(((PTR_SIZE_INT)c_d&~mask) |
+	 ((PTR_SIZE_INT)r_d&mask));
+	nist_cp_bn(r_d, res, BN_NIST_224_TOP);
+	r->top = BN_NIST_224_TOP;
+	bn_correct_top(r);
+
+	return 1;
+#ifdef CLIVER
+  } // composed_version == COMPOSED_E
+  else return COMPOSED_INVALID;
+#endif
 	}
 
 #define nist_set_256(to, from, a1, a2, a3, a4, a5, a6, a7, a8) \
@@ -809,9 +1004,19 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	mask  = 0-(PTR_SIZE_INT)(*u.f)(c_d,r_d,_nist_p_256[0],BN_NIST_256_TOP);
 	mask &= 0-(PTR_SIZE_INT)carry;
+#ifdef CLIVER
+  if (composed_version == COMPOSED_F) {
 	res   = c_d;
 	res   = (BN_ULONG *)(((PTR_SIZE_INT)res&~mask) |
 	 ((PTR_SIZE_INT)r_d&mask));
+  } else if (composed_version == COMPOSED_E) {
+#endif
+	res   = (BN_ULONG *)(((PTR_SIZE_INT)c_d&~mask) |
+	 ((PTR_SIZE_INT)r_d&mask));
+#ifdef CLIVER
+  } // composed_version == COMPOSED_E
+  else exit(COMPOSED_INVALID);
+#endif
 	nist_cp_bn(r_d, res, BN_NIST_256_TOP);
 	r->top = BN_NIST_256_TOP;
 	bn_correct_top(r);
@@ -1031,9 +1236,19 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	mask  = 0-(PTR_SIZE_INT)(*u.f)(c_d,r_d,_nist_p_384[0],BN_NIST_384_TOP);
 	mask &= 0-(PTR_SIZE_INT)carry;
+#ifdef CLIVER
+  if (composed_version == COMPOSED_F) {
 	res   = c_d;
 	res   = (BN_ULONG *)(((PTR_SIZE_INT)res&~mask) |
 	 ((PTR_SIZE_INT)r_d&mask));
+  } else if (composed_version == COMPOSED_E) {
+#endif
+	res   = (BN_ULONG *)(((PTR_SIZE_INT)c_d&~mask) |
+	 ((PTR_SIZE_INT)r_d&mask));
+#ifdef CLIVER
+  } // composed_version == COMPOSED_E
+  else exit(COMPOSED_INVALID);
+#endif
 	nist_cp_bn(r_d, res, BN_NIST_384_TOP);
 	r->top = BN_NIST_384_TOP;
 	bn_correct_top(r);
@@ -1098,9 +1313,19 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	bn_add_words(r_d,r_d,t_d,BN_NIST_521_TOP);
 	mask = 0-(PTR_SIZE_INT)bn_sub_words(t_d,r_d,_nist_p_521,BN_NIST_521_TOP);
+#ifdef CLIVER
+  if (composed_version == COMPOSED_F) {
 	res  = t_d;
 	res  = (BN_ULONG *)(((PTR_SIZE_INT)res&~mask) |
 	 ((PTR_SIZE_INT)r_d&mask));
+  } else if (composed_version == COMPOSED_E) {
+#endif
+  res  = (BN_ULONG *)(((PTR_SIZE_INT)t_d&~mask) |
+	 ((PTR_SIZE_INT)r_d&mask));
+#ifdef CLIVER
+  } // composed_version == COMPOSED_E
+  else exit(COMPOSED_INVALID);
+#endif
 	nist_cp_bn(r_d,res,BN_NIST_521_TOP);
 	r->top = BN_NIST_521_TOP;
 	bn_correct_top(r);

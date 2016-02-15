@@ -908,16 +908,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 	OPENSSL_assert(ret >= 0);
 
 #ifdef CLIVER
-	if(composed_version == VERSION_E)
-  {
-    for (p = (unsigned char*) authchunks + sizeof(sctp_assoc_t);
-	       p < (unsigned char*) authchunks + sockopt_len;
-	       p += sizeof(uint8_t))
-		  {
-		  if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
-		  if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
-		  }
-  }else if(composed_version == VERSION_F) {
+  if (composed_version == COMPOSED_F) {
     for (p = (unsigned char*) authchunks->gauth_chunks;
 	       p < (unsigned char*) authchunks + sockopt_len;
 	       p += sizeof(uint8_t))
@@ -925,16 +916,17 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 		  if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
 		  if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
 		  }
-  }
-#else
-	for (p = (unsigned char*) authchunks->gauth_chunks;
-	     p < (unsigned char*) authchunks + sockopt_len;
-	     p += sizeof(uint8_t))
-		{
-		if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
-		if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
-		}
-
+  } else if (composed_version == COMPOSED_E) {
+#endif
+  for (p = (unsigned char*) authchunks + sizeof(sctp_assoc_t);
+       p < (unsigned char*) authchunks + sockopt_len;
+       p += sizeof(uint8_t))
+    {
+    if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
+    if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
+    }
+#ifdef CLIVER
+  } // composed_version == COMPOSED_E
 #endif
 
 	OPENSSL_free(authchunks);
@@ -1219,6 +1211,17 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 			ii = getsockopt(b->num, IPPROTO_SCTP, SCTP_PEER_AUTH_CHUNKS, authchunks, &optlen);
 			OPENSSL_assert(ii >= 0);
 
+#ifdef CLIVER
+      if (composed_version == COMPOSED_F) {
+			for (p = (unsigned char*) authchunks->gauth_chunks;
+				 p < (unsigned char*) authchunks + optlen;
+				 p += sizeof(uint8_t))
+				{
+				if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
+				if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
+				}
+      } else if (composed_version == COMPOSED_E) {
+#endif
 			for (p = (unsigned char*) authchunks + sizeof(sctp_assoc_t);
 				 p < (unsigned char*) authchunks + optlen;
 				 p += sizeof(uint8_t))
@@ -1226,6 +1229,9 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 				if (*p == OPENSSL_SCTP_DATA_CHUNK_TYPE) auth_data = 1;
 				if (*p == OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE) auth_forward = 1;
 				}
+#ifdef CLIVER
+      } // composed_version == COMPOSED_E
+#endif
 
 			OPENSSL_free(authchunks);
 
