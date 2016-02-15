@@ -117,6 +117,10 @@
 #include <openssl/rand.h>
 #include "ssl_locl.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -2520,13 +2524,24 @@ const EVP_MD *tls12_get_hash(unsigned char hash_alg)
 		{
 #ifndef OPENSSL_NO_MD5
 		case TLSEXT_hash_md5:
+
+#ifdef CLIVER
 #ifdef OPENSSL_FIPS
 		if (FIPS_mode() && (composed_version == COMPOSED_E))
 			return NULL;
-#endif
+#endif //!OPENSSL_FIPS
         if((composed_version == COMPOSED_E))
 		    return EVP_md5();
-#endif
+#else //CLIVER
+
+#ifdef OPENSSL_FIPS
+        if (FIPS_mode())
+            return NULL;
+#endif //OPENSSL_FIPS
+        return EVP_md5();
+#endif //CLIVER
+#endif //OPENSSL_NO_MD5
+
 #ifndef OPENSSL_NO_SHA
 		case TLSEXT_hash_sha1:
 		return EVP_sha1();

@@ -334,9 +334,17 @@ fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
 			{
 			if (version != s->version)
 				{
+#ifdef CLIVER
+				SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
+                                if ((s->version & 0xFF00) == (version & 0xFF00) &&
+                                ((!s->enc_write_ctx && !s->write_hash) ||
+                                composed_version == COMPOSED_E))
+
+#else
 				SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
                                 if ((s->version & 0xFF00) == (version & 0xFF00))
-                                	/* Send back error using their minor version number :-) */
+#endif
+                                /* Send back error using their minor version number :-) */
 					s->version = (unsigned short)version;
 				al=SSL_AD_PROTOCOL_VERSION;
 				goto f_err;
@@ -1458,10 +1466,19 @@ int ssl3_do_change_cipher_spec(SSL *s)
 		sender=s->method->ssl3_enc->client_finished_label;
 		slen=s->method->ssl3_enc->client_finished_label_len;
 		}
-
+#ifdef CLIVER
+    int tmp = s->method->ssl3_enc->final_finish_mac(s,
+		sender,slen,s->s3->tmp.peer_finish_md);
+    if (tmp == 0 && composed_version == COMPOSED_F)
+        {
+        SSLerr(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
+        return 0;
+        }
+    s->s3->tmp.peer_finish_md_len = tmp;
+#else
 	s->s3->tmp.peer_finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
 		sender,slen,s->s3->tmp.peer_finish_md);
-
+#endif
 	return(1);
 	}
 
