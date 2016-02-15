@@ -846,7 +846,15 @@ start:
 				goto start;
 			}
 		}
+#ifdef CLIVER
+   if (s->d1->listen && rr->type != SSL3_RT_HANDSHAKE &&
+        (composed_version == COMPOSED_F))
+       {
+       rr->length = 0;
+       goto start;
+       }
 
+#endif
 	/* we now have a packet which can be read and processed */
 
 	if (s->s3->change_cipher_spec /* set when we receive ChangeCipherSpec,
@@ -1051,6 +1059,10 @@ start:
 			!(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
 			!s->s3->renegotiate)
 			{
+#ifdef CLIVER
+            if(composed_version == COMPOSED_F)
+                s->d1->handshake_read_seq++;
+#endif
 			s->new_session = 1;
 			ssl3_renegotiate(s);
 			if (ssl3_renegotiate_check(s))
