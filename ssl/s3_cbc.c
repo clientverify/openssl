@@ -58,6 +58,10 @@
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 /* MAX_HASH_BIT_COUNT_BYTES is the maximum number of bytes in the hash's length
  * field. (SHA-384/512 have 128-bit length.) */
 #define MAX_HASH_BIT_COUNT_BYTES 16
@@ -147,9 +151,10 @@ int tls1_cbc_remove_padding(const SSL* s,
 	{
 	unsigned padding_length, good, to_check, i;
 	const unsigned overhead = 1 /* padding length byte */ + mac_size;
-	/* Check if version requires explicit IV */
-	if (s->version >= TLS1_1_VERSION || s->version == DTLS1_VERSION)
-		{
+#ifdef CLIVER
+    /* Check if version requires explicit IV */
+	if (s->version >= TLS1_1_VERSION) 
+        {
 		/* These lengths are all public so we can test them in
 		 * non-constant time.
 		 */
@@ -160,6 +165,47 @@ int tls1_cbc_remove_padding(const SSL* s,
 		rec->input += block_size;
 		rec->length -= block_size;
 		}
+	else if (s->version == DTLS1_VERSION && composed_version == COMPOSED_E)
+        {
+		/* These lengths are all public so we can test them in
+		 * non-constant time.
+		 */
+		if (overhead + block_size > rec->length)
+			return 0;
+		/* We can now safely skip explicit IV */
+		rec->data += block_size;
+		rec->input += block_size;
+		rec->length -= block_size;
+		}
+	else if (s->version == DTLS1_BAD_VER && composed_version == COMPOSED_F)
+        {
+		/* These lengths are all public so we can test them in
+		 * non-constant time.
+		 */
+		if (overhead + block_size > rec->length)
+			return 0;
+		/* We can now safely skip explicit IV */
+		rec->data += block_size;
+		rec->input += block_size;
+		rec->length -= block_size;
+		}
+
+
+#else
+    /* Check if version requires explicit IV */
+	if (s->version >= TLS1_1_VERSION || s->version == DTLS1_VERSION)
+        {
+		/* These lengths are all public so we can test them in
+		 * non-constant time.
+		 */
+		if (overhead + block_size > rec->length)
+			return 0;
+		/* We can now safely skip explicit IV */
+		rec->data += block_size;
+		rec->input += block_size;
+		rec->length -= block_size;
+		}
+#endif
 	else if (overhead > rec->length)
 		return 0;
 
