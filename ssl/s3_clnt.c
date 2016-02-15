@@ -680,10 +680,22 @@ int ssl3_client_hello(SSL *s)
 		/* else use the pre-loaded session */
 
 		p=s->s3->client_random;
-		Time=(unsigned long)time(NULL);			/* Time */
+#ifdef CLIVER
+        if(composed_version == COMPOSED_F){
+            if (ssl_fill_hello_random(s, 0, p, SSL3_RANDOM_SIZE) <= 0)
+                goto err;
+        } else if (composed_version == COMPOSED_E){
+            Time=(unsigned long)time(NULL);			/* Time */
+		    l2n(Time,p);
+		    if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
+			    goto err;
+        } else exit(COMPOSED_INVALID);
+#else
+        Time=(unsigned long)time(NULL);			/* Time */
 		l2n(Time,p);
 		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			goto err;
+#endif
 
 		/* Do the message type and length last */
 		d=p= &(buf[4]);
