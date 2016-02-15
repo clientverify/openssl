@@ -161,7 +161,11 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 
 		i=s->method->ssl3_enc->final_finish_mac(s,
 			sender,slen,s->s3->tmp.finish_md);
-		s->s3->tmp.finish_md_len = i;
+#ifdef CLIVER
+        if (i == 0 && composed_version == COMPOSED_F)
+            return 0;
+#endif
+        s->s3->tmp.finish_md_len = i;
 		memcpy(p, s->s3->tmp.finish_md, i);
 		p+=i;
 		l=i;
@@ -208,6 +212,13 @@ static void ssl3_take_mac(SSL *s)
 	{
 	const char *sender;
 	int slen;
+#ifdef CLIVER
+    /* If no new cipher setup return immediately: other functions will
+     * set the appropriate error.
+     */
+     if (s->s3->tmp.new_cipher == NULL && composed_version == COMPOSED_F)
+        return;
+#endif
 
 	if (s->state & SSL_ST_CONNECT)
 		{
