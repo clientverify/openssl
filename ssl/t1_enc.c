@@ -422,7 +422,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 #ifdef CLIVER
         if (s->enc_write_ctx != NULL && (!SSL_IS_DTLS(s) || composed_version == COMPOSED_E))
             reuse_dd = 1;
-        if ((s->enc_write_ctx=EVP_CIPHER_CTX_new()) == NULL)
+        else if ((s->enc_write_ctx=EVP_CIPHER_CTX_new()) == NULL)
             goto err;
 		dd= s->enc_write_ctx;
 
@@ -941,19 +941,28 @@ int tls1_final_finish_mac(SSL *s,
 #ifdef CLIVER
             int hashsize = EVP_MD_size(md);
             EVP_MD_CTX *hdgst = s->s3->handshake_dgst[idx];
-            if (!hdgst && composed_version == COMPOSED_F)
+            if (hashsize < 0 || hashsize > (int)(sizeof buf - (size_t)(q-buf)))
                 err = 1;
-            else if (hashsize < 0 || hashsize > (int)(sizeof buf - (size_t)(q-buf)))
+            else if (!hdgst && composed_version == COMPOSED_F)
                 err = 1;
-            else {
+
+           else {
 	    			if( !EVP_MD_CTX_copy_ex(&ctx,s->s3->handshake_dgst[idx])
                         && (composed_version == COMPOSED_F) )
                         err = 1;
                     else if (!EVP_DigestFinal_ex(&ctx,q,&i)
                         && (composed_version == COMPOSED_F) )
                         err = 1;
-    				if (i != (unsigned int)hashsize) /* can't really happen */
+    				if (i != (unsigned int)hashsize){ /* can't really happen */
 					    err = 1;
+                        if(composed_version == COMPOSED_F)
+                            q+=hashsize;
+                        else if(composed_version == COMPOSED_E)
+                            q+=i;
+                        else exit(COMPOSED_INVALID);
+                    } else
+                        q+=hashsize;
+
             }
 
 #else
