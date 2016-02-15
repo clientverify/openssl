@@ -51,6 +51,10 @@
 #include "modes_lcl.h"
 #include <string.h>
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 #ifndef MODES_DEBUG
 # ifndef NDEBUG
 #  define NDEBUG
@@ -80,6 +84,18 @@ int CRYPTO_ccm128_setiv(CCM128_CONTEXT *ctx,
 
 	if (nlen<(14-L)) return -1;		/* nonce is too short */
 
+#ifdef CLIVER
+  if (composed_version == COMPOSED_F) {
+	if (sizeof(mlen)==8 && L>=3) {
+		ctx->nonce.c[8]  = (u8)(mlen>>(56%(sizeof(mlen)*8)));
+		ctx->nonce.c[9]  = (u8)(mlen>>(48%(sizeof(mlen)*8)));
+		ctx->nonce.c[10] = (u8)(mlen>>(40%(sizeof(mlen)*8)));
+		ctx->nonce.c[11] = (u8)(mlen>>(32%(sizeof(mlen)*8)));
+	}
+	else
+		ctx->nonce.u[1] = 0;
+  } else if (composed_version == COMPOSED_E) {
+#endif
 	if (sizeof(mlen)==8 && L>=3) {
 		ctx->nonce.c[8]  = (u8)(mlen>>(56%(sizeof(mlen)*8)));
 		ctx->nonce.c[9]  = (u8)(mlen>>(48%(sizeof(mlen)*8)));
@@ -88,6 +104,9 @@ int CRYPTO_ccm128_setiv(CCM128_CONTEXT *ctx,
 	}
 	else
 		*(u32*)(&ctx->nonce.c[8]) = 0;
+#ifdef CLIVER
+  } // composed_version == COMPOSED_E
+#endif
 
 	ctx->nonce.c[12] = (u8)(mlen>>24);
 	ctx->nonce.c[13] = (u8)(mlen>>16);
