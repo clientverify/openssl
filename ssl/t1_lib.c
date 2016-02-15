@@ -1039,6 +1039,11 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	                       SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
 #endif
 
+#if !defined(OPENSSL_NO_EC) && defined(CLIVER)
+   if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG && (composed_version == COMPOSED_F))
+       ssl_check_for_safari(s, data, d, n);
+#endif /* !OPENSSL_NO_EC && defined(CLIVER) */
+
 	if (data >= (d+n-2))
 		goto ri_check;
 	n2s(data,len);
@@ -1553,11 +1558,6 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	s->tlsext_heartbeat &= ~(SSL_TLSEXT_HB_ENABLED |
 	                       SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
 #endif
-
-#if !defined(OPENSSL_NO_EC) && defined(CLIVER)
-   if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG && (composed_version == COMPOSED_F))
-       ssl_check_for_safari(s, data, d, n);
-#endif /* !OPENSSL_NO_EC && defined(CLIVER) */
 
 	if (data >= (d+n-2))
 		goto ri_check;
