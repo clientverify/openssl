@@ -274,23 +274,25 @@ static int ssl23_no_ssl2_ciphers(SSL *s)
  * on failure, 1 on success. */
 int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
    {
-   int send_time = 0;
+   if(composed_version == COMPOSED_F){
+        int send_time = 0;
 
-   if (len < 4)
-       return 0;
-   if (server)
-       send_time = (s->mode & SSL_MODE_SEND_SERVERHELLO_TIME) != 0;
-   else
-       send_time = (s->mode & SSL_MODE_SEND_CLIENTHELLO_TIME) != 0;
-   if (send_time)
-       {
-       unsigned long Time = time(NULL);
-       unsigned char *p = result;
-       l2n(Time, p);
-       return RAND_pseudo_bytes(p, len-4);
-       }
-   else
-       return RAND_pseudo_bytes(result, len);
+        if (len < 4)
+            return 0;
+        if (server)
+            send_time = (s->mode & SSL_MODE_SEND_SERVERHELLO_TIME) != 0;
+        else
+            send_time = (s->mode & SSL_MODE_SEND_CLIENTHELLO_TIME) != 0;
+        if (send_time)
+            {
+            unsigned long Time = time(NULL);
+            unsigned char *p = result;
+            l2n(Time, p);
+            return RAND_pseudo_bytes(p, len-4);
+            }
+        else
+            return RAND_pseudo_bytes(result, len);
+   } else exit(COMPOSED_INVALID);
    }
 #endif
 
@@ -381,11 +383,22 @@ static int ssl23_client_hello(SSL *s)
 #endif
 
 		p=s->s3->client_random;
-		Time=(unsigned long)time(NULL);		/* Time */
+#ifdef CLIVER
+        if (composed_version == COMPOSED_E){
+            Time=(unsigned long)time(NULL);		/* Time */
+		    l2n(Time,p);
+		    if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
+			    return -1;
+        } else if (composed_version == COMPOSED_F){
+            if (ssl_fill_hello_random(s, 0, p, SSL3_RANDOM_SIZE) <= 0)
+                return -1;
+        }else exit(COMPOSED_INVALID);
+#else
+        Time=(unsigned long)time(NULL);		/* Time */
 		l2n(Time,p);
 		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			return -1;
-
+#endif
 		if (version == TLS1_2_VERSION)
 			{
 			version_major = TLS1_2_VERSION_MAJOR;
