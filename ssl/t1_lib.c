@@ -384,7 +384,7 @@ int tls12_get_req_sig_algs(SSL *s, unsigned char *p)
 	    if (p)
 		    memcpy(p, tls12_sigalgs, slen);
 	    return (int)slen;
-	} else exit(0);
+	} else exit(COMPOSED_INVALID);
 #else //#if !defined(OPENSSL_NO_MD5) && defined(CLIVER)
     size_t slen = sizeof(tls12_sigalgs);
 #ifdef OPENSSL_FIPS
@@ -604,7 +604,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	    	s2n(sizeof(tls12_sigalgs), ret);
 		    memcpy(ret, tls12_sigalgs, sizeof(tls12_sigalgs));
 		    ret += sizeof(tls12_sigalgs);
-        } else exit(0);
+        } else exit(COMPOSED_INVALID);
 #else
         if ((size_t)(limit - ret) < sizeof(tls12_sigalgs) + 6)
 			return NULL; 
