@@ -167,14 +167,20 @@ int dtls1_connect(SSL *s)
 	
 	s->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s); 
-
 #ifndef OPENSSL_NO_SCTP
 	/* Notify SCTP BIO socket to enter handshake
 	 * mode and prevent stream identifier other
 	 * than 0. Will be ignored if no SCTP is used.
 	 */
+
+#ifdef CLIVER
+    if(composed_version == COMPOSED_E)
+	    BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE, s->in_handshake, NULL);
+#else //CLIVER
 	BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE, s->in_handshake, NULL);
-#endif
+#endif //CLIVER
+
+#endif //OPENSSL_NO_SCTP
 
 #ifndef OPENSSL_NO_HEARTBEATS
 	/* If we're awaiting a HeartbeatResponse, pretend we
@@ -571,6 +577,17 @@ int dtls1_connect(SSL *s)
 				goto end;
 				}
 			
+#ifdef CLIVER
+#ifndef OPENSSL_NO_SCTP
+               if (s->hit && (composed_version == COMPOSED_F))
+                   {
+                   /* Change to new shared key of SCTP-Auth,
+                    * will be ignored if no SCTP used.
+                    */
+                   BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+                   }
+#endif
+#endif //CLIVER
 			dtls1_reset_seq_numbers(s, SSL3_CC_WRITE);
 			break;
 
@@ -613,6 +630,16 @@ int dtls1_connect(SSL *s)
 				}
 			else
 				{
+#ifdef CLIVER
+#ifndef OPENSSL_NO_SCTP
+               /* Change to new shared key of SCTP-Auth,
+                * will be ignored if no SCTP used.
+                */
+               if(composed_version == COMPOSED_F)
+                    BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+#endif
+#endif //CLIVER
+
 #ifndef OPENSSL_NO_TLSEXT
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->tlsext_ticket_expected)
@@ -798,13 +825,27 @@ int dtls1_client_hello(SSL *s)
 
 		/* if client_random is initialized, reuse it, we are
 		 * required to use same upon reply to HelloVerify */
-		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++) ;
+		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++)
+            ;
+#ifdef CLIVER
+		if (i==sizeof(s->s3->client_random))
+			{
+            if(composed_version == COMPOSED_E) {
+			    Time=(unsigned long)time(NULL);	/* Time */
+			    l2n(Time,p);
+			    RAND_pseudo_bytes(p,sizeof(s->s3->client_random)-4);
+			} else if(composed_version == COMPOSED_F){
+                ssl_fill_hello_random(s, 0, p,sizeof(s->s3->client_random));
+            } else exit(COMPOSED_INVALID);
+            }
+#else //CLIVER
 		if (i==sizeof(s->s3->client_random))
 			{
 			Time=(unsigned long)time(NULL);	/* Time */
 			l2n(Time,p);
 			RAND_pseudo_bytes(p,sizeof(s->s3->client_random)-4);
 			}
+#endif
 
 		/* Do the message type and length last */
 		d=p= &(buf[DTLS1_HM_HEADER_LENGTH]);
