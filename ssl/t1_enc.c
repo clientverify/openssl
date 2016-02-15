@@ -418,15 +418,35 @@ int tls1_change_cipher_state(SSL *s, int which)
 			s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
 			else
 			s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
-		if (s->enc_write_ctx != NULL)
-			reuse_dd = 1;
-		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
-			goto err;
+
+#ifdef CLIVER
+        if (s->enc_write_ctx != NULL && (!SSL_IS_DTLS(s) || composed_version == COMPOSED_E))
+            reuse_dd = 1;
+        if ((s->enc_write_ctx=EVP_CIPHER_CTX_new()) == NULL)
+            goto err;
+		dd= s->enc_write_ctx;
+
+        if (SSL_IS_DTLS(s) && (composed_version == COMPOSED_F))
+            {
+                mac_ctx = EVP_MD_CTX_create();
+                if (!mac_ctx)
+                    goto err;
+                s->write_hash = mac_ctx;
+         }else
+            mac_ctx = ssl_replace_hash(&s->write_hash,NULL);
+#else
+        if (s->enc_write_ctx != NULL)
+            reuse_dd = 1;
+        else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
+            goto err;
 		else
 			/* make sure it's intialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_write_ctx);
 		dd= s->enc_write_ctx;
 		mac_ctx = ssl_replace_hash(&s->write_hash,NULL);
+
+#endif //cliver
+
 #ifndef OPENSSL_NO_COMP
 		if (s->compress != NULL)
 			{
@@ -918,7 +938,27 @@ int tls1_final_finish_mac(SSL *s,
 		{
 		if (mask & ssl_get_algorithm2(s))
 			{
-			int hashsize = EVP_MD_size(md);
+#ifdef CLIVER
+            int hashsize = EVP_MD_size(md);
+            EVP_MD_CTX *hdgst = s->s3->handshake_dgst[idx];
+            if (!hdgst && composed_version == COMPOSED_F)
+                err = 1;
+            else if (hashsize < 0 || hashsize > (int)(sizeof buf - (size_t)(q-buf)))
+                err = 1;
+            else {
+	    			if( !EVP_MD_CTX_copy_ex(&ctx,s->s3->handshake_dgst[idx])
+                        && (composed_version == COMPOSED_F) )
+                        err = 1;
+                    else if (!EVP_DigestFinal_ex(&ctx,q,&i)
+                        && (composed_version == COMPOSED_F) )
+                        err = 1;
+    				if (i != (unsigned int)hashsize) /* can't really happen */
+					    err = 1;
+            }
+
+#else
+
+            int hashsize = EVP_MD_size(md);
 			if (hashsize < 0 || hashsize > (int)(sizeof buf - (size_t)(q-buf)))
 				{
 				/* internal error: 'buf' is too small for this cipersuite! */
@@ -932,6 +972,7 @@ int tls1_final_finish_mac(SSL *s,
 					err = 1;
 				q+=i;
 				}
+#endif //cliver
 			}
 		}
 		
