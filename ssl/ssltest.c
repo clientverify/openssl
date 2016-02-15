@@ -881,7 +881,16 @@ bad:
 		meth=SSLv23_method();
 #else
 #ifdef OPENSSL_NO_SSL2
-	meth=SSLv3_method();
+
+   if (tls1 && composed_version == COMPOSED_F) //only happens in F
+       meth=TLSv1_method();
+   else
+   if (ssl3 || composed_version == COMPOSED_E) //default for E
+       meth=SSLv3_method();
+   else if (composed_version == COMPOSED_F) //default for F, only happens in F
+       meth=SSLv23_method();
+   else exit(COMPOSED_INVALID);
+
 #else
 	meth=SSLv2_method();
 #endif
