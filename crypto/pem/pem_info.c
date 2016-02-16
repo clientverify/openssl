@@ -70,6 +70,10 @@
 #include <openssl/dsa.h>
 #endif
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 #ifndef OPENSSL_NO_FP_API
 STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u)
 	{
@@ -167,6 +171,11 @@ start:
 #ifndef OPENSSL_NO_RSA
 			if (strcmp(name,PEM_STRING_RSA) == 0)
 			{
+#ifdef CLIVER
+      if (composed_version == COMPOSED_F) {
+			d2i=(D2I_OF(void))d2i_RSAPrivateKey; // this line was missing in 1.0.1e
+      }
+#endif
 			if (xi->x_pkey != NULL) 
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
