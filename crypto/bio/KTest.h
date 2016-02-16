@@ -23,7 +23,7 @@ extern "C" {
 extern int composed_version;
 #define COMPOSED_E 1
 #define COMPOSED_F 2
-#define COMPOSED_INVALID -1
+#define COMPOSED_INVALID -31
 int init_version();
   
   typedef struct KTestObject KTestObject;
