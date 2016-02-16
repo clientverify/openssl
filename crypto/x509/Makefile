@@ -392,7 +392,8 @@ x509type.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x509type.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x509type.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x509type.o: ../../include/openssl/x509_vfy.h ../cryptlib.h x509type.c
-x_all.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+x_all.o: ../../e_os.h ../../include/openssl/KTest.h
+x_all.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x_all.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 x_all.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
 x_all.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
