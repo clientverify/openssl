@@ -162,6 +162,10 @@
 #include <openssl/dh.h>
 #endif
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 const char ssl3_version_str[]="SSLv3" OPENSSL_VERSION_PTEXT;
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
@@ -3037,6 +3041,14 @@ void ssl3_clear(SSL *s)
 		s->s3->tmp.ecdh = NULL;
 		}
 #endif
+#ifdef CLIVER
+#ifndef OPENSSL_NO_TLSEXT
+#ifndef OPENSSL_NO_EC
+      s->s3->is_probably_safari = 0;
+#endif /* !OPENSSL_NO_EC */
+#endif /* !OPENSSL_NO_TLSEXT */
+#endif //CLIVER
+
 
 	rp = s->s3->rbuf.buf;
 	wp = s->s3->wbuf.buf;
@@ -4016,6 +4028,16 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		ii=sk_SSL_CIPHER_find(allow,c);
 		if (ii >= 0)
 			{
+#ifdef CLIVER
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_TLSEXT)
+           if ((alg_k & SSL_kEECDH) && (alg_a & SSL_aECDSA) && s->s3->is_probably_safari
+                && (composed_version == COMPOSED_F))
+               {
+               if (!ret) ret=sk_SSL_CIPHER_value(allow,ii);
+               continue;
+               }
+#endif
+#endif //CLIVER
 			ret=sk_SSL_CIPHER_value(allow,ii);
 			break;
 			}
@@ -4273,10 +4295,25 @@ need to go to SSL_ST_ACCEPT.
  */
 long ssl_get_algorithm2(SSL *s)
 	{
+#ifdef CLIVER
+	long alg2 = s->s3->tmp.new_cipher->algorithm2;
+	if (TLS1_get_version(s) == TLS1_2_VERSION &&
+	    alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))
+		return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
+
+    else if (TLS1_get_version(s) > TLS1_2_VERSION &&
+         alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF) &&
+         (composed_version == COMPOSED_E))
+         return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
+
+    return alg2;
+
+#else
 	long alg2 = s->s3->tmp.new_cipher->algorithm2;
 	if (TLS1_get_version(s) >= TLS1_2_VERSION &&
 	    alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))
 		return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
 	return alg2;
-	}
-		
+#endif //CLIVER
+    }
+
