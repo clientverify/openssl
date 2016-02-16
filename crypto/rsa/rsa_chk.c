@@ -52,6 +52,9 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
 
 int RSA_check_key(const RSA *key)
 	{
@@ -59,7 +62,15 @@ int RSA_check_key(const RSA *key)
 	BN_CTX *ctx;
 	int r;
 	int ret=1;
-	
+#ifdef CLIVER
+   if ((!key->p || !key->q || !key->n || !key->e || !key->d) && composed_version == COMPOSED_F)
+       {
+       RSAerr(RSA_F_RSA_CHECK_KEY, RSA_R_VALUE_MISSING);
+       return 0;
+       }
+
+#endif
+
 	i = BN_new();
 	j = BN_new();
 	k = BN_new();

@@ -72,6 +72,10 @@
 #include "evp_locl.h"
 #include "rsa_locl.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 /* RSA pkey context structure */
 
 typedef struct
@@ -611,7 +615,11 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 			pm = RSA_NO_PADDING;
 		else if (!strcmp(value, "oeap"))
 			pm = RSA_PKCS1_OAEP_PADDING;
-		else if (!strcmp(value, "x931"))
+#ifdef CLIVER
+        else if (!strcmp(value, "oaep") && (composed_version == COMPOSED_F))
+            pm = RSA_PKCS1_OAEP_PADDING;
+#endif
+        else if (!strcmp(value, "x931"))
 			pm = RSA_X931_PADDING;
 		else if (!strcmp(value, "pss"))
 			pm = RSA_PKCS1_PSS_PADDING;

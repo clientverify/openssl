@@ -67,6 +67,10 @@
 #endif
 #include "asn1_locl.h"
 
+#ifdef CLIVER
+#include <openssl/KTest.h>
+#endif
+
 static int rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	{
 	unsigned char *penc = NULL;
@@ -301,7 +305,167 @@ static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg,
 static int rsa_pss_param_print(BIO *bp, RSA_PSS_PARAMS *pss, 
 				X509_ALGOR *maskHash, int indent)
 	{
-	int rv = 0;
+#ifdef CLIVER
+  int rv = 0;
+  if(composed_version == COMPOSED_E){
+	if (!pss)
+		{
+		if (BIO_puts(bp, " (INVALID PSS PARAMETERS)\n") <= 0)
+			return 0;
+		return 1;
+		}
+	if (BIO_puts(bp, "\n") <= 0)
+		goto err;
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+	if (BIO_puts(bp, "Hash Algorithm: ") <= 0)
+		goto err;
+
+	if (pss->hashAlgorithm)
+		{
+		if (i2a_ASN1_OBJECT(bp, pss->hashAlgorithm->algorithm) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "sha1 (default)") <= 0)
+		goto err;
+
+	if (BIO_puts(bp, "\n") <= 0)
+		goto err;
+
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+
+	if (BIO_puts(bp, "Mask Algorithm: ") <= 0)
+			goto err;
+	if (pss->maskGenAlgorithm)
+		{
+		if (i2a_ASN1_OBJECT(bp, pss->maskGenAlgorithm->algorithm) <= 0)
+			goto err;
+		if (BIO_puts(bp, " with ") <= 0)
+			goto err;
+		if (maskHash)
+			{
+			if (i2a_ASN1_OBJECT(bp, maskHash->algorithm) <= 0)
+			goto err;
+			}
+		else if (BIO_puts(bp, "INVALID") <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "mgf1 with sha1 (default)") <= 0)
+		goto err;
+	BIO_puts(bp, "\n");
+
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+	if (BIO_puts(bp, "Salt Length: ") <= 0)
+			goto err;
+	if (pss->saltLength)
+		{
+		if (i2a_ASN1_INTEGER(bp, pss->saltLength) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "20 (default)") <= 0)
+		goto err;
+	BIO_puts(bp, "\n");
+
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+	if (BIO_puts(bp, "Trailer Field: ") <= 0)
+			goto err;
+	if (pss->trailerField)
+		{
+		if (i2a_ASN1_INTEGER(bp, pss->trailerField) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "0xbc (default)") <= 0)
+		goto err;
+	BIO_puts(bp, "\n");
+	
+	rv = 1;
+
+  }else if(composed_version == COMPOSED_F){
+	if (!pss)
+		{
+		if (BIO_puts(bp, " (INVALID PSS PARAMETERS)\n") <= 0)
+			return 0;
+		return 1;
+		}
+	if (BIO_puts(bp, "\n") <= 0)
+		goto err;
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+	if (BIO_puts(bp, "Hash Algorithm: ") <= 0)
+		goto err;
+
+	if (pss->hashAlgorithm)
+		{
+		if (i2a_ASN1_OBJECT(bp, pss->hashAlgorithm->algorithm) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "sha1 (default)") <= 0)
+		goto err;
+
+	if (BIO_puts(bp, "\n") <= 0)
+		goto err;
+
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+
+	if (BIO_puts(bp, "Mask Algorithm: ") <= 0)
+			goto err;
+	if (pss->maskGenAlgorithm)
+		{
+		if (i2a_ASN1_OBJECT(bp, pss->maskGenAlgorithm->algorithm) <= 0)
+			goto err;
+		if (BIO_puts(bp, " with ") <= 0)
+			goto err;
+		if (maskHash)
+			{
+			if (i2a_ASN1_OBJECT(bp, maskHash->algorithm) <= 0)
+			goto err;
+			}
+		else if (BIO_puts(bp, "INVALID") <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "mgf1 with sha1 (default)") <= 0)
+		goto err;
+	BIO_puts(bp, "\n");
+
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+	if (BIO_puts(bp, "Salt Length: 0x") <= 0)
+			goto err;
+	if (pss->saltLength)
+		{
+		if (i2a_ASN1_INTEGER(bp, pss->saltLength) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "0x14 (default)") <= 0)
+		goto err;
+	BIO_puts(bp, "\n");
+
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+	if (BIO_puts(bp, "Trailer Field: 0x") <= 0)
+			goto err;
+	if (pss->trailerField)
+		{
+		if (i2a_ASN1_INTEGER(bp, pss->trailerField) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "BC (default)") <= 0)
+		goto err;
+	BIO_puts(bp, "\n");
+	
+	rv = 1;
+  }else exit (COMPOSED_INVALID);
+  err:
+  return rv;
+
+
+#else
+
+    int rv = 0;
 	if (!pss)
 		{
 		if (BIO_puts(bp, " (INVALID PSS PARAMETERS)\n") <= 0)
@@ -379,7 +543,7 @@ static int rsa_pss_param_print(BIO *bp, RSA_PSS_PARAMS *pss,
 
 	err:
 	return rv;
-
+#endif //CLIVER
 	}
 
 static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
