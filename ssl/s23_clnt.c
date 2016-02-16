@@ -355,7 +355,8 @@ static int ssl23_client_hello(SSL *s)
 #endif
 
 		p=s->s3->client_random;
-		Time=(unsigned long)time(NULL);		/* Time */
+		time_t t = 0; //side note: time_t     time(time_t *);
+        Time=(unsigned long) t;//time(NULL);                       /* Time */
 		l2n(Time,p);
 		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			return -1;
