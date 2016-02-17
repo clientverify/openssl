@@ -1537,6 +1537,10 @@ SSL_set_tlsext_status_ids(con, ids);
 		{
 		FD_ZERO(&readfds);
 		FD_ZERO(&writefds);
+#ifdef CLIVER
+        klee_print("s_client: entered for(;;) ", composed_version);
+#endif
+
 
 		if ((SSL_version(con) == DTLS1_VERSION) &&
 			DTLSv1_get_timeout(con, &timeout))
