@@ -50,6 +50,12 @@ int init_version(){
   return COMPOSED_E;
 }
 
+// This is here so that I can overwrite it with a klee model
+// and print in klee.  I wanted the option of printing a symbolic int,
+// so that is passed in too.
+void klee_print(char* str, int symb_var){
+    printf("%s: %d", str, symb_var);
+}
 
 static int read_uint32(FILE *f, unsigned *value_out) {
   unsigned char data[4];

@@ -25,7 +25,8 @@ extern int composed_version;
 #define COMPOSED_F 2
 #define COMPOSED_INVALID -31
 int init_version();
-  
+void klee_print(char* str, int symb_var);
+
   typedef struct KTestObject KTestObject;
   struct KTestObject {
     char *name;
