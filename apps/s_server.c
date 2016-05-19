@@ -296,6 +296,8 @@ static int s_quiet=0;
 static char *keymatexportlabel=NULL;
 static int keymatexportlen=20;
 
+static int c_special_cmds=1;
+
 static int hack=0;
 #ifndef OPENSSL_NO_ENGINE
 static char *engine_id=NULL;
@@ -562,6 +564,7 @@ static void sv_usage(void)
 #endif
 	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
 	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
+	BIO_printf(bio_err," -no_special_cmds  - Disable special commands 'Q','q','B','r','R','P','S'\n");
 	}
 
 static int local_argc=0;
@@ -1340,6 +1343,10 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			keymatexportlen=atoi(*(++argv));
 			if (keymatexportlen == 0) goto bad;
+			}
+		else if (strcmp(*argv,"-no_special_cmds") == 0)
+			{
+			c_special_cmds=0;
 			}
 		else
 			{
@@ -2179,7 +2186,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				i=raw_read_stdin(buf,bufsize);
 			if (!s_quiet)
 				{
-				if ((i <= 0) || (buf[0] == 'Q'))
+				if ((i <= 0) || (c_special_cmds && buf[0] == 'Q'))
 					{
 					BIO_printf(bio_s_out,"DONE\n");
 					SHUTDOWN(s);
@@ -2187,7 +2194,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					ret= -11;
 					goto err;
 					}
-				if ((i <= 0) || (buf[0] == 'q'))
+				if ((i <= 0) || (c_special_cmds && buf[0] == 'q'))
 					{
 					BIO_printf(bio_s_out,"DONE\n");
 					if (SSL_version(con) != DTLS1_VERSION)
@@ -2198,7 +2205,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					}
 
 #ifndef OPENSSL_NO_HEARTBEATS
-				if ((buf[0] == 'B') &&
+				if (c_special_cmds && (buf[0] == 'B') &&
 					((buf[1] == '\n') || (buf[1] == '\r')))
 					{
 					BIO_printf(bio_err,"HEARTBEATING\n");
@@ -2207,7 +2214,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					continue;
 					}
 #endif
-				if ((buf[0] == 'r') && 
+				if (c_special_cmds && (buf[0] == 'r') &&
 					((buf[1] == '\n') || (buf[1] == '\r')))
 					{
 					SSL_renegotiate(con);
@@ -2217,7 +2224,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					continue;
 					/* strcpy(buf,"server side RE-NEGOTIATE\n"); */
 					}
-				if ((buf[0] == 'R') &&
+				if (c_special_cmds && (buf[0] == 'R') &&
 					((buf[1] == '\n') || (buf[1] == '\r')))
 					{
 					SSL_set_verify(con,
@@ -2229,12 +2236,12 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					continue;
 					/* strcpy(buf,"server side RE-NEGOTIATE asking for client cert\n"); */
 					}
-				if (buf[0] == 'P')
+				if (c_special_cmds && buf[0] == 'P')
 					{
 					static const char *str="Lets print some clear text\n";
 					BIO_write(SSL_get_wbio(con),str,strlen(str));
 					}
-				if (buf[0] == 'S')
+				if (c_special_cmds && buf[0] == 'S')
 					{
 					print_stats(bio_s_out,SSL_get_SSL_CTX(con));
 					}
