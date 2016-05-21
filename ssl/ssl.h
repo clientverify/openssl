@@ -170,6 +170,10 @@
 extern "C" {
 #endif
 
+#ifdef CLIVER
+extern const char *tls_master_secret_file;
+#endif
+
 /* SSLeay version number for ASN.1 encoding of the session information */
 /* Version 0 - initial version
  * Version 1 - added the optional peer certificate

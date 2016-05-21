@@ -565,6 +565,9 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
 	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
 	BIO_printf(bio_err," -no_special_cmds  - Disable special commands 'Q','q','B','r','R','P','S'\n");
+#ifdef CLIVER
+	BIO_printf(bio_err," -master_secret F  - Save master secret to file F\n");
+#endif
 	}
 
 static int local_argc=0;
@@ -1348,6 +1351,13 @@ int MAIN(int argc, char *argv[])
 			{
 			c_special_cmds=0;
 			}
+#ifdef CLIVER
+		else if (strcmp(*argv,"-master_secret") == 0)
+			{
+			if (--argc < 1) goto bad;
+			tls_master_secret_file = *(++argv);
+			}
+#endif
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);

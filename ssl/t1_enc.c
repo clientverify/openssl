@@ -150,6 +150,7 @@
 
 #ifdef CLIVER
 #include <openssl/KTest.h>
+const char *tls_master_secret_file = NULL;
 #endif
 
 /* seed1 through seed5 are virtually concatenated */
@@ -1125,6 +1126,13 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 
 #ifdef CLIVER
 	ktest_master_secret(s->session->master_key, SSL3_MASTER_SECRET_SIZE);
+  if (tls_master_secret_file) {
+    FILE *fp = fopen(tls_master_secret_file, "wb");
+    if (fp) {
+      fwrite(s->session->master_key, SSL3_MASTER_SECRET_SIZE, 1, fp);
+      fclose(fp);
+    }
+  }
 #endif
 	return(SSL3_MASTER_SECRET_SIZE);
 	}
