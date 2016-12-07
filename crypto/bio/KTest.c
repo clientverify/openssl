@@ -577,7 +577,7 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 
     // Parse the recorded select input/output.
     char *recorded_select = strdup((const char*)o->bytes);
-    char *item;
+    char *item, *tmp;
     fd_set in_readfds, in_writefds, out_readfds, out_writefds;
     int i, ret, recorded_sockfd, recorded_nfds;
 
@@ -586,11 +586,14 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
     FD_ZERO(&out_readfds); // output of select
     FD_ZERO(&out_writefds);// output of select
 
-    assert(strcmp(strtok(recorded_select, " "), "sockfd") == 0);
+    tmp = strtok(recorded_select, " ");
+    assert(strcmp(tmp, "sockfd") == 0);
     recorded_sockfd = atoi(strtok(NULL, " ")); // socket for TLS traffic
-    assert(strcmp(strtok(NULL, " "), "nfds") == 0);
+    tmp = strtok(NULL, " ");
+    assert(strcmp(tmp, "nfds") == 0);
     recorded_nfds = atoi(strtok(NULL, " "));
-    assert(strcmp(strtok(NULL, " "), "inR") == 0);
+    tmp = strtok(NULL, " ");
+    assert(strcmp(tmp, "inR") == 0);
     item = strtok(NULL, " ");
     assert(strlen(item) == recorded_nfds);
     for (i = 0; i < recorded_nfds; i++) {
@@ -598,7 +601,8 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 	FD_SET(i, &in_readfds);
       }
     }
-    assert(strcmp(strtok(NULL, " "), "inW") == 0);
+    tmp = strtok(NULL, " ");
+    assert(strcmp(tmp, "inW") == 0);
     item = strtok(NULL, " ");
     assert(strlen(item) == recorded_nfds);
     for (i = 0; i < recorded_nfds; i++) {
@@ -606,9 +610,11 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 	FD_SET(i, &in_writefds);
       }
     }
-    assert(strcmp(strtok(NULL, " "), "ret") == 0);
+    tmp = strtok(NULL, " ");
+    assert(strcmp(tmp, "ret") == 0);
     ret = atoi(strtok(NULL, " "));
-    assert(strcmp(strtok(NULL, " "), "outR") == 0);
+    tmp = strtok(NULL, " ");
+    assert(strcmp(tmp, "outR") == 0);
     item = strtok(NULL, " ");
     assert(strlen(item) == recorded_nfds);
     for (i = 0; i < recorded_nfds; i++) {
@@ -616,7 +622,8 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 	FD_SET(i, &out_readfds);
       }
     }
-    assert(strcmp(strtok(NULL, " "), "outW") == 0);
+    tmp = strtok(NULL, " ");
+    assert(strcmp(tmp, "outW") == 0);
     item = strtok(NULL, " ");
     assert(strlen(item) == recorded_nfds);
     for (i = 0; i < recorded_nfds; i++) {
