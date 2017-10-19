@@ -154,8 +154,6 @@ typedef unsigned int u_int;
 
 #ifdef CLIVER
 #include <openssl/KTest.h>
-static const char *arg_ktest_filename = NULL;
-static enum kTestMode arg_ktest_mode = KTEST_NONE;
 #endif
 
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)

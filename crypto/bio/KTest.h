@@ -63,6 +63,8 @@ extern "C" {
 
   // Capture mode
   enum kTestMode {KTEST_NONE, KTEST_RECORD, KTEST_PLAYBACK};
+  const char *arg_ktest_filename;
+  enum kTestMode arg_ktest_mode;
 
   // Network capture for Cliver
   int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
