@@ -14,7 +14,10 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <time.h>
+#include <netdb.h>
 
+#include <openssl/ec.h>
+#include <openssl/bn.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,7 +46,6 @@ extern "C" {
     KTestObject *objects;
   };
 
-  
   /* returns the current .ktest file format version */
   unsigned kTest_getCurrentVersion();
   
@@ -70,6 +72,8 @@ extern "C" {
   int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
   int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout);
+  int bssl_stdin_ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
+            fd_set *exceptfds, struct timeval *timeout);
   ssize_t ktest_writesocket(int fd, const void *buf, size_t count);
   ssize_t ktest_readsocket(int fd, void *buf, size_t count);
 
@@ -88,6 +92,15 @@ extern "C" {
 
   void ktest_start(const char *filename, enum kTestMode mode);
   void ktest_finish();		     // write capture to file
+
+  int ktest_getaddrinfo(const char *node, const char *service,
+                       const struct addrinfo *hints, struct addrinfo **res);
+
+  void ktest_freeaddrinfo(struct addrinfo *res);
+  int ktest_fcntl(int socket, int flags, int not_sure);
+
+int bssl_EC_POINT_mul( const EC_GROUP *group, EC_POINT *r,
+    const BIGNUM *n, const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
 
 #ifdef __cplusplus
 }
