@@ -10,7 +10,10 @@
 //===----------------------------------------------------------------------===//
 
 #include <openssl/KTest.h>
-
+// The following macros were used by openssl, so while boring does not need them
+// our code relies on them.
+#  define readsocket(s,b,n)       read((s),(b),(n))
+#  define writesocket(s,b,n)      write((s),(b),(n))
 
 #include <openssl/rand.h>
 #undef RAND_bytes
@@ -479,6 +482,41 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   }
   else {
       perror("ktest_connect error - should never get here");
+      exit(4);
+  }
+}
+
+
+int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
+{
+  printf("nerp ktest_bind(%d...)\n", sockfd);
+  if (ktest_mode == KTEST_NONE) { // passthrough
+      return bind(sockfd, addr, addrlen);
+  }
+  else if (ktest_mode == KTEST_RECORD) {
+      int ret;
+      ret = bind(sockfd, addr, addrlen);
+      if(ktest_sockfd != -1){
+        assert(ret != 0);
+        return ret;
+      }
+      ktest_sockfd = sockfd;
+      if (KTEST_DEBUG) {
+        printf("bind() called on socket for TLS traffic (%d)\n", sockfd);
+      }
+      return ret;
+  }
+  else if (ktest_mode == KTEST_PLAYBACK) {
+      if( ktest_sockfd != -1) //if ktest_sockfd is already assigned, return error
+        return -1;
+      ktest_sockfd = sockfd;
+      if (KTEST_DEBUG) {
+        printf("bind() called on socket for TLS traffic (%d)\n", sockfd);
+      }
+      return 0; // assume success
+  }
+  else {
+      perror("ktest_bind error - should never get here");
       exit(4);
   }
 }
