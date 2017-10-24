@@ -522,6 +522,21 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 }
 
 
+int ktest_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen){
+  if (ktest_mode == KTEST_NONE || ktest_mode == KTEST_RECORD) { // passthrough
+      return accept(sockfd, addr, addrlen);
+  } else if (ktest_mode == KTEST_PLAYBACK) {
+    int accept_sock = socket(AF_INET, SOCK_STREAM, 0);
+    assert(accept_sock >= 0);
+    ktest_sockfd = accept_sock;
+    return accept_sock;
+  } else{
+    perror("ktest_bind error - should never get here");
+    exit(4);
+  }
+}
+
+
 /**
  * Note that ktest_select playback is slightly brittle in that it
  * assumes that the only socket descriptors we care about are
