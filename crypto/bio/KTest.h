@@ -64,7 +64,7 @@ extern "C" {
   void  kTest_free(KTest *);
 
   // Capture mode
-  enum kTestMode {KTEST_NONE, KTEST_RECORD, KTEST_PLAYBACK};
+  enum kTestMode {KTEST_NONE, KTEST_RECORD, KTEST_PLAYBACK, KTEST_GET_PEER_NAME};
   const char *arg_ktest_filename;
   enum kTestMode arg_ktest_mode;
 
@@ -99,6 +99,8 @@ extern "C" {
                        const struct addrinfo *hints, struct addrinfo **res);
 
   void ktest_freeaddrinfo(struct addrinfo *res);
+  int ktest_getpeername(int sockfd, struct sockaddr *addr, socklen_t
+       *addrlen);
   int ktest_fcntl(int socket, int flags, int not_sure);
 
 int bssl_EC_POINT_mul( const EC_GROUP *group, EC_POINT *r,

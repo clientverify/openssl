@@ -1130,6 +1130,46 @@ void ktest_freeaddrinfo(struct addrinfo *res){
     freeaddrinfo(res);
 }
 
+int ktest_getpeername(int sockfd, struct sockaddr *addr, socklen_t
+       *addrlen){
+  if(ktest_mode == KTEST_NONE){
+    return getpeername(sockfd, addr, addrlen);
+  }else if(ktest_mode == KTEST_RECORD){
+    int ret = getpeername(sockfd, addr, addrlen);
+    assert(ret == 0);
+    KTOV_append(&ktov, ktest_object_names[KTEST_GET_PEER_NAME], *addrlen, addr);
+
+    return ret;
+  }else if(ktest_mode == KTEST_PLAYBACK){
+    KTestObject *o = KTOV_next_object(&ktov,
+                       ktest_object_names[KTEST_GET_PEER_NAME]);
+    if (o->numBytes > *addrlen) {
+      fprintf(stderr,
+        "ktest_getpeername playback error: %zu bytes of input, "
+        "%d bytes recorded", *addrlen, o->numBytes);
+      exit(2);
+    }
+
+    *addrlen = o->numBytes;
+    memcpy(addr, o->bytes, o->numBytes);
+
+    if (KTEST_DEBUG) {
+      unsigned int i;
+      printf("getpeername playback [%d]", o->numBytes);
+      for (i = 0; i < o->numBytes; i++) {
+        printf(" %2.2x", ((unsigned char*)addr)[i]);
+      }
+      printf("\n");
+    }
+
+    return 0; //assume success
+  }else{
+    perror("ktest_connect error - should never get here");
+    exit(4);
+  }
+
+}
+
 //Always takes 3 arguements, workaround for klee socket abstraction.  In klee
 //klee model will be executed instead.
 int ktest_fcntl(int socket, int flags, int not_sure){
