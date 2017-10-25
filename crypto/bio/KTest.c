@@ -523,12 +523,19 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 
 
 int ktest_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen){
-  if (ktest_mode == KTEST_NONE || ktest_mode == KTEST_RECORD) { // passthrough
-      return accept(sockfd, addr, addrlen);
+  if (ktest_mode == KTEST_NONE){
+    return accept(sockfd, addr, addrlen);
+  }else if(ktest_mode == KTEST_RECORD) { // passthrough
+      int accept_sock = accept(sockfd, addr, addrlen);
+      ktest_sockfd = accept_sock;
+      return accept_sock;
   } else if (ktest_mode == KTEST_PLAYBACK) {
     int accept_sock = socket(AF_INET, SOCK_STREAM, 0);
     assert(accept_sock >= 0);
     ktest_sockfd = accept_sock;
+    if (KTEST_DEBUG) {
+      printf("accept() called on socket for TLS traffic (%d)\n", accept_sock);
+    }
     return accept_sock;
   } else{
     perror("ktest_bind error - should never get here");
@@ -638,6 +645,7 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
     tmp = strtok(recorded_select, " ");
     assert(strcmp(tmp, "sockfd") == 0);
     recorded_sockfd = atoi(strtok(NULL, " ")); // socket for TLS traffic
+    assert(recorded_sockfd == ktest_sockfd);
 
     tmp = strtok(NULL, " ");
     assert(strcmp(tmp, "nfds") == 0);
