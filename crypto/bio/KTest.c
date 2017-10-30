@@ -37,7 +37,7 @@
 // for compatibility reasons
 #define BOUT_MAGIC "BOUT\n"
 
-#define KTEST_DEBUG 0
+#define KTEST_DEBUG 1
 
 // override inline assembly version of FD_ZERO from
 // /usr/include/x86_64-linux-gnu/bits/select.h
@@ -453,7 +453,11 @@ static KTestObjectVector ktov;  // contains network, time, and prng captures
 static enum kTestMode ktest_mode = KTEST_NONE;
 static const char *ktest_output_file = "s_client.ktest";
 static const char *ktest_network_file = "s_client.net.ktest";
-static int ktest_sockfd = -1; // descriptor of the socket we're capturing
+#define MAX_FDS 32  //total number of socket file descriptors we will support
+static int ktest_nfds = 0; //total number of socket file descriptors in system
+static int ktest_sockfds[MAX_FDS]; // descriptor of the sockets we're capturing
+                                  //values initialized to -1 in ktest_start.
+static int ktest_bind_sockfd = -1;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported functionality
@@ -461,12 +465,14 @@ static int ktest_sockfd = -1; // descriptor of the socket we're capturing
 
 int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
+  assert(ktest_nfds + 1 < MAX_FDS);
   if (ktest_mode == KTEST_NONE) { // passthrough
       return connect(sockfd, addr, addrlen);
   }
   else if (ktest_mode == KTEST_RECORD) {
       int ret;
-      ktest_sockfd = sockfd; // record the socket descriptor of interest
+      ktest_sockfds[ktest_nfds] = sockfd; // record the socket descriptor of interest
+      ktest_nfds++;
       ret = connect(sockfd, addr, addrlen);
       if (KTEST_DEBUG) {
 	printf("connect() called on socket for TLS traffic (%d)\n", sockfd);
@@ -474,7 +480,8 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-      ktest_sockfd = sockfd; // record the socket descriptor of interest
+      ktest_sockfds[ktest_nfds] = sockfd; // record the socket descriptor of interest
+      ktest_nfds++;
       if (KTEST_DEBUG) {
 	printf("connect() called on socket for TLS traffic (%d)\n", sockfd);
       }
@@ -486,9 +493,12 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   }
 }
 
-
+/* We assume that any given program has only successful call to bind.
+ * This is enforced with the ktest_bind_sockfd variable
+ */
 int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
+  assert(ktest_nfds + 1< MAX_FDS);
   printf("nerp ktest_bind(%d...)\n", sockfd);
   if (ktest_mode == KTEST_NONE) { // passthrough
       return bind(sockfd, addr, addrlen);
@@ -496,20 +506,22 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   else if (ktest_mode == KTEST_RECORD) {
       int ret;
       ret = bind(sockfd, addr, addrlen);
-      if(ktest_sockfd != -1){
+      if(ktest_bind_sockfd != -1){
         assert(ret != 0);
         return ret;
       }
-      ktest_sockfd = sockfd;
+      ktest_sockfds[ktest_nfds] = ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
+      ktest_nfds++;
       if (KTEST_DEBUG) {
         printf("bind() called on socket for TLS traffic (%d)\n", sockfd);
       }
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-      if( ktest_sockfd != -1) //if ktest_sockfd is already assigned, return error
+      if( ktest_bind_sockfd != -1) //if ktest_bind_sockfd is already assigned, return error
         return -1;
-      ktest_sockfd = sockfd;
+      ktest_sockfds[ktest_nfds] = ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
+      ktest_nfds++;
       if (KTEST_DEBUG) {
         printf("bind() called on socket for TLS traffic (%d)\n", sockfd);
       }
@@ -523,16 +535,19 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 
 
 int ktest_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen){
+  assert(ktest_nfds + 1 < MAX_FDS);
   if (ktest_mode == KTEST_NONE){
     return accept(sockfd, addr, addrlen);
   }else if(ktest_mode == KTEST_RECORD) { // passthrough
       int accept_sock = accept(sockfd, addr, addrlen);
-      ktest_sockfd = accept_sock;
+      ktest_sockfds[ktest_nfds] = accept_sock; // record the socket descriptor of interest
+      ktest_nfds++;
       return accept_sock;
   } else if (ktest_mode == KTEST_PLAYBACK) {
     int accept_sock = socket(AF_INET, SOCK_STREAM, 0);
     assert(accept_sock >= 0);
-    ktest_sockfd = accept_sock;
+    ktest_sockfds[ktest_nfds] = accept_sock; // record the socket descriptor of interest
+    ktest_nfds++;
     if (KTEST_DEBUG) {
       printf("accept() called on socket for TLS traffic (%d)\n", accept_sock);
     }
@@ -556,6 +571,7 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 {
   assert(readfds != NULL);
   assert(exceptfds == NULL);
+  assert(ktest_nfds <= MAX_FDS);
   if (ktest_mode == KTEST_NONE) { // passthrough
       return select(nfds, readfds, writefds, exceptfds, timeout);
   } else if (ktest_mode == KTEST_RECORD) {
@@ -568,11 +584,12 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       //    ret - return value from select()
       //    outR - readfds output value
       //    outW - writefds output value
-    
+
       int ret, i;
       unsigned int size = 4*nfds + 40 /*text*/ + 3*4 /*3 fd's*/ + 1 /*null*/;
       char *record = (char *)calloc(size, sizeof(char));
       unsigned int pos = 0;
+
 
       if (KTEST_DEBUG) {
         printf("\n");
@@ -584,22 +601,12 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       }
 
       pos += snprintf(&record[pos], size-pos,
-		      "sockfd %d nfds %d inR ", ktest_sockfd, nfds);
-      for (i = 0; i < nfds; i++) {
-	    pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, readfds));
-      }
-      if(writefds != NULL) {
-        pos += snprintf(&record[pos], size-pos, " inW ");
-
-        for (i = 0; i < nfds; i++) {
-  	        pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, writefds));
-        }
-      }
+		      "ktest_nfds %d nfds %d ", ktest_nfds, nfds);
 
       ret = select(nfds, readfds, writefds, exceptfds, timeout);
 
       if (KTEST_DEBUG) {
-	    printf("Select returned %d (sockfd = %d)\n", ret, ktest_sockfd);
+	    printf("Select returned %d (ktest_nfds = %d)\n", ret, ktest_nfds);
 	    printf("OUT readfds   = ");
     	print_fd_set(nfds, readfds);
     	if(writefds != NULL) printf("OUT writefds  = ");
@@ -608,18 +615,27 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
         fflush(stdout);
       }
 
+      //record the read fds set on return
       pos += snprintf(&record[pos], size-pos, " ret %d outR ", ret);
-      for (i = 0; i < nfds; i++) {
+      for (i = 0; i < 3; i++) { //record the 0, 1, 2 fds set on return
 	    pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, readfds));
+      }
+
+      for (i = 0; i < ktest_nfds; i++) {
+	    pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(ktest_sockfds[i], readfds));
       }
 
       if(writefds != NULL) {
         pos += snprintf(&record[pos], size-pos, " outW ");
-        for (i = 0; i < nfds; i++) {
+        for (i = 0; i < 3; i++) { //record the 0, 1, 2 fds set on return
             pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, writefds));
+        }
+        for (i = 0; i < ktest_nfds; i++) {
+            pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(ktest_sockfds[i], writefds));
         }
       }
 
+      assert(pos < size);
       record[size-1] = '\0'; // just in case we ran out of room.
       KTOV_append(&ktov, ktest_object_names[SELECT], strlen(record)+1, record);
       free(record);
@@ -629,63 +645,48 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
     KTestObject *o = KTOV_next_object(&ktov, ktest_object_names[SELECT]);
 
     // Make sure we have included the socket for TLS traffic
-    assert(ktest_sockfd < nfds);
+    //TODO: figure out how to represent this?: assert(ktest_sockfd < nfds);
     // Parse the recorded select input/output.
     char *recorded_select = strdup((const char*)o->bytes);
     char *item, *tmp;
-    fd_set in_readfds, in_writefds, out_readfds, out_writefds;
-    int ret, recorded_sockfd;
-    unsigned int i, recorded_nfds;
+    int ret = 0, recorded_ktest_nfds = 0, recorded_nfds = 0, active_fd_count = 0, i = 0;
 
-    FD_ZERO(&in_readfds);  // input to select
-    if(writefds != NULL){ FD_ZERO(&in_writefds);} // input to select
-    FD_ZERO(&out_readfds); // output of select
-    if(writefds != NULL){ FD_ZERO(&out_writefds);}// output of select
+    FD_ZERO(readfds); // output of select
+    if(writefds != NULL){ FD_ZERO(writefds);}// output of select
 
     tmp = strtok(recorded_select, " ");
-    assert(strcmp(tmp, "sockfd") == 0);
-    recorded_sockfd = atoi(strtok(NULL, " ")); // socket for TLS traffic
-    assert(recorded_sockfd == ktest_sockfd);
+    assert(strcmp(tmp, "ktest_nfds") == 0);
+    recorded_ktest_nfds = atoi(strtok(NULL, " ")); // socket for TLS traffic
+    assert(ktest_nfds == recorded_ktest_nfds);
 
     tmp = strtok(NULL, " ");
     assert(strcmp(tmp, "nfds") == 0);
     recorded_nfds = atoi(strtok(NULL, " "));
 
     tmp = strtok(NULL, " ");
-    assert(strcmp(tmp, "inR") == 0);
-
-    item = strtok(NULL, " ");
-    assert(strlen(item) == recorded_nfds);
-    for (i = 0; i < recorded_nfds; i++) {
-      if (item[i] == '1') {
-	    FD_SET(i, &in_readfds);
-      }
-    }
-
-
-    if(writefds != NULL) {
-        tmp = strtok(NULL, " ");
-        assert(strcmp(tmp, "inW") == 0);
-        item = strtok(NULL, " ");
-        assert(strlen(item) == recorded_nfds);
-        for (i = 0; i < recorded_nfds; i++) {
-            if (item[i] == '1') {
-	            FD_SET(i, &in_writefds);
-            }
-        }
-    }
-
-    tmp = strtok(NULL, " ");
     assert(strcmp(tmp, "ret") == 0);
     ret = atoi(strtok(NULL, " "));
+
+    // Copy recorded data to the final output fd_sets.
+    FD_ZERO(readfds);
+    if(writefds != NULL){ FD_ZERO(writefds);}
 
     tmp = strtok(NULL, " ");
     assert(strcmp(tmp, "outR") == 0);
     item = strtok(NULL, " ");
-    assert(strlen(item) == recorded_nfds);
-    for (i = 0; i < recorded_nfds; i++) {
+    assert(strlen(item) == (recorded_ktest_nfds + 3));
+
+    //set out_readfds
+    for (i = 0; i < 3; i++) { //0, 1, 2 set out_readfds
       if (item[i] == '1') {
-	    FD_SET(i, &out_readfds);
+	    FD_SET(i, readfds);
+        active_fd_count++;
+      }
+    }
+    for (i = 0; i < recorded_ktest_nfds; i++) {
+      if (item[i + 3] == '1') {  //ktest_sockfds set out_readfds
+	    FD_SET(ktest_sockfds[i], readfds);
+        active_fd_count++;
       }
     }
 
@@ -694,61 +695,37 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
         tmp = strtok(NULL, " ");
         assert(strcmp(tmp, "outW") == 0);
         item = strtok(NULL, " ");
-        assert(strlen(item) == recorded_nfds);
-        for (i = 0; i < recorded_nfds; i++) {
+        assert(strlen(item) == (recorded_ktest_nfds + 3));
+        //set out_writefds
+        for (i = 0; i < 3; i++) { //0, 1, 2 set out_writefds
             if (item[i] == '1') {
-	            FD_SET(i, &out_writefds);
+	            FD_SET(i, writefds);
+                active_fd_count++;
+            }
+        }
+        for (i = 0; i < recorded_ktest_nfds; i++) {
+            if (item[i +3] == '1') { //ktest_sockfds set out_writefds
+	            FD_SET(ktest_sockfds[i], writefds);
+                active_fd_count++;
             }
         }
     }
 
+
+    assert(active_fd_count == ret); // Did we miss anything?
     free(recorded_select);
 
 
     if (KTEST_DEBUG) {
       printf("SELECT playback (recorded_nfds = %d, actual_nfds = %d):\n",
-	     recorded_nfds, nfds);
-      printf("  inR: ");
-      print_fd_set(recorded_nfds, &in_readfds);
-      if(writefds != NULL) printf("  inW: ");
-      if(writefds != NULL) print_fd_set(recorded_nfds, &in_writefds);
+	     (recorded_ktest_nfds + 3), nfds);
       printf("  outR:");
-      print_fd_set(recorded_nfds, &out_readfds);
+      print_fd_set((recorded_ktest_nfds+3), readfds);
       if(writefds != NULL) printf("  outW:");
-      if(writefds != NULL) print_fd_set(recorded_nfds, &out_writefds);
+      if(writefds != NULL) print_fd_set((recorded_ktest_nfds+3), writefds);
       printf("  ret = %d\n", ret);
     }
 
-    // Copy recorded data to the final output fd_sets.
-    FD_ZERO(readfds);
-    if(writefds != NULL){ FD_ZERO(writefds);}
-    int active_fd_count = 0;
-    // stdin(0), stdout(1), stderr(2)
-    for (i = 0; i < 3; i++) {
-      if (FD_ISSET(i, &out_readfds)) {
-	      FD_SET(i, readfds);
-	      active_fd_count++;
-      }
-
-      if(writefds != NULL) {
-        if (FD_ISSET(i, &out_writefds)) {
-	          FD_SET(i, writefds);
-	          active_fd_count++;
-        }
-      }
-    }
-    // TLS socket (nfds-1)
-    if (FD_ISSET(recorded_sockfd, &out_readfds)) {
-      FD_SET(ktest_sockfd, readfds);
-      active_fd_count++;
-    }
-    if(writefds != NULL) {
-        if (FD_ISSET(recorded_sockfd, &out_writefds)) {
-          FD_SET(ktest_sockfd, writefds);
-          active_fd_count++;
-        }
-    }
-    assert(active_fd_count == ret); // Did we miss anything?
 
     return ret;
   }
@@ -1035,6 +1012,11 @@ void ktest_master_secret(unsigned char *ms, int len) {
 }
 
 void ktest_start(const char *filename, enum kTestMode mode) {
+  //Initialize socketfds with -1
+  int i;
+  for(i = 0; i < MAX_FDS; i++){
+    ktest_sockfds[i] = -1;
+  }
   KTOV_init(&ktov);
   ktest_mode = mode;
 
