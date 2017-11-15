@@ -27,6 +27,8 @@
 #include <assert.h>
 #include <stdint.h>
 #include <sys/time.h>
+#include <errno.h>
+#include <signal.h>
 
 #include <fcntl.h>
 
@@ -300,6 +302,13 @@ void kTest_free(KTest *bo) {
 // Local to this file
 ///////////////////////////////////////////////////////////////////////////////
 
+enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT,
+       MASTER_SECRET, KTEST_GET_PEER_NAME, ERROR, SIGNAL, WAIT_PID};
+static char* ktest_object_names[] = {
+  "c2s", "s2c", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
+  "error", "signal", "waitpid"
+};
+
 typedef struct KTestObjectVector {
   KTestObject *objects;
   int size;
@@ -418,6 +427,13 @@ static void KTOV_append(KTestObjectVector *ov,
   // KTO_print(stdout, &ov->objects[i]);
 }
 
+
+static int (*signal_handler)(int);
+int ktest_register_signal_handler(int (*a)(int)){
+  signal_handler = a;
+}
+
+
 static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
 {
   if (ov->playback_index >= ov->size) {
@@ -425,15 +441,26 @@ static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
     exit(2);
   }
   KTestObject *o = &ov->objects[ov->playback_index];
-  if (strcmp(o->name, name) != 0) {
+  ov->playback_index++;
+  if (strcmp(o->name, ktest_object_names[ERROR]) == 0){ //error is stored instead
+    //of the requested object
+    errno = (int)o->bytes;
+    fprintf(stderr, "ktest playback returning NULL on error");
+  } else if (strcmp(o->name, ktest_object_names[SIGNAL]) == 0){
+    int sig = (int)o->bytes;
+    //Here we call the signal handler
+    signal_handler(sig);
+    if(KTEST_DEBUG) printf("KTOV_next_object finished handling signal %s record\n", sig);
+    return KTOV_next_object(ov, name);
+  } else if (strcmp(o->name, name) != 0) {
     fprintf(stderr,
 	    "ERROR: ktest playback needed '%s', but recording had '%s'\n",
 	    name, o->name);
     exit(2);
   }
-  ov->playback_index++;
   return o;
 }
+
 
 static void print_fd_set(int nfds, fd_set *fds) {
   int i;
@@ -443,16 +470,18 @@ static void print_fd_set(int nfds, fd_set *fds) {
   printf("\n");
 }
 
-enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT,
-       MASTER_SECRET };
-static char* ktest_object_names[] = {
-  "c2s", "s2c", "rng", "prng", "time", "stdin", "select", "master_secret"
-};
-
 static KTestObjectVector ktov;  // contains network, time, and prng captures
 static enum kTestMode ktest_mode = KTEST_NONE;
 static const char *ktest_output_file = "s_client.ktest";
 static const char *ktest_network_file = "s_client.net.ktest";
+void ktest_set_mode_none(void){
+  arg_ktest_filename = NULL;
+  ktest_mode = KTEST_NONE;
+  //TODO: eliminate the use of two mode variables...
+  arg_ktest_mode = KTEST_NONE;
+}
+
+
 #define MAX_FDS 32  //total number of socket file descriptors we will support
 static int ktest_nfds = 0; //total number of socket file descriptors in system
 static int ktest_sockfds[MAX_FDS]; // descriptor of the sockets we're capturing
@@ -463,6 +492,115 @@ static int ktest_bind_sockfd = -1;
 // Exported functionality
 ///////////////////////////////////////////////////////////////////////////////
 
+
+//Return the same fake pid everytime for debugging.
+#define KTEST_FORK_DUMMY_CHILD_PID 37
+
+int ktest_waitpid(pid_t pid, int *status, int options){
+  assert(pid == -1);
+  assert(options == WNOHANG);
+  if (ktest_mode == KTEST_NONE){
+    return waitpid(pid, status, options);
+  } else if(arg_ktest_mode == KTEST_PLAYBACK) {
+    int tmp = waitpid(pid, status, options);
+    //TODO: Use only one KTestObject.
+    KTestObject *o = KTOV_next_object(&ktov,
+                          ktest_object_names[WAIT_PID]);
+    KTestObject *o2 = KTOV_next_object(&ktov,
+                          ktest_object_names[WAIT_PID]);
+
+    int rec = (int) o->bytes;
+    if(tmp > 0) return tmp;
+    else if(rec > 0){
+      //Requirement: consistency between the child pid ktest_fork
+      //returns and the pid returned by ktest_waitpid.
+      *status = o->bytes;
+      return KTEST_FORK_DUMMY_CHILD_PID;
+    } else return tmp;
+  } else if(arg_ktest_mode == KTEST_RECORD) {
+    int tmp = waitpid(pid, status, options);
+    KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(tmp) , &tmp);
+    KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(*status) , status);
+    return tmp;
+  } else {
+    perror("ktest_signal error - should never get here");
+    exit(4);
+  }
+}
+
+//which is the parent or child--whichever we wish to continue
+//recording or playing back from
+pid_t ktest_fork(enum KTEST_FORK which){
+  enum kTestMode ktest_mode = arg_ktest_mode;
+  if (ktest_mode == KTEST_NONE){
+    pid_t pid = fork();
+    return pid;
+  } else if(arg_ktest_mode == KTEST_RECORD){
+    pid_t pid = fork();
+    assert(pid >= 0);
+    //This is the case where we no longer wish to record.
+    if((pid != 0 && which == CHILD) || (pid == 0 && which == PARENT)){
+      ktest_set_mode_none();
+      return pid;
+    }else if ((pid == 0 && which == CHILD) || (pid != 0 && which == PARENT)) {
+      //Keep recording.
+      return pid;
+    } else {
+      perror("ktest_fork error - should never get here");
+      exit(4);
+    }
+  } else if (arg_ktest_mode == KTEST_PLAYBACK){
+    if(which == PARENT){ //we recorded the parent
+      //return a positive non-0 value.
+      //Note: we assume there is no communication between
+      //parent and child in the recorded case.  If there is,
+      //then we're in trouble.
+      //Must correspond with the pid eventually returned from
+      //ktest_waitpid.
+      return KTEST_FORK_DUMMY_CHILD_PID;
+    } else { //we recorded the child, return current pid.
+      //not guarenteed to be the same as when recorded.
+      return 0;
+    }
+  } else {
+    perror("ktest_fork error - should never get here");
+    exit(4);
+  }
+}
+
+//We assume that we only get signals we need to handle while in another call
+//e.g. ktest_accept/ktest_select.  We then record the signal.  Playback
+//signals are handled in the KTOV_next_object() function.
+void ktest_record_signal(int sig_num){
+  if (ktest_mode == KTEST_NONE)
+    return;
+  else if (arg_ktest_mode == KTEST_PLAYBACK){
+    return;
+  } else if(arg_ktest_mode == KTEST_RECORD){
+    if(KTEST_DEBUG) printf("ktest_record_signal appending %d\n", sig_num);
+    KTOV_append(&ktov, ktest_object_names[SIGNAL], sizeof(sig_num), &sig_num);
+  } else {
+    perror("ktest_signal error - should never get here");
+    exit(4);
+  }
+}
+
+//This overaproximates the filedescriptors in the system.  We don't support
+//a close model at the moment--which is probably going to bite us at some point.
+void insert_ktest_sockfd(int sockfd){
+  int i;
+  for(i = 0; i < ktest_nfds; i++){
+    if(ktest_sockfds[i] == sockfd){
+      if(KTEST_DEBUG) printf("insert_ktest_sockfd attempting to add duplicate sockfd %d\n", sockfd);
+      return;
+    }
+  }
+  if(KTEST_DEBUG) printf("insert_ktest_sockfd adding %d to ktest_sockfds\n", sockfd);
+  assert(ktest_nfds + 1 < MAX_FDS);
+  ktest_sockfds[ktest_nfds] = sockfd; // record the socket descriptor of interest
+  ktest_nfds++; //incriment the counter recording the number of sockets we're tracking
+}
+
 int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
   assert(ktest_nfds + 1 < MAX_FDS);
@@ -471,6 +609,7 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   }
   else if (ktest_mode == KTEST_RECORD) {
       int ret;
+      if(KTEST_DEBUG) printf("ktest_connect adding %d to ktest_sockfds\n", sockfd);
       ktest_sockfds[ktest_nfds] = sockfd; // record the socket descriptor of interest
       ktest_nfds++;
       ret = connect(sockfd, addr, addrlen);
@@ -480,6 +619,7 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
       return ret;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
+      if(KTEST_DEBUG) printf("ktest_connect adding %d to ktest_sockfds\n", sockfd);
       ktest_sockfds[ktest_nfds] = sockfd; // record the socket descriptor of interest
       ktest_nfds++;
       if (KTEST_DEBUG) {
@@ -510,6 +650,7 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
         assert(ret != 0);
         return ret;
       }
+      if(KTEST_DEBUG) printf("ktest_bind adding %d to ktest_sockfds\n", sockfd);
       ktest_sockfds[ktest_nfds] = ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
       ktest_nfds++;
       if (KTEST_DEBUG) {
@@ -520,6 +661,7 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   else if (ktest_mode == KTEST_PLAYBACK) {
       if( ktest_bind_sockfd != -1) //if ktest_bind_sockfd is already assigned, return error
         return -1;
+      if(KTEST_DEBUG) printf("ktest_bind adding %d to ktest_sockfds\n", sockfd);
       ktest_sockfds[ktest_nfds] = ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
       ktest_nfds++;
       if (KTEST_DEBUG) {
@@ -540,12 +682,14 @@ int ktest_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen){
     return accept(sockfd, addr, addrlen);
   }else if(ktest_mode == KTEST_RECORD) { // passthrough
       int accept_sock = accept(sockfd, addr, addrlen);
+      if(KTEST_DEBUG) printf("ktest_accept adding %d to ktest_sockfds\n", accept_sock);
       ktest_sockfds[ktest_nfds] = accept_sock; // record the socket descriptor of interest
       ktest_nfds++;
       return accept_sock;
   } else if (ktest_mode == KTEST_PLAYBACK) {
     int accept_sock = socket(AF_INET, SOCK_STREAM, 0);
     assert(accept_sock >= 0);
+    if(KTEST_DEBUG) printf("ktest_accept adding %d to ktest_sockfds\n", accept_sock);
     ktest_sockfds[ktest_nfds] = accept_sock; // record the socket descriptor of interest
     ktest_nfds++;
     if (KTEST_DEBUG) {
@@ -569,6 +713,13 @@ int ktest_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen){
 int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
 		  fd_set *exceptfds, struct timeval *timeout)
 {
+  if(KTEST_DEBUG && (ktest_mode == KTEST_RECORD || ktest_mode == KTEST_PLAYBACK)){
+    printf("ktest_sockfds: ");
+    int i;
+    for(i = 0; i < ktest_nfds; i ++)
+      printf("%d, ", ktest_sockfds[i]);
+    printf("\n");
+  }
   assert(readfds != NULL);
   assert(exceptfds == NULL);
   assert(ktest_nfds <= MAX_FDS);
@@ -585,7 +736,7 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       //    outR - readfds output value
       //    outW - writefds output value
 
-      int ret, i;
+      int ret, i, active_fd_count = 0;
       unsigned int size = 4*nfds + 40 /*text*/ + 3*4 /*3 fd's*/ + 1 /*null*/;
       char *record = (char *)calloc(size, sizeof(char));
       unsigned int pos = 0;
@@ -616,25 +767,31 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       }
 
       //record the read fds set on return
-      pos += snprintf(&record[pos], size-pos, " ret %d outR ", ret);
+      pos += snprintf(&record[pos], size-pos, " outR ");
       for (i = 0; i < 3; i++) { //record the 0, 1, 2 fds set on return
+        if(FD_ISSET(i, readfds)) active_fd_count++;
 	    pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, readfds));
       }
 
       for (i = 0; i < ktest_nfds; i++) {
+        if(FD_ISSET(ktest_sockfds[i], readfds)) active_fd_count++;
 	    pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(ktest_sockfds[i], readfds));
       }
 
       if(writefds != NULL) {
         pos += snprintf(&record[pos], size-pos, " outW ");
         for (i = 0; i < 3; i++) { //record the 0, 1, 2 fds set on return
-            pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, writefds));
+             if(FD_ISSET(i, writefds)) active_fd_count++;
+	         pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(i, writefds));
         }
         for (i = 0; i < ktest_nfds; i++) {
-            pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(ktest_sockfds[i], writefds));
+            if(FD_ISSET(ktest_sockfds[i], writefds)) active_fd_count++;
+	        pos += snprintf(&record[pos], size-pos, "%d", FD_ISSET(ktest_sockfds[i], writefds));
         }
       }
 
+      pos += snprintf(&record[pos], size-pos, " active_fd_count %d ", ret);
+      if(KTEST_DEBUG && ret != active_fd_count) printf("select ret = %d active_fd_count = %d\n", ret, active_fd_count);
       assert(pos < size);
       record[size-1] = '\0'; // just in case we ran out of room.
       KTOV_append(&ktov, ktest_object_names[SELECT], strlen(record)+1, record);
@@ -663,9 +820,6 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
     assert(strcmp(tmp, "nfds") == 0);
     recorded_nfds = atoi(strtok(NULL, " "));
 
-    tmp = strtok(NULL, " ");
-    assert(strcmp(tmp, "ret") == 0);
-    ret = atoi(strtok(NULL, " "));
 
     // Copy recorded data to the final output fd_sets.
     FD_ZERO(readfds);
@@ -712,9 +866,9 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
     }
 
 
-    assert(active_fd_count == ret); // Did we miss anything?
-    free(recorded_select);
-
+    tmp = strtok(NULL, " ");
+    assert(strcmp(tmp, "active_fd_count") == 0);
+    ret = atoi(strtok(NULL, " "));
 
     if (KTEST_DEBUG) {
       printf("SELECT playback (recorded_nfds = %d, actual_nfds = %d):\n",
@@ -723,9 +877,12 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       print_fd_set((recorded_ktest_nfds+3), readfds);
       if(writefds != NULL) printf("  outW:");
       if(writefds != NULL) print_fd_set((recorded_ktest_nfds+3), writefds);
-      printf("  ret = %d\n", ret);
+      printf("  ret = %d active_fd_count = %d\n", ret, active_fd_count);
     }
 
+    if(ret != active_fd_count) printf("select ret = %d active_fd_count = %d\n", ret, active_fd_count);
+    assert(active_fd_count == ret); // Did we miss anything?
+    free(recorded_select);
 
     return ret;
   }
@@ -758,6 +915,14 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
       perror("ktest_writesocket error");
       exit(1);
     }
+    if (KTEST_DEBUG) {
+      unsigned int i;
+      printf("writesocket redording [%d]", num_bytes);
+      for (i = 0; i < num_bytes; i++) {
+	printf(" %2.2x", ((unsigned char*)buf)[i]);
+      }
+      printf("\n");
+    }
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
@@ -766,7 +931,16 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_writesocket playback error: %zu bytes of input, "
-	      "%d bytes recorded", count, o->numBytes);
+	      "%d bytes recorded\n", count, o->numBytes);
+      int i = 0;
+      printf(" Recorded Sending:   \n");
+      KTO_print(stdout, o);
+      printf("\n");
+      o->numBytes = count;
+      o->bytes = buf;
+      fprintf(stderr, " Attempting to send: \n");
+      KTO_print(stdout, o);
+      printf("\n");
       exit(2);
     }
     // Since this is a write, compare for equality.
@@ -777,7 +951,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
       unsigned int i;
       printf("writesocket playback [%d]", o->numBytes);
       for (i = 0; i < o->numBytes; i++) {
-	printf(" %2.2x", ((unsigned char*)buf)[i]);
+        printf(" %2.2x", ((unsigned char*)buf)[i]);
       }
       printf("\n");
     }
@@ -799,14 +973,29 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     if (num_bytes >= 0) {
       KTOV_append(&ktov, ktest_object_names[SERVER_TO_CLIENT], num_bytes, buf);
     } else if (num_bytes < 0) {
-      perror("ktest_readsocket error");
-      exit(1);
+      assert(errno != EINTR && errno != EAGAIN);
+      KTOV_append(&ktov, ktest_object_names[ERROR], sizeof(errno), &errno);
+      fprintf(stderr, "ktest_readsocket error returning %d bytes\n", num_bytes);
+      assert(errno != EINTR && errno != EAGAIN);
+      //exit(1);
+    }
+    if (KTEST_DEBUG) {
+      unsigned int i;
+      printf("readsocket redording [%d]", num_bytes);
+      for (i = 0; i < num_bytes; i++) {
+	printf(" %2.2x", ((unsigned char*)buf)[i]);
+      }
+      printf("\n");
     }
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
     KTestObject *o = KTOV_next_object(&ktov,
 				      ktest_object_names[SERVER_TO_CLIENT]);
+    if(strcmp(o->name, ktest_object_names[ERROR]) == 0){
+      fprintf(stderr, "ktest_readsocket error returning %d bytes\n", -1);
+      return -1;
+    }
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_readsocket playback error: %zu byte destination buffer, "

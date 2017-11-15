@@ -64,10 +64,17 @@ extern "C" {
   void  kTest_free(KTest *);
 
   // Capture mode
-  enum kTestMode {KTEST_NONE, KTEST_RECORD, KTEST_PLAYBACK, KTEST_GET_PEER_NAME};
+  enum kTestMode {KTEST_NONE, KTEST_RECORD, KTEST_PLAYBACK};
   const char *arg_ktest_filename;
   enum kTestMode arg_ktest_mode;
+  void ktest_set_mode_none(void);
 
+  enum KTEST_FORK {PARENT, CHILD};
+  int  ktest_waitpid(pid_t pid, int *status, int options);
+  pid_t ktest_fork(enum KTEST_FORK which);
+  void ktest_record_signal(int sig_num);
+  int  ktest_register_signal_handler(int (*a)(int));
+  void insert_ktest_sockfd(int sockfd);
   // Network capture for Cliver
   int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
   int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
