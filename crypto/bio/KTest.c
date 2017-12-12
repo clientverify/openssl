@@ -506,25 +506,29 @@ int ktest_waitpid(pid_t pid, int *status, int options){
   if (ktest_mode == KTEST_NONE){
     return waitpid(pid, status, options);
   } else if(arg_ktest_mode == KTEST_PLAYBACK) {
-    int tmp = waitpid(pid, status, options);
     //TODO: Use only one KTestObject.
     KTestObject *o = KTOV_next_object(&ktov,
                           ktest_object_names[WAIT_PID]);
+    if(strcmp(o->name, ktest_object_names[ERROR]) == 0){
+      if(KTEST_DEBUG) fprintf(stderr, "ktest_waitpid error\n");
+      return -1;
+    }
     KTestObject *o2 = KTOV_next_object(&ktov,
                           ktest_object_names[WAIT_PID]);
 
-    int rec = (int) o->bytes;
-    if(tmp > 0) return tmp;
-    else if(rec > 0){
-      //Requirement: consistency between the child pid ktest_fork
-      //returns and the pid returned by ktest_waitpid.
-      *status = o->bytes;
-      return KTEST_FORK_DUMMY_CHILD_PID;
-    } else return tmp;
+    //Requirement: consistency between the child pid ktest_fork
+    //returns and the pid returned by ktest_waitpid.
+    *status = o->bytes;
+    return KTEST_FORK_DUMMY_CHILD_PID;
   } else if(arg_ktest_mode == KTEST_RECORD) {
     int tmp = waitpid(pid, status, options);
-    KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(tmp) , &tmp);
-    KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(*status) , status);
+    if(tmp > 0){
+      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(tmp) , &tmp);
+      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(*status) , status);
+    } else {
+      KTOV_append(&ktov, ktest_object_names[ERROR], sizeof(errno), &errno);
+      if(KTEST_DEBUG) fprintf(stderr, "ktest_waitpid error\n");
+    }
     return tmp;
   } else {
     perror("ktest_signal error - should never get here");
