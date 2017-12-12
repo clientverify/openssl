@@ -48,6 +48,8 @@
 #endif
 #define FD_ZERO(p)        memset((char *)(p), 0, sizeof(*(p)))
 
+static int my_pid = -1;
+
 /***/
 
 static int read_uint32(FILE *f, unsigned *value_out) {
@@ -303,10 +305,10 @@ void kTest_free(KTest *bo) {
 ///////////////////////////////////////////////////////////////////////////////
 
 enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT,
-       MASTER_SECRET, KTEST_GET_PEER_NAME, ERROR, SIGNAL, WAIT_PID};
+       MASTER_SECRET, KTEST_GET_PEER_NAME, ERROR, SIGNAL, WAIT_PID, RECV_MSG_FD};
 static char* ktest_object_names[] = {
   "c2s", "s2c", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
-  "error", "signal", "waitpid"
+  "error", "signal", "waitpid", "recvmsg_fd"
 };
 
 typedef struct KTestObjectVector {
@@ -408,6 +410,7 @@ static void KTOV_append(KTestObjectVector *ov,
 			int num_bytes,
 			const void *bytes)
 {
+  assert(my_pid == getpid());
   int i;
   assert(ov != NULL);
   assert(name != NULL);
@@ -436,6 +439,7 @@ int ktest_register_signal_handler(int (*a)(int)){
 
 static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
 {
+  assert(my_pid == getpid());
   if (ov->playback_index >= ov->size) {
     fprintf(stderr, "ERROR: ktest playback %s - no more recorded events", name);
     exit(2);
@@ -540,10 +544,12 @@ pid_t ktest_fork(enum KTEST_FORK which){
     assert(pid >= 0);
     //This is the case where we no longer wish to record.
     if((pid != 0 && which == CHILD) || (pid == 0 && which == PARENT)){
+      my_pid = -1;
       ktest_set_mode_none();
       return pid;
     }else if ((pid == 0 && which == CHILD) || (pid != 0 && which == PARENT)) {
       //Keep recording.
+      my_pid = getpid();
       return pid;
     } else {
       perror("ktest_fork error - should never get here");
@@ -902,6 +908,63 @@ int bssl_stdin_ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
   return ktest_select(nfds, readfds, writefds, exceptfds, timeout);
 }
 
+
+//Added for sshd support.  The monitor creates pseudoterminal and passes it
+//to the second (authenticated worker).
+ssize_t ktest_recvmsg_fd(int sockfd, struct msghdr *msg, int flags)
+{
+  assert(flags == 0);
+  int expected_return = 1; //openssh expects this to be the return value
+  if (ktest_mode == KTEST_NONE) { // passthrough
+    return recvmsg(sockfd, msg, flags);
+  }
+  else if (ktest_mode == KTEST_RECORD) {
+    ssize_t num_bytes = recvmsg(sockfd, msg, flags);
+    if (num_bytes == expected_return) {
+      struct cmsghdr *cmsg;
+      cmsg = CMSG_FIRSTHDR(msg);
+      int fd = (*(int *)CMSG_DATA(cmsg));
+      assert(fd >=0);
+      insert_ktest_sockfd(fd); //add the socket being returned to the list
+      //we're tracking
+      KTOV_append(&ktov, ktest_object_names[RECV_MSG_FD], 0, NULL);
+    } else if (num_bytes < 0) {
+      fprintf(stderr, "ktest_readsocket error returning %d bytes\n", num_bytes);
+      exit(1);
+    } else {
+      fprintf(stderr, "ERROR: expected %d returned from recvmsg got %d\n",
+          expected_return, num_bytes);
+      exit(1);
+    }
+    return num_bytes;
+  }
+  else if (ktest_mode == KTEST_PLAYBACK) {
+    KTestObject *o = KTOV_next_object(&ktov,
+				      ktest_object_names[RECV_MSG_FD]);
+
+    //sockfd is really a dummy fd, so we don't care if it is created with
+    //open or socket, since we have recorded all interactions it will engage
+    //in in playback.  This assumption will not hold if ktest_mode is changed.
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    assert(sockfd >= 0); //Ensure fd creation was successful.
+    insert_ktest_sockfd(sockfd);
+
+    //The following is highly specific to what is checked in mm_recieve_fd in
+    //ssh codebase.
+    struct cmsghdr *cmsg;
+    cmsg = CMSG_FIRSTHDR(msg);
+    cmsg->cmsg_type = SCM_RIGHTS;
+    memcpy(CMSG_DATA(cmsg), &sockfd, sizeof(sockfd));
+
+    return expected_return;
+  }
+  else {
+    perror("ktest_readsocket coding error - should never get here");
+    exit(4);
+  }
+}
+
+
 ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
 {
   if (ktest_mode == KTEST_NONE) { // passthrough
@@ -1201,6 +1264,7 @@ void ktest_master_secret(unsigned char *ms, int len) {
 }
 
 void ktest_start(const char *filename, enum kTestMode mode) {
+  my_pid = getpid();
   //Initialize socketfds with -1
   int i;
   for(i = 0; i < MAX_FDS; i++){
@@ -1254,6 +1318,7 @@ void ktest_finish() {
   }
 
   else if (ktest_mode == KTEST_RECORD) {
+    assert(my_pid == getpid());
     memset(&ktest, 0, sizeof(KTest));
     ktest.numObjects = ktov.size;
     ktest.objects = ktov.objects;
@@ -1292,6 +1357,7 @@ void ktest_finish() {
   }
 
   else if (ktest_mode == KTEST_PLAYBACK) {
+    assert(my_pid == getpid());
     // TODO: nothing except maybe cleanup?
   }
 }
@@ -1343,7 +1409,7 @@ int ktest_getpeername(int sockfd, struct sockaddr *addr, socklen_t
 
     return 0; //assume success
   }else{
-    perror("ktest_connect error - should never get here");
+    perror("ktest_getpeername error - should never get here");
     exit(4);
   }
 

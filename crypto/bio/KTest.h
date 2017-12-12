@@ -85,6 +85,7 @@ extern "C" {
             fd_set *exceptfds, struct timeval *timeout);
   ssize_t ktest_writesocket(int fd, const void *buf, size_t count);
   ssize_t ktest_readsocket(int fd, void *buf, size_t count);
+  ssize_t ktest_recvmsg_fd(int sockfd, struct msghdr *msg, int flags);
 
   // stdin capture for Cliver
   int ktest_raw_read_stdin(void *buf, int siz);
