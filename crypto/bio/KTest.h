@@ -91,6 +91,7 @@ extern "C" {
   int ktest_raw_read_stdin(void *buf, int siz);
 
   // Random number generator capture for Cliver
+  int ktest_RAND_status(void);
   int ktest_RAND_bytes(unsigned char *buf, int num);
   int ktest_RAND_pseudo_bytes(unsigned char *buf, int num);
 

@@ -1146,6 +1146,25 @@ time_t ktest_time(time_t *t)
   }
 }
 
+int ktest_RAND_status()
+{
+  if (ktest_mode == KTEST_NONE) {
+    return RAND_status();
+  }
+  else if (ktest_mode == KTEST_RECORD) {
+    int ret = RAND_status();
+    assert(ret == 1);
+    return ret;
+  }
+  else if (ktest_mode == KTEST_PLAYBACK) {
+    return 1; // success
+  }
+  else {
+    perror("ktest_RAND_status coding error - should never get here");
+    exit(4);
+  }
+}
+
 
 int ktest_RAND_bytes(unsigned char *buf, int num)
 {
