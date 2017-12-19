@@ -685,6 +685,11 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   }
 }
 
+int ktest_listen(int sockfd, int backlog){
+    int ret = listen(sockfd, backlog);
+    assert(ret == 0);
+    return ret;
+}
 
 int ktest_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen){
   assert(ktest_nfds + 1 < MAX_FDS);
