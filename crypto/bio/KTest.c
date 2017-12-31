@@ -611,35 +611,22 @@ void insert_ktest_sockfd(int sockfd){
   ktest_nfds++; //incriment the counter recording the number of sockets we're tracking
 }
 
+int ktest_socket(int domain, int type, int protocol){
+  int sockfd = socket(domain, type, protocol);
+  if(KTEST_DEBUG) printf("ktest_sock adding %d to ktest_sockfds\n", sockfd);
+  assert(ktest_nfds + 1< MAX_FDS);
+  insert_ktest_sockfd(sockfd);
+  return sockfd;
+}
+
 int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
-  assert(ktest_nfds + 1 < MAX_FDS);
-  if (ktest_mode == KTEST_NONE) { // passthrough
-      return connect(sockfd, addr, addrlen);
-  }
-  else if (ktest_mode == KTEST_RECORD) {
-      int ret;
-      if(KTEST_DEBUG) printf("ktest_connect adding %d to ktest_sockfds\n", sockfd);
-      ktest_sockfds[ktest_nfds] = sockfd; // record the socket descriptor of interest
-      ktest_nfds++;
-      ret = connect(sockfd, addr, addrlen);
-      if (KTEST_DEBUG) {
-	printf("connect() called on socket for TLS traffic (%d)\n", sockfd);
-      }
-      return ret;
-  }
-  else if (ktest_mode == KTEST_PLAYBACK) {
-      if(KTEST_DEBUG) printf("ktest_connect adding %d to ktest_sockfds\n", sockfd);
-      ktest_sockfds[ktest_nfds] = sockfd; // record the socket descriptor of interest
-      ktest_nfds++;
-      if (KTEST_DEBUG) {
-	printf("connect() called on socket for TLS traffic (%d)\n", sockfd);
-      }
-      return 0; // assume success
-  }
-  else {
-      perror("ktest_connect error - should never get here");
-      exit(4);
+  if (ktest_mode == KTEST_NONE || ktest_mode == KTEST_RECORD) { // passthrough
+    int ret = connect(sockfd, addr, addrlen);
+    assert(ret == 0);
+    return ret;
+  }else{
+    return 0; // assume success
   }
 }
 
@@ -648,7 +635,6 @@ int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
  */
 int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
-  assert(ktest_nfds + 1< MAX_FDS);
   printf("nerp ktest_bind(%d...)\n", sockfd);
   if (ktest_mode == KTEST_NONE) { // passthrough
       return bind(sockfd, addr, addrlen);
@@ -661,8 +647,7 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
         return ret;
       }
       if(KTEST_DEBUG) printf("ktest_bind adding %d to ktest_sockfds\n", sockfd);
-      ktest_sockfds[ktest_nfds] = ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
-      ktest_nfds++;
+      ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
       if (KTEST_DEBUG) {
         printf("bind() called on socket for TLS traffic (%d)\n", sockfd);
       }
@@ -672,8 +657,7 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
       if( ktest_bind_sockfd != -1) //if ktest_bind_sockfd is already assigned, return error
         return -1;
       if(KTEST_DEBUG) printf("ktest_bind adding %d to ktest_sockfds\n", sockfd);
-      ktest_sockfds[ktest_nfds] = ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
-      ktest_nfds++;
+      ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
       if (KTEST_DEBUG) {
         printf("bind() called on socket for TLS traffic (%d)\n", sockfd);
       }
@@ -698,15 +682,13 @@ int ktest_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen){
   }else if(ktest_mode == KTEST_RECORD) { // passthrough
       int accept_sock = accept(sockfd, addr, addrlen);
       if(KTEST_DEBUG) printf("ktest_accept adding %d to ktest_sockfds\n", accept_sock);
-      ktest_sockfds[ktest_nfds] = accept_sock; // record the socket descriptor of interest
-      ktest_nfds++;
+      insert_ktest_sockfd(accept_sock);
       return accept_sock;
   } else if (ktest_mode == KTEST_PLAYBACK) {
     int accept_sock = socket(AF_INET, SOCK_STREAM, 0);
     assert(accept_sock >= 0);
     if(KTEST_DEBUG) printf("ktest_accept adding %d to ktest_sockfds\n", accept_sock);
-    ktest_sockfds[ktest_nfds] = accept_sock; // record the socket descriptor of interest
-    ktest_nfds++;
+    insert_ktest_sockfd(accept_sock);
     if (KTEST_DEBUG) {
       printf("accept() called on socket for TLS traffic (%d)\n", accept_sock);
     }

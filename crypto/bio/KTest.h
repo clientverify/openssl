@@ -77,6 +77,7 @@ extern "C" {
   void insert_ktest_sockfd(int sockfd);
   // Network capture for Cliver
   int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+  int ktest_socket(int domain, int type, int protocol);
   int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
   int ktest_listen(int sockfd, int backlog);
   int ktest_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
