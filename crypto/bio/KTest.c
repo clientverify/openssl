@@ -646,7 +646,7 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
         assert(ret != 0);
         return ret;
       }
-      if(KTEST_DEBUG) printf("ktest_bind adding %d to ktest_sockfds\n", sockfd);
+      if(KTEST_DEBUG) printf("ktest_bind binding to %d (openssl model)\n", sockfd);
       ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
       if (KTEST_DEBUG) {
         printf("bind() called on socket for TLS traffic (%d)\n", sockfd);
@@ -656,7 +656,7 @@ int ktest_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
   else if (ktest_mode == KTEST_PLAYBACK) {
       if( ktest_bind_sockfd != -1) //if ktest_bind_sockfd is already assigned, return error
         return -1;
-      if(KTEST_DEBUG) printf("ktest_bind adding %d to ktest_sockfds\n", sockfd);
+      if(KTEST_DEBUG) printf("ktest_bind binding to %d (openssl model)\n", sockfd);
       ktest_bind_sockfd = sockfd; // record the socket descriptor of interest
       if (KTEST_DEBUG) {
         printf("bind() called on socket for TLS traffic (%d)\n", sockfd);
@@ -1375,9 +1375,13 @@ void ktest_finish() {
 int ktest_getaddrinfo(const char *node, const char *service,
                        const struct addrinfo *hints, struct addrinfo **res){
      if(ktest_mode == KTEST_PLAYBACK){
-        return getaddrinfo("localhost", service, hints, res);
+        int ret = getaddrinfo("localhost", service, hints, res);
+        (*res)->ai_next = NULL;
+        return ret;
      }else{
-        return getaddrinfo(node, service, hints, res);
+        int ret = getaddrinfo(node, service, hints, res);
+        (*res)->ai_next = NULL;
+        return ret;
      }
 }
 
