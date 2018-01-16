@@ -602,10 +602,10 @@ void insert_ktest_sockfd(int sockfd){
   for(i = 0; i < ktest_nfds; i++){
     if(ktest_sockfds[i] == sockfd){
       if(KTEST_DEBUG) printf("insert_ktest_sockfd attempting to add duplicate sockfd %d\n", sockfd);
-      return;
+      assert(0);
     }
   }
-  if(KTEST_DEBUG) printf("insert_ktest_sockfd adding %d to ktest_sockfds\n", sockfd);
+  if(KTEST_DEBUG) printf("insert_ktest_sockfd adding %d to ktest_sockfds ktest_nfds %d\n", sockfd, ktest_nfds);
   assert(ktest_nfds + 1 < MAX_FDS);
   ktest_sockfds[ktest_nfds] = sockfd; // record the socket descriptor of interest
   ktest_nfds++; //incriment the counter recording the number of sockets we're tracking
@@ -617,6 +617,49 @@ int ktest_socket(int domain, int type, int protocol){
   assert(ktest_nfds + 1< MAX_FDS);
   insert_ktest_sockfd(sockfd);
   return sockfd;
+}
+
+int ktest_close(int fd){
+  if(KTEST_DEBUG) printf("ktest_close removing %d from ktest_sockfds\n", fd);
+
+  if (ktest_mode == KTEST_NONE) { // passthrough
+    close(fd);
+  } else if (ktest_mode == KTEST_RECORD) {
+    int ret = close(fd);
+    assert(ret == 0);
+
+    int i;
+    int done = 0;
+    for(i = 0; i < ktest_nfds; i++){
+      if(ktest_sockfds[i] == fd){
+        if(!done){
+          ktest_sockfds[i] = -1;
+          done = 1;
+        } else {
+          assert(0);
+        }
+      }
+    }
+    return 0;
+  } else if (ktest_mode == KTEST_PLAYBACK) {
+    int i;
+    int done = 0;
+    for(i = 0; i < ktest_nfds; i++){
+      if(ktest_sockfds[i] == fd){
+        if(!done){
+          ktest_sockfds[i] = -1;
+          done = 1;
+        } else {
+          assert(0);
+        }
+      }
+    }
+    return 0;
+
+  } else {
+      perror("ktest_bind error - should never get here");
+      exit(4);
+  }
 }
 
 int ktest_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
@@ -997,17 +1040,28 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
       printf("\n");
       exit(2);
     }
-    // Since this is a write, compare for equality.
-    if (o->numBytes > 0 && memcmp(buf, o->bytes, o->numBytes) != 0) {
-      fprintf(stderr, "WARNING: ktest_writesocket playback - data mismatch\n");
-    }
+
     if (KTEST_DEBUG) {
       unsigned int i;
       printf("writesocket playback [%d]", o->numBytes);
       for (i = 0; i < o->numBytes; i++) {
+        printf(" %2.2x", ((unsigned char*)o->bytes)[i]);
+      }
+      printf("\n");
+    }
+
+    // Since this is a write, compare for equality.
+    if (o->numBytes > 0 && memcmp(buf, o->bytes, o->numBytes) != 0) {
+      fprintf(stderr, "WARNING: ktest_writesocket playback - data mismatch\n");
+      //trying to send:
+      unsigned int i;
+      printf("writesocket trying to write [%d]", count);
+      for (i = 0; i < count; i++) {
         printf(" %2.2x", ((unsigned char*)buf)[i]);
       }
       printf("\n");
+      //and fail
+      //assert(0);
     }
     return o->numBytes;
   }
