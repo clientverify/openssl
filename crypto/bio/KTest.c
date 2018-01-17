@@ -619,6 +619,15 @@ int ktest_socket(int domain, int type, int protocol){
   return sockfd;
 }
 
+int ktest_dup(int oldfd){
+  int newfd = dup(oldfd);
+  assert(ktest_nfds + 1< MAX_FDS);
+  insert_ktest_sockfd(newfd);
+  printf("ktest_dup returning %d\n", newfd);
+  return newfd;
+}
+
+
 int ktest_close(int fd){
   if(KTEST_DEBUG) printf("ktest_close removing %d from ktest_sockfds\n", fd);
 
@@ -961,7 +970,6 @@ ssize_t ktest_recvmsg_fd(int sockfd, struct msghdr *msg, int flags)
       assert(fd >=0);
       insert_ktest_sockfd(fd); //add the socket being returned to the list
       //we're tracking
-      KTOV_append(&ktov, ktest_object_names[RECV_MSG_FD], 0, NULL);
     } else if (num_bytes < 0) {
       fprintf(stderr, "ktest_readsocket error returning %d bytes\n", num_bytes);
       exit(1);
@@ -973,9 +981,6 @@ ssize_t ktest_recvmsg_fd(int sockfd, struct msghdr *msg, int flags)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    KTestObject *o = KTOV_next_object(&ktov,
-				      ktest_object_names[RECV_MSG_FD]);
-
     //sockfd is really a dummy fd, so we don't care if it is created with
     //open or socket, since we have recorded all interactions it will engage
     //in in playback.  This assumption will not hold if ktest_mode is changed.
