@@ -450,7 +450,7 @@ static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
   if (strcmp(o->name, ktest_object_names[ERROR]) == 0){ //error is stored instead
     //of the requested object
     errno = (int)o->bytes;
-    fprintf(stderr, "ktest playback returning NULL on error");
+    fprintf(stderr, "ktest playback returning NULL on error\n");
   } else if (strcmp(o->name, ktest_object_names[SIGNAL]) == 0){
     int sig = (int)o->bytes;
     //Here we call the signal handler
@@ -519,13 +519,15 @@ int ktest_waitpid(pid_t pid, int *status, int options){
 
     //Requirement: consistency between the child pid ktest_fork
     //returns and the pid returned by ktest_waitpid.
-    *status = o->bytes;
+    *status = *((int*)o2->bytes);
+    if(KTEST_DEBUG) printf("ktest_waitpid setting status to %d\n", *status);
     return KTEST_FORK_DUMMY_CHILD_PID;
   } else if(arg_ktest_mode == KTEST_RECORD) {
     int tmp = waitpid(pid, status, options);
     if(tmp > 0){
-      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(tmp) , &tmp);
-      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(*status) , status);
+      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(int) , &tmp);
+      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(int) , status);
+      if(KTEST_DEBUG) printf("ktest_waitpid appending retval %d status %d\n", tmp, *status);
     } else {
       KTOV_append(&ktov, ktest_object_names[ERROR], sizeof(errno), &errno);
       if(KTEST_DEBUG) fprintf(stderr, "ktest_waitpid error\n");
@@ -624,13 +626,13 @@ int ktest_dup(int oldfd){
   int newfd = dup(oldfd);
   assert(ktest_nfds + 1< MAX_FDS);
   insert_ktest_sockfd(newfd);
-  printf("ktest_dup returning %d\n", newfd);
+  if(KTEST_DEBUG) printf("ktest_dup returning %d\n", newfd);
   return newfd;
 }
 
 
 int ktest_close(int fd){
-  if(KTEST_DEBUG) printf("ktest_close removing %d from ktest_sockfds\n", fd);
+  if(KTEST_DEBUG) printf("ktest_close removing %d from ktest_sockfds pid %d\n", fd, getpid());
 
   if (ktest_mode == KTEST_NONE) { // passthrough
     close(fd);
@@ -1067,7 +1069,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
       }
       printf("\n");
       //and fail
-      //assert(0);
+      assert(0);
     }
     return o->numBytes;
   }
