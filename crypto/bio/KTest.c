@@ -305,11 +305,11 @@ void kTest_free(KTest *bo) {
 ///////////////////////////////////////////////////////////////////////////////
 
 enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT,
-       MASTER_SECRET, KTEST_GET_PEER_NAME, ERROR, SIGNAL, WAIT_PID, RECV_MSG_FD,
-       IS_NEXT_ERROR};
+       MASTER_SECRET, KTEST_GET_PEER_NAME, WAITPID_ERROR, ERROR, SIGNAL, WAIT_PID, RECV_MSG_FD,
+        IS_NEXT_WAITPID_ERROR, IS_NEXT_ERROR};
 static char* ktest_object_names[] = {
   "c2s", "s2c", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
-  "error", "signal", "waitpid", "recvmsg_fd", "is_next_error"
+  "waitpid_error", "error", "signal", "waitpid", "recvmsg_fd", "is_next_waitpid_error", "is_next_error"
 };
 
 typedef struct KTestObjectVector {
@@ -501,36 +501,64 @@ static int ktest_bind_sockfd = -1;
 //Return the same fake pid everytime for debugging.
 #define KTEST_FORK_DUMMY_CHILD_PID 37
 
-int ktest_waitpid(pid_t pid, int *status, int options){
+int ktest_waitpid_happytuesday(pid_t pid, int *status, int options){
+  if(KTEST_DEBUG) printf("openssl's ktest_waitpid 0\n");
+
   assert(pid == -1);
   assert(options == WNOHANG);
   if (ktest_mode == KTEST_NONE){
     return waitpid(pid, status, options);
   } else if(arg_ktest_mode == KTEST_PLAYBACK) {
-    //TODO: Use only one KTestObject.
-    KTestObject *o = KTOV_next_object(&ktov,
-                          ktest_object_names[WAIT_PID]);
-    if(strcmp(o->name, ktest_object_names[ERROR]) == 0){
-      if(KTEST_DEBUG) fprintf(stderr, "ktest_waitpid error\n");
+    //Get error indicator:
+    KTestObject *is_next_error = KTOV_next_object(&ktov,
+                          ktest_object_names[IS_NEXT_WAITPID_ERROR]);
+
+    assert((int)(*is_next_error->bytes) == 1 || (int)(*is_next_error->bytes) == 0);
+
+    //Handle error:
+    if((int)(*is_next_error->bytes) == 1){
+      KTestObject *o = KTOV_next_object(&ktov,
+                          ktest_object_names[WAITPID_ERROR]);
+      errno = (int)(*o->bytes); 
+     
+      if(KTEST_DEBUG) fprintf(stderr, "ktest_waitpid error %d\n", errno);
       return -1;
     }
-    KTestObject *o2 = KTOV_next_object(&ktov,
+
+    //Status:
+    KTestObject *status_object = KTOV_next_object(&ktov,
                           ktest_object_names[WAIT_PID]);
+    *status = (int)(*status_object->bytes);
+
+    //Return value:
+    KTestObject *ret_obj = KTOV_next_object(&ktov,
+                          ktest_object_names[WAIT_PID]);
+    int ret = (int)(*ret_obj->bytes);
+    //If ret is 0, return 0
+    if(ret == 0){
+      if(KTEST_DEBUG) printf("ktest_waitpid returning 0\n");
+      return 0;
+    }
 
     //Requirement: consistency between the child pid ktest_fork
     //returns and the pid returned by ktest_waitpid.
-    *status = *((int*)o2->bytes);
-    if(KTEST_DEBUG) printf("ktest_waitpid setting status to %d\n", *status);
+    if(KTEST_DEBUG) printf("ktest_waitpid returning pid %d status %d\n",
+        KTEST_FORK_DUMMY_CHILD_PID, *status);
     return KTEST_FORK_DUMMY_CHILD_PID;
+
   } else if(arg_ktest_mode == KTEST_RECORD) {
     int tmp = waitpid(pid, status, options);
-    if(tmp > 0){
-      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(int) , &tmp);
-      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(int) , status);
+    if(tmp >= 0){
+      int next = 0; //next record is not an error
+      KTOV_append(&ktov, ktest_object_names[IS_NEXT_WAITPID_ERROR], sizeof(next), &next);
+      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(int), status);
+      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(int), &tmp);
       if(KTEST_DEBUG) printf("ktest_waitpid appending retval %d status %d\n", tmp, *status);
     } else {
-      KTOV_append(&ktov, ktest_object_names[ERROR], sizeof(errno), &errno);
-      if(KTEST_DEBUG) fprintf(stderr, "ktest_waitpid error\n");
+      int next = 1; //next record is an error
+      KTOV_append(&ktov, ktest_object_names[IS_NEXT_WAITPID_ERROR], sizeof(next), &next);
+      KTOV_append(&ktov, ktest_object_names[WAITPID_ERROR], sizeof(errno), &errno);
+      if(KTEST_DEBUG) fprintf(stderr, "ktest_waitpid appending error %d\n", errno);
     }
     return tmp;
   } else {
@@ -597,6 +625,8 @@ void ktest_record_signal(int sig_num){
     exit(4);
   }
 }
+
+
 
 //This overaproximates the filedescriptors in the system.  We don't support
 //a close model at the moment--which is probably going to bite us at some point.
@@ -1087,6 +1117,7 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
   }
   else if (ktest_mode == KTEST_RECORD) {
     ssize_t num_bytes = readsocket(fd, buf, count);
+    int my_errno = errno;
     if (num_bytes >= 0) {
       int next = 0; //next record isn't error
       KTOV_append(&ktov, ktest_object_names[IS_NEXT_ERROR], sizeof(next), &next);
@@ -1094,10 +1125,10 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
     } else if (num_bytes < 0) {
       int next = 1; //next record is an error
       KTOV_append(&ktov, ktest_object_names[IS_NEXT_ERROR], sizeof(next), &next);
-      assert(errno != EINTR && errno != EAGAIN);
-      KTOV_append(&ktov, ktest_object_names[ERROR], sizeof(errno), &errno);
+      assert(my_errno != EINTR && my_errno != EAGAIN);
+      KTOV_append(&ktov, ktest_object_names[ERROR], sizeof(my_errno), &my_errno);
       fprintf(stderr, "ktest_readsocket error returning %d bytes\n", num_bytes);
-      assert(errno != EINTR && errno != EAGAIN);
+      assert(my_errno != EINTR && my_errno != EAGAIN);
     }
     if (KTEST_DEBUG) {
       unsigned int i;
@@ -1107,6 +1138,7 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
       }
       printf("\n");
     }
+    errno = my_errno;
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
@@ -1115,7 +1147,8 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
    KTestObject *o = KTOV_next_object(&ktov,
 				      ktest_object_names[SERVER_TO_CLIENT]);
     if(strcmp(o->name, ktest_object_names[ERROR]) == 0){
-      fprintf(stderr, "ktest_readsocket error returning %d bytes\n", -1);
+      errno = (int)*o->bytes;
+      fprintf(stderr, "ktest_readsocket error returning bytes: %d errno: %d\n", -1, errno);
       return -1;
     }
     if (o->numBytes > count) {
