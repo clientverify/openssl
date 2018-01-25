@@ -69,6 +69,7 @@ extern "C" {
   enum kTestMode arg_ktest_mode;
   void ktest_set_mode_none(void);
 
+  int ktest_shutdown(int socket, int how);
   enum KTEST_FORK {PARENT, CHILD};
   int  ktest_waitpid(pid_t pid, int *status, int options);
   pid_t ktest_fork(enum KTEST_FORK which);

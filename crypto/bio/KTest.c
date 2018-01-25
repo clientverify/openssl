@@ -305,11 +305,11 @@ void kTest_free(KTest *bo) {
 ///////////////////////////////////////////////////////////////////////////////
 
 enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT,
-       MASTER_SECRET, KTEST_GET_PEER_NAME, WAITPID_ERROR, ERROR, SIGNAL, WAIT_PID, RECV_MSG_FD,
+       MASTER_SECRET, KTEST_GET_PEER_NAME, WAITPID_ERROR, ERROR, WAIT_PID, RECV_MSG_FD,
         IS_NEXT_WAITPID_ERROR, IS_NEXT_ERROR};
 static char* ktest_object_names[] = {
   "c2s", "s2c", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
-  "waitpid_error", "error", "signal", "waitpid", "recvmsg_fd", "is_next_waitpid_error", "is_next_error"
+  "waitpid_error", "error", "waitpid", "recvmsg_fd", "is_next_waitpid_error", "is_next_error"
 };
 
 typedef struct KTestObjectVector {
@@ -451,12 +451,6 @@ static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
     //of the requested object
     errno = (int)o->bytes;
     fprintf(stderr, "ktest playback returning NULL on error\n");
-  } else if (strcmp(o->name, ktest_object_names[SIGNAL]) == 0){
-    int sig = (int)o->bytes;
-    //Here we call the signal handler
-    signal_handler(sig);
-    if(KTEST_DEBUG) printf("KTOV_next_object finished handling signal %s record\n", sig);
-    return KTOV_next_object(ov, name);
   } else if (strcmp(o->name, name) != 0) {
     fprintf(stderr,
 	    "ERROR: ktest playback needed '%s', but recording had '%s'\n",
@@ -501,7 +495,7 @@ static int ktest_bind_sockfd = -1;
 //Return the same fake pid everytime for debugging.
 #define KTEST_FORK_DUMMY_CHILD_PID 37
 
-int ktest_waitpid_happytuesday(pid_t pid, int *status, int options){
+int ktest_waitpid_or_error(pid_t pid, int *status, int options){
   if(KTEST_DEBUG) printf("openssl's ktest_waitpid 0\n");
 
   assert(pid == -1);
@@ -567,6 +561,10 @@ int ktest_waitpid_happytuesday(pid_t pid, int *status, int options){
   }
 }
 
+int ktest_shutdown(int socket, int how){
+  return shutdown(socket, how);
+}
+
 //which is the parent or child--whichever we wish to continue
 //recording or playing back from
 pid_t ktest_fork(enum KTEST_FORK which){
@@ -612,14 +610,17 @@ pid_t ktest_fork(enum KTEST_FORK which){
 //We assume that we only get signals we need to handle while in another call
 //e.g. ktest_accept/ktest_select.  We then record the signal.  Playback
 //signals are handled in the KTOV_next_object() function.
+static int signal_indicator = 0;
+static int signal_val = 0;
 void ktest_record_signal(int sig_num){
   if (ktest_mode == KTEST_NONE)
     return;
   else if (arg_ktest_mode == KTEST_PLAYBACK){
     return;
   } else if(arg_ktest_mode == KTEST_RECORD){
-    if(KTEST_DEBUG) printf("ktest_record_signal appending %d\n", sig_num);
-    KTOV_append(&ktov, ktest_object_names[SIGNAL], sizeof(sig_num), &sig_num);
+    if(KTEST_DEBUG) printf("ktest_record_signal setting signal_indicator\n");
+    signal_indicator = 1;
+    signal_val = sig_num;
   } else {
     perror("ktest_signal error - should never get here");
     exit(4);
@@ -819,7 +820,7 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
       //    outW - writefds output value
 
       int ret, i, active_fd_count = 0;
-      unsigned int size = 4*nfds + 40 /*text*/ + 3*4 /*3 fd's*/ + 1 /*null*/;
+      unsigned int size = 4*nfds + 40 /*text*/ + 3*4 /*3 fd's*/ + 1 /*null*/ + 500 /*added to get signal stuff to work*/;
       char *record = (char *)calloc(size, sizeof(char));
       unsigned int pos = 0;
 
@@ -833,10 +834,17 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
         fflush(stdout);
       }
 
-      pos += snprintf(&record[pos], size-pos,
-		      "ktest_nfds %d nfds %d ", ktest_nfds, nfds);
+
 
       ret = select(nfds, readfds, writefds, exceptfds, timeout);
+
+      pos += snprintf(&record[pos], size-pos,
+		      "signal_indicator %d signal_val %d ", signal_indicator, signal_val);
+      signal_indicator = 0;
+      signal_val = 0;
+
+      pos += snprintf(&record[pos], size-pos,
+		      "ktest_nfds %d nfds %d ", ktest_nfds, nfds);
 
       if (KTEST_DEBUG) {
 	    printf("Select returned %d (ktest_nfds = %d)\n", ret, ktest_nfds);
@@ -894,6 +902,21 @@ int ktest_select(int nfds, fd_set *readfds, fd_set *writefds,
     if(writefds != NULL){ FD_ZERO(writefds);}// output of select
 
     tmp = strtok(recorded_select, " ");
+
+    //figure out if we have to handle a signal.
+    assert(strcmp(tmp, "signal_indicator") == 0);
+    int my_signal_indicator = atoi(strtok(NULL, " ")); // socket for TLS traffic
+
+    tmp = strtok(NULL, " ");
+    assert(strcmp(tmp, "signal_val") == 0);
+    int my_signal_val = atoi(strtok(NULL, " "));
+
+    if(my_signal_indicator){
+      if(KTEST_DEBUG) printf("select signal %d active_fd_count = %d\n", ret, active_fd_count);
+      signal_handler(my_signal_val);
+    }
+
+    tmp = strtok(NULL, " ");
     assert(strcmp(tmp, "ktest_nfds") == 0);
     recorded_ktest_nfds = atoi(strtok(NULL, " ")); // socket for TLS traffic
     assert(ktest_nfds == recorded_ktest_nfds);
