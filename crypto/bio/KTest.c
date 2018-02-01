@@ -661,6 +661,29 @@ int ktest_dup(int oldfd){
   return newfd;
 }
 
+int ktest_stat(const char *path, struct stat *buf){
+  int ret = stat(path, buf);
+  assert(ret == 0);
+  return ret;
+}
+
+int ktest_chown(const char *path, uid_t owner, gid_t group){
+  int ret = chown(path, owner, group);
+  assert(ret == 0);
+  return ret;
+}
+
+int ktest_initgroups( const char *user, gid_t group){
+  int ret = initgroups(user, group);
+  assert(ret == 0);
+  return ret;
+}
+
+int ktest_setgroups(size_t size, const gid_t *list){
+  int ret = setgroups(size, list);
+  assert(ret == 0);
+  return ret;
+}
 
 int ktest_close(int fd){
   if(KTEST_DEBUG) printf("ktest_close removing %d from ktest_sockfds pid %d\n", fd, getpid());
