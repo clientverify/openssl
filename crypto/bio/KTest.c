@@ -646,19 +646,31 @@ void insert_ktest_sockfd(int sockfd){
 }
 
 int ktest_socket(int domain, int type, int protocol){
-  int sockfd = socket(domain, type, protocol);
-  if(KTEST_DEBUG) printf("ktest_sock adding %d to ktest_sockfds\n", sockfd);
-  assert(ktest_nfds + 1< MAX_FDS);
-  insert_ktest_sockfd(sockfd);
-  return sockfd;
+  if (ktest_mode == KTEST_NONE) {
+    return socket(domain, type, protocol);
+  } else if  (ktest_mode == KTEST_PLAYBACK || ktest_mode == KTEST_RECORD) {
+    int sockfd = socket(domain, type, protocol);
+    if(KTEST_DEBUG) printf("ktest_sock adding %d to ktest_sockfds\n", sockfd);
+    assert(ktest_nfds + 1< MAX_FDS);
+    insert_ktest_sockfd(sockfd);
+    return sockfd;
+  }else
+    assert(0);
 }
 
 int ktest_dup(int oldfd){
-  int newfd = dup(oldfd);
-  assert(ktest_nfds + 1< MAX_FDS);
-  insert_ktest_sockfd(newfd);
-  if(KTEST_DEBUG) printf("ktest_dup returning %d\n", newfd);
-  return newfd;
+
+  if (ktest_mode == KTEST_NONE) { // passthrough
+    return dup(oldfd);
+  } else if(ktest_mode == KTEST_PLAYBACK || ktest_mode == KTEST_RECORD){
+    int newfd = dup(oldfd);
+    assert(ktest_nfds + 1< MAX_FDS);
+    insert_ktest_sockfd(newfd);
+    if(KTEST_DEBUG) printf("ktest_dup returning %d\n", newfd);
+    return newfd;
+  } else {
+    assert(0);
+  }
 }
 
 int ktest_stat(const char *path, struct stat *buf){
@@ -686,10 +698,10 @@ int ktest_setgroups(size_t size, const gid_t *list){
 }
 
 int ktest_close(int fd){
-  if(KTEST_DEBUG) printf("ktest_close removing %d from ktest_sockfds pid %d\n", fd, getpid());
+//  if(KTEST_DEBUG) printf("ktest_close removing %d from ktest_sockfds pid %d\n", fd, getpid());
 
   if (ktest_mode == KTEST_NONE) { // passthrough
-    close(fd);
+    return close(fd);
   } else if (ktest_mode == KTEST_RECORD) {
     int ret = close(fd);
     assert(ret == 0);
