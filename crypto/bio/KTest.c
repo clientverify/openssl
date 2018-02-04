@@ -503,57 +503,56 @@ int ktest_waitpid_or_error(pid_t pid, int *status, int options){
   if (ktest_mode == KTEST_NONE){
     return waitpid(pid, status, options);
   } else if(arg_ktest_mode == KTEST_PLAYBACK) {
-    //Get error indicator:
-    KTestObject *is_next_error = KTOV_next_object(&ktov,
-                          ktest_object_names[IS_NEXT_WAITPID_ERROR]);
+    KTestObject *o = KTOV_next_object(&ktov, ktest_object_names[WAIT_PID]);
+    char *recorded_select = strdup((const char*)o->bytes);
 
-    assert((int)(*is_next_error->bytes) == 1 || (int)(*is_next_error->bytes) == 0);
+    char* tmp = strtok(recorded_select, " ");
+    assert(strcmp(tmp, "ret_val") == 0);
+    int ret_val = atoi(strtok(NULL, " "));
 
-    //Handle error:
-    if((int)(*is_next_error->bytes) == 1){
-      KTestObject *o = KTOV_next_object(&ktov,
-                          ktest_object_names[WAITPID_ERROR]);
-      errno = (int)(*o->bytes); 
-     
-      if(KTEST_DEBUG) fprintf(stderr, "ktest_waitpid error %d\n", errno);
-      return -1;
+    if(ret_val >= 0){
+      tmp = strtok(NULL, " ");
+      printf("ktest_waitpid status == %s\n", tmp);
+      assert(strcmp(tmp, "status") == 0);
+      *status = atoi(strtok(NULL, " "));
+      if(KTEST_DEBUG) printf("ktest_waitpid status %d\n", *status);
+    } else {
+      tmp = strtok(NULL, " ");
+      printf("ktest_waitpid errno == %s\n", tmp);
+      assert(strcmp(tmp, "errno") == 0);
+      errno = atoi(strtok(NULL, " "));
+      if(KTEST_DEBUG) printf("ktest_waitpid error %d\n", errno);
     }
-
-    //Status:
-    KTestObject *status_object = KTOV_next_object(&ktov,
-                          ktest_object_names[WAIT_PID]);
-    *status = (int)(*status_object->bytes);
-
-    //Return value:
-    KTestObject *ret_obj = KTOV_next_object(&ktov,
-                          ktest_object_names[WAIT_PID]);
-    int ret = (int)(*ret_obj->bytes);
-    //If ret is 0, return 0
-    if(ret == 0){
+    free(recorded_select);
+    if(ret_val == 0){
       if(KTEST_DEBUG) printf("ktest_waitpid returning 0\n");
       return 0;
+    } else if(ret_val <  0){
+      return -1;
+    } else {
+       if(KTEST_DEBUG) printf("ktest_waitpid returning pid %d status %d\n",
+           KTEST_FORK_DUMMY_CHILD_PID, *status);
+      return KTEST_FORK_DUMMY_CHILD_PID;
+
     }
-
-    //Requirement: consistency between the child pid ktest_fork
-    //returns and the pid returned by ktest_waitpid.
-    if(KTEST_DEBUG) printf("ktest_waitpid returning pid %d status %d\n",
-        KTEST_FORK_DUMMY_CHILD_PID, *status);
-    return KTEST_FORK_DUMMY_CHILD_PID;
-
   } else if(arg_ktest_mode == KTEST_RECORD) {
+    unsigned int size = 100;
+    char *record = (char*) calloc(size, sizeof(char));
+    unsigned int pos = 0;
+
     int tmp = waitpid(pid, status, options);
+
+    pos += snprintf(&record[pos], size-pos, "ret_val %d ", tmp);
     if(tmp >= 0){
-      int next = 0; //next record is not an error
-      KTOV_append(&ktov, ktest_object_names[IS_NEXT_WAITPID_ERROR], sizeof(next), &next);
-      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(int), status);
-      KTOV_append(&ktov, ktest_object_names[WAIT_PID], sizeof(int), &tmp);
+      pos += snprintf(&record[pos], size-pos, "status %d ", *status);
       if(KTEST_DEBUG) printf("ktest_waitpid appending retval %d status %d\n", tmp, *status);
     } else {
-      int next = 1; //next record is an error
-      KTOV_append(&ktov, ktest_object_names[IS_NEXT_WAITPID_ERROR], sizeof(next), &next);
-      KTOV_append(&ktov, ktest_object_names[WAITPID_ERROR], sizeof(errno), &errno);
-      if(KTEST_DEBUG) fprintf(stderr, "ktest_waitpid appending error %d\n", errno);
+      pos += snprintf(&record[pos], size-pos, "errno %d ", errno);
+      if(KTEST_DEBUG) printf("ktest_waitpid appending error %d\n", errno);
     }
+    assert(pos < size);
+    record[size-1] = '\n';
+    KTOV_append(&ktov, ktest_object_names[WAIT_PID], strlen(record)+1, record);
     return tmp;
   } else {
     perror("ktest_signal error - should never get here");
