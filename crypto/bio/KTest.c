@@ -305,11 +305,11 @@ void kTest_free(KTest *bo) {
 ///////////////////////////////////////////////////////////////////////////////
 
 enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT,
-       MASTER_SECRET, KTEST_GET_PEER_NAME, WAITPID_ERROR, ERROR, WAIT_PID, RECV_MSG_FD,
-        IS_NEXT_WAITPID_ERROR, IS_NEXT_ERROR};
+       MASTER_SECRET, KTEST_GET_PEER_NAME, ERROR, WAIT_PID, RECV_MSG_FD,
+       IS_NEXT_ERROR};
 static char* ktest_object_names[] = {
   "c2s", "s2c", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
-  "waitpid_error", "error", "waitpid", "recvmsg_fd", "is_next_waitpid_error", "is_next_error"
+  "error", "waitpid", "recvmsg_fd", "is_next_error"
 };
 
 typedef struct KTestObjectVector {
@@ -512,13 +512,11 @@ int ktest_waitpid_or_error(pid_t pid, int *status, int options){
 
     if(ret_val >= 0){
       tmp = strtok(NULL, " ");
-      printf("ktest_waitpid status == %s\n", tmp);
       assert(strcmp(tmp, "status") == 0);
       *status = atoi(strtok(NULL, " "));
       if(KTEST_DEBUG) printf("ktest_waitpid status %d\n", *status);
     } else {
       tmp = strtok(NULL, " ");
-      printf("ktest_waitpid errno == %s\n", tmp);
       assert(strcmp(tmp, "errno") == 0);
       errno = atoi(strtok(NULL, " "));
       if(KTEST_DEBUG) printf("ktest_waitpid error %d\n", errno);
