@@ -304,11 +304,11 @@ void kTest_free(KTest *bo) {
 // Local to this file
 ///////////////////////////////////////////////////////////////////////////////
 
-enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT,
+enum { VERIFY_SENDSOCKET=0, VERIFY_READSOCKET, RNG, PRNG, TIME, STDIN, SELECT,
        MASTER_SECRET, KTEST_GET_PEER_NAME, WAIT_PID, RECV_MSG_FD,
        READSOCKET_OR_ERROR};
 static char* ktest_object_names[] = {
-  "c2s", "s2c", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
+  "verify_sendsocket", "verify_readsocket", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
   "waitpid", "recvmsg_fd", "readsocket_or_error"
 };
 
@@ -1097,7 +1097,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
   else if (ktest_mode == KTEST_RECORD) {
     ssize_t num_bytes = writesocket(fd, buf, count);
     if (num_bytes > 0) {
-      KTOV_append(&ktov, ktest_object_names[CLIENT_TO_SERVER], num_bytes, buf);
+      KTOV_append(&ktov, ktest_object_names[VERIFY_SENDSOCKET], num_bytes, buf);
     } else if (num_bytes < 0) {
       perror("ktest_writesocket error");
       exit(1);
@@ -1114,7 +1114,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
     KTestObject *o = KTOV_next_object(&ktov,
-				      ktest_object_names[CLIENT_TO_SERVER]);
+				      ktest_object_names[VERIFY_SENDSOCKET]);
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_writesocket playback error: %zu bytes of input, "
@@ -1247,7 +1247,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     ssize_t num_bytes = readsocket(fd, buf, count);
     assert(num_bytes >= 0);
     
-    KTOV_append(&ktov, ktest_object_names[SERVER_TO_CLIENT], num_bytes, buf);
+    KTOV_append(&ktov, ktest_object_names[VERIFY_READSOCKET], num_bytes, buf);
     if (KTEST_DEBUG) {
       unsigned int i;
       printf("readsocket redording [%d]", num_bytes);
@@ -1260,7 +1260,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
     KTestObject *o = KTOV_next_object(&ktov,
-				      ktest_object_names[SERVER_TO_CLIENT]);
+				      ktest_object_names[VERIFY_READSOCKET]);
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_readsocket playback error: %zu byte destination buffer, "
