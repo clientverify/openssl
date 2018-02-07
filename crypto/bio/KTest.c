@@ -305,11 +305,11 @@ void kTest_free(KTest *bo) {
 ///////////////////////////////////////////////////////////////////////////////
 
 enum { CLIENT_TO_SERVER=0, SERVER_TO_CLIENT, RNG, PRNG, TIME, STDIN, SELECT,
-       MASTER_SECRET, KTEST_GET_PEER_NAME, ERROR, WAIT_PID, RECV_MSG_FD,
-       IS_NEXT_ERROR};
+       MASTER_SECRET, KTEST_GET_PEER_NAME, WAIT_PID, RECV_MSG_FD,
+       READSOCKET_OR_ERROR};
 static char* ktest_object_names[] = {
   "c2s", "s2c", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
-  "error", "waitpid", "recvmsg_fd", "is_next_error"
+  "waitpid", "recvmsg_fd", "readsocket_or_error"
 };
 
 typedef struct KTestObjectVector {
@@ -447,11 +447,8 @@ static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
   }
   KTestObject *o = &ov->objects[ov->playback_index];
   ov->playback_index++;
-  if (strcmp(o->name, ktest_object_names[ERROR]) == 0){ //error is stored instead
-    //of the requested object
-    errno = (int)o->bytes;
-    fprintf(stderr, "ktest playback returning NULL on error\n");
-  } else if (strcmp(o->name, name) != 0) {
+
+  if (strcmp(o->name, name) != 0) {
     fprintf(stderr,
 	    "ERROR: ktest playback needed '%s', but recording had '%s'\n",
 	    name, o->name);
@@ -1167,6 +1164,8 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
 
 ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
 {
+  char* error_str = "is_error ";
+  char* not_error_str = "not_error ";
   if (ktest_mode == KTEST_NONE) { // passthrough
     return readsocket(fd, buf, count);
   }
@@ -1174,20 +1173,26 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
     ssize_t num_bytes = readsocket(fd, buf, count);
     int my_errno = errno;
     if (num_bytes >= 0) {
-      int next = 0; //next record isn't error
-      KTOV_append(&ktov, ktest_object_names[IS_NEXT_ERROR], sizeof(next), &next);
-      KTOV_append(&ktov, ktest_object_names[SERVER_TO_CLIENT], num_bytes, buf);
+      int size = strlen(not_error_str) + num_bytes;
+      int pos = 0;
+      char* record = malloc(size);
+      pos += snprintf(&record[pos], size-pos, not_error_str);
+      assert(pos == strlen(not_error_str));
+      memcpy(record+pos, buf, num_bytes);
+      KTOV_append(&ktov, ktest_object_names[READSOCKET_OR_ERROR], size, record);
     } else if (num_bytes < 0) {
-      int next = 1; //next record is an error
-      KTOV_append(&ktov, ktest_object_names[IS_NEXT_ERROR], sizeof(next), &next);
+      int size = strlen(error_str) + sizeof(my_errno);
+      int pos = 0;
+      char* record = malloc(size);
+      pos += snprintf(&record[pos], size-pos, "%s%d", error_str, my_errno);
       assert(my_errno != EINTR && my_errno != EAGAIN);
-      KTOV_append(&ktov, ktest_object_names[ERROR], sizeof(my_errno), &my_errno);
+      KTOV_append(&ktov, ktest_object_names[READSOCKET_OR_ERROR], size, record);
       fprintf(stderr, "ktest_readsocket error returning %d bytes\n", num_bytes);
       assert(my_errno != EINTR && my_errno != EAGAIN);
     }
-    if (KTEST_DEBUG) {
+    if (KTEST_DEBUG && num_bytes>=0) {
       unsigned int i;
-      printf("readsocket redording [%d]", num_bytes);
+      printf("readsocket recording [%d]", num_bytes);
       for (i = 0; i < num_bytes; i++) {
 	printf(" %2.2x", ((unsigned char*)buf)[i]);
       }
@@ -1197,32 +1202,33 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-   KTestObject *is_next_error = KTOV_next_object(&ktov,
-				      ktest_object_names[IS_NEXT_ERROR]);
-   KTestObject *o = KTOV_next_object(&ktov,
-				      ktest_object_names[SERVER_TO_CLIENT]);
-    if(strcmp(o->name, ktest_object_names[ERROR]) == 0){
-      errno = (int)*o->bytes;
+    KTestObject *o = KTOV_next_object(&ktov,
+				      ktest_object_names[READSOCKET_OR_ERROR]);
+    if(strncmp(o->bytes, error_str, strlen(error_str)) == 0){
+      errno = (int)o->bytes[strlen(error_str)];
       fprintf(stderr, "ktest_readsocket error returning bytes: %d errno: %d\n", -1, errno);
       return -1;
     }
-    if (o->numBytes > count) {
+    assert(strncmp(o->bytes, not_error_str, strlen(not_error_str)) == 0);
+    int   read_len = o->numBytes - strlen(not_error_str);
+    char* read_buf = o->bytes    + strlen(not_error_str);
+    if (read_len > count) {
       fprintf(stderr,
 	      "ktest_readsocket playback error: %zu byte destination buffer, "
-	      "%d bytes recorded", count, o->numBytes);
+	      "%d bytes recorded", count, read_len);
       exit(2);
     }
     // Read recorded data into buffer
-    memcpy(buf, o->bytes, o->numBytes);
+    memcpy(buf, read_buf, read_len);
     if (KTEST_DEBUG) {
       unsigned int i;
-      printf("readsocket playback [%d]", o->numBytes);
-      for (i = 0; i < o->numBytes; i++) {
-	printf(" %2.2x", ((unsigned char*)buf)[i]);
+      printf("readsocket playback [read_len %d size %d]", read_len, o->numBytes);
+      for (i = 0; i < read_len; i++) {
+	      printf(" %2.2x", ((unsigned char*)buf)[i]);
       }
       printf("\n");
     }
-    return o->numBytes;
+    return read_len;
   }
   else {
     perror("ktest_readsocket coding error - should never get here");
@@ -1239,15 +1245,9 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
   }
   else if (ktest_mode == KTEST_RECORD) {
     ssize_t num_bytes = readsocket(fd, buf, count);
-    if (num_bytes >= 0) {
-      KTOV_append(&ktov, ktest_object_names[SERVER_TO_CLIENT], num_bytes, buf);
-    } else if (num_bytes < 0) {
-      assert(errno != EINTR && errno != EAGAIN);
-      KTOV_append(&ktov, ktest_object_names[ERROR], sizeof(errno), &errno);
-      fprintf(stderr, "ktest_readsocket error returning %d bytes\n", num_bytes);
-      assert(errno != EINTR && errno != EAGAIN);
-      //exit(1);
-    }
+    assert(num_bytes >= 0);
+    
+    KTOV_append(&ktov, ktest_object_names[SERVER_TO_CLIENT], num_bytes, buf);
     if (KTEST_DEBUG) {
       unsigned int i;
       printf("readsocket redording [%d]", num_bytes);
@@ -1261,10 +1261,6 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
   else if (ktest_mode == KTEST_PLAYBACK) {
     KTestObject *o = KTOV_next_object(&ktov,
 				      ktest_object_names[SERVER_TO_CLIENT]);
-    if(strcmp(o->name, ktest_object_names[ERROR]) == 0){
-      fprintf(stderr, "ktest_readsocket error returning %d bytes\n", -1);
-      return -1;
-    }
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_readsocket playback error: %zu byte destination buffer, "
