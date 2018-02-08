@@ -306,10 +306,10 @@ void kTest_free(KTest *bo) {
 
 enum { VERIFY_SENDSOCKET=0, VERIFY_READSOCKET, RNG, PRNG, TIME, STDIN, SELECT,
        MASTER_SECRET, KTEST_GET_PEER_NAME, WAIT_PID, RECV_MSG_FD,
-       READSOCKET_OR_ERROR};
+       READSOCKET_OR_ERROR, READSOCKET, WRITESOCKET};
 static char* ktest_object_names[] = {
   "verify_sendsocket", "verify_readsocket", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
-  "waitpid", "recvmsg_fd", "readsocket_or_error"
+  "waitpid", "recvmsg_fd", "readsocket_or_error", "readsocket", "writesocket"
 };
 
 typedef struct KTestObjectVector {
@@ -1078,9 +1078,8 @@ ssize_t ktest_recvmsg_fd(int sockfd, struct msghdr *msg, int flags)
     //sockfd is really a dummy fd, so we don't care if it is created with
     //open or socket, since we have recorded all interactions it will engage
     //in in playback.  This assumption will not hold if ktest_mode is changed.
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    int sockfd = ktest_socket(AF_INET, SOCK_STREAM, 0);
     assert(sockfd >= 0); //Ensure fd creation was successful.
-    insert_ktest_sockfd(sockfd);
 
     //The following is highly specific to what is checked in mm_recieve_fd in
     //ssh codebase.
@@ -1106,7 +1105,10 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
   else if (ktest_mode == KTEST_RECORD) {
     ssize_t num_bytes = writesocket(fd, buf, count);
     if (num_bytes > 0) {
-      KTOV_append(&ktov, ktest_object_names[VERIFY_SENDSOCKET], num_bytes, buf);
+      if(verification_socket == fd)
+        KTOV_append(&ktov, ktest_object_names[VERIFY_SENDSOCKET], num_bytes, buf);
+      else
+        KTOV_append(&ktov, ktest_object_names[WRITESOCKET], num_bytes, buf);
     } else if (num_bytes < 0) {
       perror("ktest_writesocket error");
       exit(1);
@@ -1122,8 +1124,14 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    KTestObject *o = KTOV_next_object(&ktov,
+    KTestObject *o;
+    if(verification_socket == fd)
+      o = KTOV_next_object(&ktov,
 				      ktest_object_names[VERIFY_SENDSOCKET]);
+    else
+      o = KTOV_next_object(&ktov,
+				      ktest_object_names[WRITESOCKET]);
+ 
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_writesocket playback error: %zu bytes of input, "
@@ -1256,7 +1264,10 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     ssize_t num_bytes = readsocket(fd, buf, count);
     assert(num_bytes >= 0);
     
-    KTOV_append(&ktov, ktest_object_names[VERIFY_READSOCKET], num_bytes, buf);
+    if(verification_socket == fd)
+      KTOV_append(&ktov, ktest_object_names[VERIFY_READSOCKET], num_bytes, buf);
+    else
+      KTOV_append(&ktov, ktest_object_names[READSOCKET], num_bytes, buf);
     if (KTEST_DEBUG) {
       unsigned int i;
       printf("readsocket redording [%d]", num_bytes);
@@ -1268,8 +1279,14 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    KTestObject *o = KTOV_next_object(&ktov,
-				      ktest_object_names[VERIFY_READSOCKET]);
+    KTestObject *o; 
+    if(verification_socket == fd)
+      o = KTOV_next_object(&ktov,
+			  	      ktest_object_names[VERIFY_READSOCKET]);
+    else
+      o = KTOV_next_object(&ktov,
+			  	      ktest_object_names[READSOCKET]);
+ 
     if (o->numBytes > count) {
       fprintf(stderr,
 	      "ktest_readsocket playback error: %zu byte destination buffer, "
