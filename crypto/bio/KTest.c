@@ -639,7 +639,16 @@ void insert_ktest_sockfd(int sockfd){
   ktest_nfds++; //incriment the counter recording the number of sockets we're tracking
 }
 
+static int verification_socket;
+int ktest_verification_socket(int domain, int type, int protocol){
+  assert(verification_socket = -1);
+  verification_socket = 0; //set it to 0 so that ktest_socket won't blow up
+  verification_socket = ktest_socket(domain, type, protocol);
+  return verification_socket;
+}
+
 int ktest_socket(int domain, int type, int protocol){
+  assert(verification_socket != -1); //should be called after ktest_verification_socket
   if (ktest_mode == KTEST_NONE) {
     return socket(domain, type, protocol);
   } else if  (ktest_mode == KTEST_PLAYBACK || ktest_mode == KTEST_RECORD) {
