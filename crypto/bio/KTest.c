@@ -39,7 +39,6 @@
 // for compatibility reasons
 #define BOUT_MAGIC "BOUT\n"
 
-#define KTEST_DEBUG 1
 
 // override inline assembly version of FD_ZERO from
 // /usr/include/x86_64-linux-gnu/bits/select.h
@@ -304,20 +303,9 @@ void kTest_free(KTest *bo) {
 // Local to this file
 ///////////////////////////////////////////////////////////////////////////////
 
-enum { VERIFY_SENDSOCKET=0, VERIFY_READSOCKET, RNG, PRNG, TIME, STDIN, SELECT,
-       MASTER_SECRET, KTEST_GET_PEER_NAME, WAIT_PID, RECV_MSG_FD,
-       READSOCKET_OR_ERROR, READSOCKET, WRITESOCKET};
-static char* ktest_object_names[] = {
-  "verify_sendsocket", "verify_readsocket", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
-  "waitpid", "recvmsg_fd", "readsocket_or_error", "readsocket", "writesocket"
-};
 
-typedef struct KTestObjectVector {
-  KTestObject *objects;
-  int size;
-  int capacity; // capacity >= size
-  int playback_index; // starts at 0
-} KTestObjectVector;
+
+
 
 // KTOV = "KTestObjectVector"
 static void KTOV_init(KTestObjectVector *ov) {
@@ -406,7 +394,7 @@ static void KTOV_print(FILE *f, const KTestObjectVector *ov) {
   }
 }
 
-static void KTOV_append(KTestObjectVector *ov,
+void KTOV_append(KTestObjectVector *ov,
 			const char *name,
 			int num_bytes,
 			const void *bytes)
@@ -438,7 +426,7 @@ int ktest_register_signal_handler(int (*a)(int)){
 }
 
 
-static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
+KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
 {
   assert(my_pid == getpid());
   if (ov->playback_index >= ov->size) {
@@ -466,10 +454,10 @@ static void print_fd_set(int nfds, fd_set *fds) {
   printf("\n");
 }
 
-static KTestObjectVector ktov;  // contains network, time, and prng captures
 static enum kTestMode ktest_mode = KTEST_NONE;
 static const char *ktest_output_file = "s_client.ktest";
 static const char *ktest_network_file = "s_client.net.ktest";
+
 void ktest_set_mode_none(void){
   arg_ktest_filename = NULL;
   ktest_mode = KTEST_NONE;
@@ -488,6 +476,23 @@ static int ktest_bind_sockfd = -1;
 // Exported functionality
 ///////////////////////////////////////////////////////////////////////////////
 
+char *ktest_ttyname(int fd){
+  if (ktest_mode == KTEST_NONE){
+    return ttyname(fd);
+  }else if(ktest_mode == KTEST_RECORD) { // passthrough
+    char* ret = ttyname(fd);
+    KTOV_append(&ktov, ktest_object_names[TTYNAME], strlen(ret)+1, ret);
+    return ret;
+  } else if (ktest_mode == KTEST_PLAYBACK) {
+    //read from ktest here...
+    KTestObject *o = KTOV_next_object(&ktov, ktest_object_names[TTYNAME]);
+    char *ret = strdup((const char*)o->bytes);
+    return ret;
+  } else {
+    perror("ktest_ttyname error - should never get here");
+    exit(4);
+  }
+}
 
 //Return the same fake pid everytime for debugging.
 #define KTEST_FORK_DUMMY_CHILD_PID 37

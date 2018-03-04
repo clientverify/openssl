@@ -23,6 +23,18 @@
 extern "C" {
 #endif
 
+#define KTEST_DEBUG 1
+
+enum { VERIFY_SENDSOCKET=0, VERIFY_READSOCKET, RNG, PRNG, TIME, STDIN, SELECT,
+       MASTER_SECRET, KTEST_GET_PEER_NAME, WAIT_PID, RECV_MSG_FD,
+       READSOCKET_OR_ERROR, READSOCKET, WRITESOCKET, TTYNAME, ARC4RNG};
+static char* ktest_object_names[] = {
+  "verify_sendsocket", "verify_readsocket", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
+  "waitpid", "recvmsg_fd", "readsocket_or_error", "readsocket", "writesocket", "ttyname",
+  "arc4rng"
+};
+
+  int verification_socket;
   typedef struct KTestObject KTestObject;
   struct KTestObject {
     char *name;
@@ -66,8 +78,20 @@ extern "C" {
   // Capture mode
   enum kTestMode {KTEST_NONE, KTEST_RECORD, KTEST_PLAYBACK};
   const char *arg_ktest_filename;
+  //put these back in c file and access with getters and setters...
   enum kTestMode arg_ktest_mode;
   void ktest_set_mode_none(void);
+
+typedef struct KTestObjectVector {
+  KTestObject *objects;
+  int size;
+  int capacity; // capacity >= size
+  int playback_index; // starts at 0
+} KTestObjectVector;
+  KTestObjectVector ktov;  // contains network, time, and prng captures
+  KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name);
+  void KTOV_append(KTestObjectVector *ov, const char *name,
+    int num_bytes, const void *bytes);
 
   int ktest_shutdown(int socket, int how);
   enum KTEST_FORK {PARENT, CHILD};
@@ -88,6 +112,7 @@ extern "C" {
             fd_set *exceptfds, struct timeval *timeout);
   ssize_t ktest_writesocket(int fd, const void *buf, size_t count);
   ssize_t ktest_readsocket(int fd, void *buf, size_t count);
+  int     ktest_record_readbuf(int fd, char* buf, int num_bytes);
   ssize_t ktest_recvmsg_fd(int sockfd, struct msghdr *msg, int flags);
 
   // stdin capture for Cliver
