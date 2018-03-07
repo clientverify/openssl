@@ -77,10 +77,11 @@ static char* ktest_object_names[] = {
 
   // Capture mode
   enum kTestMode {KTEST_NONE, KTEST_RECORD, KTEST_PLAYBACK};
-  const char *arg_ktest_filename;
   //put these back in c file and access with getters and setters...
-  enum kTestMode arg_ktest_mode;
   void ktest_set_mode_none(void);
+  enum kTestMode ktest_get_mode(void);
+  void ktest_set_mode_off(void);
+  void ktest_set_mode_on(void);
 
 typedef struct KTestObjectVector {
   KTestObject *objects;

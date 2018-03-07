@@ -455,14 +455,33 @@ static void print_fd_set(int nfds, fd_set *fds) {
 }
 
 static enum kTestMode ktest_mode = KTEST_NONE;
+//We want this to be the origional
+static enum kTestMode arg_ktest_mode = KTEST_NONE;
+static const char *arg_ktest_filename = NULL;
 static const char *ktest_output_file = "s_client.ktest";
 static const char *ktest_network_file = "s_client.net.ktest";
 
+//Called on fork.  No reverting from this.
 void ktest_set_mode_none(void){
   arg_ktest_filename = NULL;
+  ktest_mode         = KTEST_NONE;
+  arg_ktest_mode     = KTEST_NONE;
+}
+
+//To be used to figure out the mode outside this file.
+enum kTestMode ktest_get_mode(void){
+  return ktest_mode;
+}
+
+//To turn off recording while executing functions we're modeling as on the
+//monitor when in record mode.
+void ktest_set_mode_off(void){
   ktest_mode = KTEST_NONE;
-  //TODO: eliminate the use of two mode variables...
-  arg_ktest_mode = KTEST_NONE;
+}
+
+//To turn back on recording.
+void ktest_set_mode_on(void){
+  ktest_mode = arg_ktest_mode;
 }
 
 
@@ -1535,7 +1554,9 @@ void ktest_master_secret(unsigned char *ms, int len) {
   }
 }
 
-void ktest_start(const char *filename, enum kTestMode mode) {
+void ktest_start(const char *filename, enum kTestMode mode){
+  arg_ktest_filename = filename;
+  arg_ktest_mode = mode;
   my_pid = getpid();
   //Initialize socketfds with -1
   int i;

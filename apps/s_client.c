@@ -396,6 +396,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_JPAKE
     char *jpake_secret = NULL;
 #endif
+#ifdef CLIVER
+    const char *my_ktest_filename = NULL;
+    enum kTestMode my_ktest_mode = KTEST_NONE;
+#endif
 
     meth = SSLv23_client_method();
 
@@ -635,14 +639,14 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-record") == 0)
 		        {
 			if (--argc < 1) goto bad;
-			arg_ktest_filename = *(++argv);
-			arg_ktest_mode = KTEST_RECORD;
+			my_ktest_filename = *(++argv);
+			my_ktest_mode = KTEST_RECORD;
 			}
 		else if (strcmp(*argv,"-playback") == 0)
 		        {
 			if (--argc < 1) goto bad;
-			arg_ktest_filename = *(++argv);
-			arg_ktest_mode = KTEST_PLAYBACK;
+			my_ktest_filename = *(++argv);
+			my_ktest_mode = KTEST_PLAYBACK;
 			}
 		else if	(strcmp(*argv,"-no_special_cmds") == 0)
 			{
@@ -665,7 +669,7 @@ int MAIN(int argc, char **argv)
     }
 
 #ifdef CLIVER
-	ktest_start(arg_ktest_filename, arg_ktest_mode);
+	ktest_start(my_ktest_filename, my_ktest_mode);
 #endif
 
     OpenSSL_add_ssl_algorithms();
