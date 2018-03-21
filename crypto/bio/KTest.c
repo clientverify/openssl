@@ -494,19 +494,23 @@ static int ktest_bind_sockfd = -1;
 ///////////////////////////////////////////////////////////////////////////////
 // Exported functionality
 ///////////////////////////////////////////////////////////////////////////////
-
+#define MAX_TTYNAME 100
+static char my_ttyname[MAX_TTYNAME];
 char *ktest_ttyname(int fd){
   if (ktest_mode == KTEST_NONE){
     return ttyname(fd);
   }else if(ktest_mode == KTEST_RECORD) { // passthrough
     char* ret = ttyname(fd);
-    KTOV_append(&ktov, ktest_object_names[TTYNAME], strlen(ret)+1, ret);
+    int len = strlen(ret)+1;
+    assert(len <= MAX_TTYNAME);
+    KTOV_append(&ktov, ktest_object_names[TTYNAME], len, ret);
     return ret;
   } else if (ktest_mode == KTEST_PLAYBACK) {
     //read from ktest here...
     KTestObject *o = KTOV_next_object(&ktov, ktest_object_names[TTYNAME]);
-    char *ret = strdup((const char*)o->bytes);
-    return ret;
+    assert(strlen((const char*)o->bytes) + 1 <= MAX_TTYNAME);
+    strcpy(my_ttyname, (const char*)o->bytes);
+    return my_ttyname;
   } else {
     perror("ktest_ttyname error - should never get here");
     exit(4);
@@ -1659,6 +1663,8 @@ int ktest_getaddrinfo(const char *node, const char *service,
                        const struct addrinfo *hints, struct addrinfo **res){
      if(ktest_mode == KTEST_PLAYBACK){
         int ret = getaddrinfo("localhost", service, hints, res);
+        if((*res)->ai_next != NULL)
+          freeaddrinfo((*res)->ai_next);
         (*res)->ai_next = NULL;
         return ret;
      }else{
