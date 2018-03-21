@@ -667,15 +667,15 @@ void insert_ktest_sockfd(int sockfd){
   ktest_nfds++; //incriment the counter recording the number of sockets we're tracking
 }
 
-int ktest_verification_socket(int domain, int type, int protocol){
-  assert(verification_socket = -1);
-  verification_socket = 0; //set it to 0 so that ktest_socket won't blow up
-  verification_socket = ktest_socket(domain, type, protocol);
-  return verification_socket;
+int ktest_monitor_socket(int domain, int type, int protocol){
+  assert(monitor_socket = -1);
+  monitor_socket = 0; //set it to 0 so that ktest_socket won't blow up
+  monitor_socket = ktest_socket(domain, type, protocol);
+  return monitor_socket;
 }
 
 int ktest_socket(int domain, int type, int protocol){
-  assert(verification_socket != -1); //should be called after ktest_verification_socket
+  assert(monitor_socket != -1); //should be called after ktest_monitor_socket
   if (ktest_mode == KTEST_NONE) {
     return socket(domain, type, protocol);
   } else if  (ktest_mode == KTEST_PLAYBACK || ktest_mode == KTEST_RECORD) {
@@ -1131,7 +1131,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
   }
   else if (ktest_mode == KTEST_RECORD) {
     ssize_t num_bytes;
-    if(verification_socket == fd){
+    if(monitor_socket == fd){
       num_bytes = count;
       KTOV_append(&ktov, ktest_object_names[VERIFY_SENDSOCKET], num_bytes, buf);
     }else{
@@ -1155,7 +1155,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
     KTestObject *o;
-    if(verification_socket == fd)
+    if(monitor_socket == fd)
       o = KTOV_next_object(&ktov,
 				      ktest_object_names[VERIFY_SENDSOCKET]);
     else
@@ -1294,7 +1294,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     ssize_t num_bytes = readsocket(fd, buf, count);
     assert(num_bytes >= 0);
 
-    if(verification_socket == fd)
+    if(monitor_socket == fd)
       KTOV_append(&ktov, ktest_object_names[VERIFY_READSOCKET], num_bytes, buf);
     else
       KTOV_append(&ktov, ktest_object_names[READSOCKET], num_bytes, buf);
@@ -1310,7 +1310,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
     KTestObject *o; 
-    if(verification_socket == fd)
+    if(monitor_socket == fd)
       o = KTOV_next_object(&ktov,
 			  	      ktest_object_names[VERIFY_READSOCKET]);
     else
@@ -1342,11 +1342,11 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
 }
 
 int ktest_record_readbuf(int fd, char* buf, int num_bytes){
-  assert(fd == verification_socket);
+  assert(fd == monitor_socket);
   assert(ktest_mode == KTEST_RECORD);
   assert(num_bytes >= 0);
 
-  if(verification_socket == fd)
+  if(monitor_socket == fd)
     KTOV_append(&ktov, ktest_object_names[VERIFY_READSOCKET], num_bytes, buf);
   if (KTEST_DEBUG) {
     unsigned int i;

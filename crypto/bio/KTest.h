@@ -29,12 +29,12 @@ enum { VERIFY_SENDSOCKET=0, VERIFY_READSOCKET, RNG, PRNG, TIME, STDIN, SELECT,
        MASTER_SECRET, KTEST_GET_PEER_NAME, WAIT_PID, RECV_MSG_FD,
        READSOCKET_OR_ERROR, READSOCKET, WRITESOCKET, TTYNAME, ARC4RNG};
 static char* ktest_object_names[] = {
-  "verify_sendsocket", "verify_readsocket", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
+  "monitor_verify_sendsocket", "monitor_verify_readsocket", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
   "waitpid", "recvmsg_fd", "readsocket_or_error", "readsocket", "writesocket", "ttyname",
   "arc4rng"
 };
 
-  int verification_socket;
+  int monitor_socket;
   typedef struct KTestObject KTestObject;
   struct KTestObject {
     char *name;
