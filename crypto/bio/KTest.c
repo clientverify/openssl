@@ -733,6 +733,10 @@ int ktest_close(int fd){
   if (ktest_mode == KTEST_NONE) { // passthrough
     return close(fd);
   } else if (ktest_mode == KTEST_RECORD) {
+    if(fd == net_socket){
+      printf("ktest_close closing net_socket %d\n", net_socket);
+      net_socket = -1;
+    }
     int ret = close(fd);
     assert(ret == 0);
 
@@ -750,6 +754,10 @@ int ktest_close(int fd){
     }
     return 0;
   } else if (ktest_mode == KTEST_PLAYBACK) {
+    if(fd == net_socket){
+      printf("ktest_close closing net_socket %d\n", net_socket);
+      net_socket = -1;
+    }
     int i;
     int done = 0;
     for(i = 0; i < ktest_nfds; i++){
@@ -834,12 +842,24 @@ int ktest_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen){
       int accept_sock = accept(sockfd, addr, addrlen);
       if(KTEST_DEBUG) printf("ktest_accept adding %d to ktest_sockfds\n", accept_sock);
       insert_ktest_sockfd(accept_sock);
+      if(accept_sock > -1){
+        printf("ktest_accept setting net_socket %d from %d\n", accept_sock, net_socket);
+        assert(net_socket == -1);
+        net_socket = accept_sock;
+      }
       return accept_sock;
   } else if (ktest_mode == KTEST_PLAYBACK) {
     int accept_sock = socket(AF_INET, SOCK_STREAM, 0);
     assert(accept_sock >= 0);
     if(KTEST_DEBUG) printf("ktest_accept adding %d to ktest_sockfds\n", accept_sock);
     insert_ktest_sockfd(accept_sock);
+
+    if(accept_sock > -1){
+      printf("ktest_accept setting net_socket %d from %d\n", accept_sock, net_socket);
+      assert(net_socket == -1);
+      net_socket = accept_sock;
+    }
+
     if (KTEST_DEBUG) {
       printf("accept() called on socket for TLS traffic (%d)\n", accept_sock);
     }
@@ -1130,11 +1150,24 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     return writesocket(fd, buf, count);
   }
   else if (ktest_mode == KTEST_RECORD) {
+    assert(monitor_socket != net_socket);
     ssize_t num_bytes;
-    if(monitor_socket == fd){
+    if (monitor_socket == fd) {
+      printf("ktest_writesocket recording for monitor_socket %d\n", fd);
       num_bytes = count;
       KTOV_append(&ktov, ktest_object_names[MONITOR_VERIFY_SENDSOCKET], num_bytes, buf);
-    }else{
+    } else if (net_socket == fd) {
+      printf("ktest_writesocket recording for net_socket %d\n", fd);
+      num_bytes = writesocket(fd, buf, count);
+      if (num_bytes > 0) {
+        KTOV_append(&ktov, ktest_object_names[NET_VERIFY_SENDSOCKET], num_bytes, buf);
+        printf("ktest_writesocket recording for net_socket %d finished\n", fd);
+      } else if (num_bytes < 0) {
+        perror("ktest_writesocket error");
+        exit(1);
+      }
+    } else {
+      printf("ktest_writesocket recording for socket %d\n", fd);
       num_bytes = writesocket(fd, buf, count);
       if (num_bytes > 0) {
         KTOV_append(&ktov, ktest_object_names[WRITESOCKET], num_bytes, buf);
@@ -1145,7 +1178,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     }
     if (KTEST_DEBUG) {
       unsigned int i;
-      printf("writesocket redording [%d]", num_bytes);
+      printf("writesocket recording [%d]", num_bytes);
       for (i = 0; i < num_bytes; i++) {
 	printf(" %2.2x", ((unsigned char*)buf)[i]);
       }
@@ -1154,13 +1187,19 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
+    assert(monitor_socket != net_socket);
     KTestObject *o;
-    if(monitor_socket == fd)
+    if(monitor_socket == fd){
       o = KTOV_next_object(&ktov,
 				      ktest_object_names[MONITOR_VERIFY_SENDSOCKET]);
-    else
+    }else if(net_socket == fd){
+      printf("ktest_writesocket playing back for net_socket %d\n", net_socket);
+      o = KTOV_next_object(&ktov,
+				      ktest_object_names[NET_VERIFY_SENDSOCKET]);
+    }else{
       o = KTOV_next_object(&ktov,
 				      ktest_object_names[WRITESOCKET]);
+    }
  
     if (o->numBytes > count) {
       fprintf(stderr,
@@ -1209,6 +1248,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
 }
 
 
+//TODO: make this verify in klee.
 ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
 {
   char* error_str = "is_error ";
@@ -1294,10 +1334,14 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     ssize_t num_bytes = readsocket(fd, buf, count);
     assert(num_bytes >= 0);
 
-    if(monitor_socket == fd)
+    if(monitor_socket == fd){
       KTOV_append(&ktov, ktest_object_names[MONITOR_VERIFY_READSOCKET], num_bytes, buf);
-    else
+    }else if(net_socket == fd){
+      printf("ktest_readsocket recording for net_socket %d\n", net_socket);
+      KTOV_append(&ktov, ktest_object_names[NET_VERIFY_READSOCKET], num_bytes, buf);
+    }else{
       KTOV_append(&ktov, ktest_object_names[READSOCKET], num_bytes, buf);
+    }
     if (KTEST_DEBUG) {
       unsigned int i;
       printf("readsocket redording [%d]", num_bytes);
@@ -1310,12 +1354,17 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
     KTestObject *o; 
-    if(monitor_socket == fd)
+    if(monitor_socket == fd){
       o = KTOV_next_object(&ktov,
 			  	      ktest_object_names[MONITOR_VERIFY_READSOCKET]);
-    else
+    }else if(net_socket == fd){
+      printf("ktest_readsocket playingback for net_socket %d\n", net_socket);
+      o = KTOV_next_object(&ktov,
+			  	      ktest_object_names[NET_VERIFY_READSOCKET]);
+    }else{
       o = KTOV_next_object(&ktov,
 			  	      ktest_object_names[READSOCKET]);
+    }
  
     if (o->numBytes > count) {
       fprintf(stderr,
@@ -1560,6 +1609,7 @@ void ktest_master_secret(unsigned char *ms, int len) {
 
 void ktest_start(const char *filename, enum kTestMode mode){
   monitor_socket = -1;
+  net_socket = -1;
   arg_ktest_filename = filename;
   arg_ktest_mode = mode;
   my_pid = getpid();
