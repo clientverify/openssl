@@ -668,7 +668,7 @@ void insert_ktest_sockfd(int sockfd){
 }
 
 int ktest_monitor_socket(int domain, int type, int protocol){
-  assert(monitor_socket = -1);
+  assert(monitor_socket == -1);
   monitor_socket = 0; //set it to 0 so that ktest_socket won't blow up
   monitor_socket = ktest_socket(domain, type, protocol);
   return monitor_socket;
@@ -1133,7 +1133,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     ssize_t num_bytes;
     if(monitor_socket == fd){
       num_bytes = count;
-      KTOV_append(&ktov, ktest_object_names[VERIFY_SENDSOCKET], num_bytes, buf);
+      KTOV_append(&ktov, ktest_object_names[MONITOR_VERIFY_SENDSOCKET], num_bytes, buf);
     }else{
       num_bytes = writesocket(fd, buf, count);
       if (num_bytes > 0) {
@@ -1157,7 +1157,7 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
     KTestObject *o;
     if(monitor_socket == fd)
       o = KTOV_next_object(&ktov,
-				      ktest_object_names[VERIFY_SENDSOCKET]);
+				      ktest_object_names[MONITOR_VERIFY_SENDSOCKET]);
     else
       o = KTOV_next_object(&ktov,
 				      ktest_object_names[WRITESOCKET]);
@@ -1295,7 +1295,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     assert(num_bytes >= 0);
 
     if(monitor_socket == fd)
-      KTOV_append(&ktov, ktest_object_names[VERIFY_READSOCKET], num_bytes, buf);
+      KTOV_append(&ktov, ktest_object_names[MONITOR_VERIFY_READSOCKET], num_bytes, buf);
     else
       KTOV_append(&ktov, ktest_object_names[READSOCKET], num_bytes, buf);
     if (KTEST_DEBUG) {
@@ -1312,7 +1312,7 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     KTestObject *o; 
     if(monitor_socket == fd)
       o = KTOV_next_object(&ktov,
-			  	      ktest_object_names[VERIFY_READSOCKET]);
+			  	      ktest_object_names[MONITOR_VERIFY_READSOCKET]);
     else
       o = KTOV_next_object(&ktov,
 			  	      ktest_object_names[READSOCKET]);
@@ -1347,7 +1347,7 @@ int ktest_record_readbuf(int fd, char* buf, int num_bytes){
   assert(num_bytes >= 0);
 
   if(monitor_socket == fd)
-    KTOV_append(&ktov, ktest_object_names[VERIFY_READSOCKET], num_bytes, buf);
+    KTOV_append(&ktov, ktest_object_names[MONITOR_VERIFY_READSOCKET], num_bytes, buf);
   if (KTEST_DEBUG) {
     unsigned int i;
     printf("readsocket redording [%d]", num_bytes);
@@ -1559,6 +1559,7 @@ void ktest_master_secret(unsigned char *ms, int len) {
 }
 
 void ktest_start(const char *filename, enum kTestMode mode){
+  monitor_socket = -1;
   arg_ktest_filename = filename;
   arg_ktest_mode = mode;
   my_pid = getpid();
