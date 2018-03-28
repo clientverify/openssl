@@ -1257,6 +1257,7 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
     return readsocket(fd, buf, count);
   }
   else if (ktest_mode == KTEST_RECORD) {
+    assert(fd != net_socket && fd != monitor_socket);
     ssize_t num_bytes = readsocket(fd, buf, count);
     int my_errno = errno;
     if (num_bytes >= 0) {
@@ -1289,6 +1290,7 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
     return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
+    assert(fd != net_socket && fd != monitor_socket);
     KTestObject *o = KTOV_next_object(&ktov,
 				      ktest_object_names[READSOCKET_OR_ERROR]);
     if(strncmp(o->bytes, error_str, strlen(error_str)) == 0){
