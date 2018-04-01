@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <assert.h>
@@ -1269,13 +1270,13 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
       memcpy(record+pos, buf, num_bytes);
       KTOV_append(&ktov, ktest_object_names[READSOCKET_OR_ERROR], size, record);
     } else if (num_bytes < 0) {
-      int size = strlen(error_str) + sizeof(my_errno);
+      int size = 100;
       int pos = 0;
       char* record = malloc(size);
       pos += snprintf(&record[pos], size-pos, "%s%d", error_str, my_errno);
       assert(my_errno != EINTR && my_errno != EAGAIN);
-      KTOV_append(&ktov, ktest_object_names[READSOCKET_OR_ERROR], size, record);
-      fprintf(stderr, "ktest_readsocket error returning %d bytes\n", num_bytes);
+      KTOV_append(&ktov, ktest_object_names[READSOCKET_OR_ERROR], strlen(record)+1, record);
+      fprintf(stderr, "ktest_readsocket error returning %d bytes my_errno %d\n", num_bytes, my_errno);
       assert(my_errno != EINTR && my_errno != EAGAIN);
     }
     if (KTEST_DEBUG && num_bytes>=0) {
@@ -1294,7 +1295,8 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
     KTestObject *o = KTOV_next_object(&ktov,
 				      ktest_object_names[READSOCKET_OR_ERROR]);
     if(strncmp(o->bytes, error_str, strlen(error_str)) == 0){
-      errno = (int)o->bytes[strlen(error_str)];
+      char* tmp = strtok(o->bytes, " ");//eat error_str
+      errno = atoi(strtok(NULL, " "));
       fprintf(stderr, "ktest_readsocket error returning bytes: %d errno: %d\n", -1, errno);
       return -1;
     }
