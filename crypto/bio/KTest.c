@@ -743,6 +743,14 @@ int ktest_close(int fd){
       printf("ktest_close closing net_socket %d\n", net_socket);
       net_socket = -1;
     }
+    if(fd == pty_socket){
+      printf("ktest_close closing pty_socket %d\n", pty_socket);
+      pty_socket = -1;
+    }
+    if(fd == pty_dup_socket){
+      printf("ktest_close closing pty_dup_socket %d\n", pty_dup_socket);
+      pty_dup_socket = -1;
+    }
     int ret = close(fd);
     assert(ret == 0);
 
@@ -763,6 +771,14 @@ int ktest_close(int fd){
     if(fd == net_socket){
       printf("ktest_close closing net_socket %d\n", net_socket);
       net_socket = -1;
+    }
+    if(fd == pty_socket){
+      printf("ktest_close closing pty_socket %d\n", pty_socket);
+      pty_socket = -1;
+    }
+    if(fd == pty_dup_socket){
+      printf("ktest_close closing pty_dup_socket %d\n", pty_dup_socket);
+      pty_dup_socket = -1;
     }
     int i;
     int done = 0;
@@ -1172,6 +1188,16 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
         perror("ktest_writesocket error");
         exit(1);
       }
+    } else if (pty_dup_socket == fd) {
+      printf("ktest_writesocket recording for pty_dup_socket %d\n", fd);
+      num_bytes = writesocket(fd, buf, count);
+      if (num_bytes > 0) {
+        KTOV_append(&ktov, ktest_object_names[PTY_DUP_VERIFY_SENDSOCKET], num_bytes, buf);
+        printf("ktest_writesocket recording for pty_dup_socket %d finished\n", fd);
+      } else if (num_bytes < 0) {
+        perror("ktest_writesocket error");
+        exit(1);
+      }
     } else {
       printf("ktest_writesocket recording for socket %d\n", fd);
       num_bytes = writesocket(fd, buf, count);
@@ -1202,6 +1228,10 @@ ssize_t ktest_writesocket(int fd, const void *buf, size_t count)
       printf("ktest_writesocket playing back for net_socket %d\n", net_socket);
       o = KTOV_next_object(&ktov,
 				      ktest_object_names[NET_VERIFY_SENDSOCKET]);
+    }else if(pty_dup_socket == fd){
+      printf("ktest_writesocket playing back for pty_dup_socket %d\n", pty_dup_socket);
+      o = KTOV_next_object(&ktov,
+				      ktest_object_names[PTY_DUP_VERIFY_SENDSOCKET]);
     }else{
       o = KTOV_next_object(&ktov,
 				      ktest_object_names[WRITESOCKET]);
@@ -1263,7 +1293,7 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
     return readsocket(fd, buf, count);
   }
   else if (ktest_mode == KTEST_RECORD) {
-    assert(fd != net_socket && fd != monitor_socket);
+    assert(fd == pty_dup_socket);
     if(waitpid_had_ECHILD == 1){
       ssize_t num_bytes = readsocket(fd, buf, count);
       assert(num_bytes == -1);
@@ -1274,7 +1304,7 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
     }
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
-    assert(fd != net_socket && fd != monitor_socket);
+    assert(fd == pty_dup_socket);
     if(waitpid_had_ECHILD == 1){
       errno = EIO;
       return -1;
@@ -1304,6 +1334,9 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
     }else if(net_socket == fd){
       printf("ktest_readsocket recording for net_socket %d\n", net_socket);
       KTOV_append(&ktov, ktest_object_names[NET_VERIFY_READSOCKET], num_bytes, buf);
+    }else if(pty_dup_socket == fd){
+      printf("ktest_readsocket recording for pty_dup_socket %d\n", pty_dup_socket);
+      KTOV_append(&ktov, ktest_object_names[PTY_DUP_VERIFY_READSOCKET], num_bytes, buf);
     }else{
       KTOV_append(&ktov, ktest_object_names[READSOCKET], num_bytes, buf);
     }
@@ -1326,6 +1359,10 @@ ssize_t ktest_readsocket(int fd, void *buf, size_t count)
       printf("ktest_readsocket playingback for net_socket %d\n", net_socket);
       o = KTOV_next_object(&ktov,
 			  	      ktest_object_names[NET_VERIFY_READSOCKET]);
+    }else if(pty_dup_socket == fd){
+      printf("ktest_readsocket playingback for pty_dup_socket %d\n", pty_dup_socket);
+      o = KTOV_next_object(&ktov,
+			  	      ktest_object_names[PTY_DUP_VERIFY_READSOCKET]);
     }else{
       o = KTOV_next_object(&ktov,
 			  	      ktest_object_names[READSOCKET]);
@@ -1575,6 +1612,8 @@ void ktest_master_secret(unsigned char *ms, int len) {
 void ktest_start(const char *filename, enum kTestMode mode){
   monitor_socket = -1;
   net_socket = -1;
+  pty_socket = -1;
+  pty_dup_socket = -1;
   arg_ktest_filename = filename;
   arg_ktest_mode = mode;
   my_pid = getpid();

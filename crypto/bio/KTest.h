@@ -28,15 +28,18 @@ extern "C" {
 enum { MONITOR_VERIFY_SENDSOCKET=0, MONITOR_VERIFY_READSOCKET,
   NET_VERIFY_SENDSOCKET, NET_VERIFY_READSOCKET, RNG, PRNG, TIME, STDIN, SELECT,
        MASTER_SECRET, KTEST_GET_PEER_NAME, WAIT_PID, RECV_MSG_FD,
-       READSOCKET_OR_ERROR, READSOCKET, WRITESOCKET, TTYNAME, ARC4RNG};
+       READSOCKET_OR_ERROR, READSOCKET, WRITESOCKET, TTYNAME, ARC4RNG,
+       PTY_DUP_VERIFY_SENDSOCKET, PTY_DUP_VERIFY_READSOCKET};
 static char* ktest_object_names[] = {
   "monitor_verify_sendsocket", "monitor_verify_readsocket", "net_verify_sendsocket", "net_verify_readsocket", "rng", "prng", "time", "stdin", "select", "master_secret", "get_peer_name",
   "waitpid", "recvmsg_fd", "readsocket_or_error", "readsocket", "writesocket", "ttyname",
-  "arc4rng"
+  "arc4rng", "pty_dup_verify_sendsocket", "pty_dup_verify_readsocket"
 };
 
   int monitor_socket;
   int net_socket;
+  int pty_socket;
+  int pty_dup_socket;
   typedef struct KTestObject KTestObject;
   struct KTestObject {
     char *name;
