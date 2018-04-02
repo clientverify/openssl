@@ -521,6 +521,7 @@ char *ktest_ttyname(int fd){
 //Return the same fake pid everytime for debugging.
 #define KTEST_FORK_DUMMY_CHILD_PID 37
 
+static int waitpid_had_ECHILD = 0;
 int ktest_waitpid_or_error(pid_t pid, int *status, int options){
   if(KTEST_DEBUG) printf("openssl's ktest_waitpid 0\n");
 
@@ -545,6 +546,8 @@ int ktest_waitpid_or_error(pid_t pid, int *status, int options){
       tmp = strtok(NULL, " ");
       assert(strcmp(tmp, "errno") == 0);
       errno = atoi(strtok(NULL, " "));
+      assert(errno == ECHILD);
+      waitpid_had_ECHILD = 1;
       if(KTEST_DEBUG) printf("ktest_waitpid error %d\n", errno);
     }
     free(recorded_select);
@@ -571,6 +574,8 @@ int ktest_waitpid_or_error(pid_t pid, int *status, int options){
       pos += snprintf(&record[pos], size-pos, "status %d ", *status);
       if(KTEST_DEBUG) printf("ktest_waitpid appending retval %d status %d\n", tmp, *status);
     } else {
+      assert(errno == ECHILD);
+      waitpid_had_ECHILD = 1;
       pos += snprintf(&record[pos], size-pos, "errno %d ", errno);
       if(KTEST_DEBUG) printf("ktest_waitpid appending error %d\n", errno);
     }
@@ -1259,67 +1264,23 @@ ssize_t ktest_readsocket_or_error(int fd, void *buf, size_t count)
   }
   else if (ktest_mode == KTEST_RECORD) {
     assert(fd != net_socket && fd != monitor_socket);
-    ssize_t num_bytes = readsocket(fd, buf, count);
-    int my_errno = errno;
-    if (num_bytes >= 0) {
-      int size = strlen(not_error_str) + num_bytes;
-      int pos = 0;
-      char* record = malloc(size);
-      pos += snprintf(&record[pos], size-pos, not_error_str);
-      assert(pos == strlen(not_error_str));
-      memcpy(record+pos, buf, num_bytes);
-      KTOV_append(&ktov, ktest_object_names[READSOCKET_OR_ERROR], size, record);
-    } else if (num_bytes < 0) {
-      int size = 100;
-      int pos = 0;
-      char* record = malloc(size);
-      pos += snprintf(&record[pos], size-pos, "%s%d", error_str, my_errno);
-      assert(my_errno != EINTR && my_errno != EAGAIN);
-      KTOV_append(&ktov, ktest_object_names[READSOCKET_OR_ERROR], strlen(record)+1, record);
-      fprintf(stderr, "ktest_readsocket error returning %d bytes my_errno %d\n", num_bytes, my_errno);
-      assert(my_errno != EINTR && my_errno != EAGAIN);
+    if(waitpid_had_ECHILD == 1){
+      ssize_t num_bytes = readsocket(fd, buf, count);
+      assert(num_bytes == -1);
+      assert(errno == EIO);
+      return num_bytes;
+    } else {
+      return ktest_readsocket(fd, buf, count);
     }
-    if (KTEST_DEBUG && num_bytes>=0) {
-      unsigned int i;
-      printf("readsocket recording [%d]", num_bytes);
-      for (i = 0; i < num_bytes; i++) {
-	printf(" %2.2x", ((unsigned char*)buf)[i]);
-      }
-      printf("\n");
-    }
-    errno = my_errno;
-    return num_bytes;
   }
   else if (ktest_mode == KTEST_PLAYBACK) {
     assert(fd != net_socket && fd != monitor_socket);
-    KTestObject *o = KTOV_next_object(&ktov,
-				      ktest_object_names[READSOCKET_OR_ERROR]);
-    if(strncmp(o->bytes, error_str, strlen(error_str)) == 0){
-      char* tmp = strtok(o->bytes, " ");//eat error_str
-      errno = atoi(strtok(NULL, " "));
-      fprintf(stderr, "ktest_readsocket error returning bytes: %d errno: %d\n", -1, errno);
+    if(waitpid_had_ECHILD == 1){
+      errno = EIO;
       return -1;
+    } else {
+      return ktest_readsocket(fd, buf, count);
     }
-    assert(strncmp(o->bytes, not_error_str, strlen(not_error_str)) == 0);
-    int   read_len = o->numBytes - strlen(not_error_str);
-    char* read_buf = o->bytes    + strlen(not_error_str);
-    if (read_len > count) {
-      fprintf(stderr,
-	      "ktest_readsocket playback error: %zu byte destination buffer, "
-	      "%d bytes recorded", count, read_len);
-      exit(2);
-    }
-    // Read recorded data into buffer
-    memcpy(buf, read_buf, read_len);
-    if (KTEST_DEBUG) {
-      unsigned int i;
-      printf("readsocket playback [read_len %d size %d]", read_len, o->numBytes);
-      for (i = 0; i < read_len; i++) {
-	      printf(" %2.2x", ((unsigned char*)buf)[i]);
-      }
-      printf("\n");
-    }
-    return read_len;
   }
   else {
     perror("ktest_readsocket coding error - should never get here");
