@@ -232,7 +232,7 @@ KTest *kTest_fromFile(const char *path) {
   return 0;
 }
 
-int kTest_toFile(KTest *bo, const char *path) {
+int kTest_toFile(KTest *bo, const char *path, int unrecording) {
   FILE *f = fopen(path, "wb");
   unsigned i;
 
@@ -242,7 +242,6 @@ int kTest_toFile(KTest *bo, const char *path) {
     goto error;
   if (!write_uint32(f, KTEST_VERSION))
     goto error;
-      
   if (!write_uint32(f, bo->numArgs))
     goto error;
   for (i=0; i<bo->numArgs; i++) {
@@ -254,11 +253,23 @@ int kTest_toFile(KTest *bo, const char *path) {
     goto error;
   if (!write_uint32(f, bo->symArgvLen))
     goto error;
-  
-  if (!write_uint32(f, bo->numObjects))
-    goto error;
+
+
+  if(unrecording){
+    if (!write_uint32(f, bo->numObjects - bo->numUnrecordedObjects))
+      goto error;
+  }else{
+    if (!write_uint32(f, bo->numObjects))
+      goto error;
+  }
+  int unrecorded = 0;
   for (i=0; i<bo->numObjects; i++) {
     KTestObject *o = &bo->objects[i];
+    if(o->record == 0 && unrecording){
+      unrecorded++;
+      assert(unrecorded <= bo->numUnrecordedObjects);
+      continue;
+    }
     if (!write_string(f, o->name))
       goto error;
     if (!write_uint64(f, o->timestamp.tv_sec))
@@ -270,13 +281,15 @@ int kTest_toFile(KTest *bo, const char *path) {
     if (o->numBytes > 0 && fwrite(o->bytes, o->numBytes, 1, f)!=1)
       goto error;
   }
+  if(unrecording)
+    assert(unrecorded == bo->numUnrecordedObjects);
 
   fclose(f);
 
   return 1;
  error:
   if (f) fclose(f);
-  
+
   return 0;
 }
 
@@ -380,6 +393,7 @@ static void KTO_print(FILE *f, const KTestObject *o) {
 static void KTO_deepcopy(KTestObject *dest, KTestObject *src) {
   dest->name = strdup(src->name);
   dest->timestamp = src->timestamp;
+  dest->record = src->record;
   dest->numBytes = src->numBytes;
   dest->bytes = (unsigned char*)malloc(sizeof(unsigned char)*src->numBytes);
   memcpy(dest->bytes, src->bytes, src->numBytes);
@@ -395,6 +409,11 @@ static void KTOV_print(FILE *f, const KTestObjectVector *ov) {
   }
 }
 
+static int record_this_record = 1;
+void do_not_record_this_record(void){
+  assert(record_this_record == 1);
+  record_this_record = 0;
+}
 void KTOV_append(KTestObjectVector *ov,
 			const char *name,
 			int num_bytes,
@@ -417,6 +436,9 @@ void KTOV_append(KTestObjectVector *ov,
       memcpy(ov->objects[i].bytes, bytes, num_bytes);
   }
   ov->size++;
+  ov->objects[i].record = record_this_record;
+  if(record_this_record == 0) ov->unrecorded++;
+  record_this_record = 1;
   // KTO_print(stdout, &ov->objects[i]);
 }
 
@@ -1673,11 +1695,23 @@ void ktest_finish() {
     assert(my_pid == getpid());
     memset(&ktest, 0, sizeof(KTest));
     ktest.numObjects = ktov.size;
+    ktest.numUnrecordedObjects = ktov.unrecorded;
     ktest.objects = ktov.objects;
 
     KTOV_print(stdout, &ktov);
 
-    int result = kTest_toFile(&ktest, ktest_output_file);
+    int result = kTest_toFile(&ktest, ktest_output_file, 0);
+    if (!result) {
+      perror("ktest_finish error");
+      exit(1);
+    }
+    printf("KTest full capture written to %s.\n", ktest_output_file);
+
+    char* path2 = malloc(strlen(ktest_output_file) + strlen("path_2")+1);
+    path2[0] = '\0';
+    strcat(path2, ktest_output_file);
+    strcat(path2, "path_2");
+    result = kTest_toFile(&ktest, path2, 1);
     if (!result) {
       perror("ktest_finish error");
       exit(1);
@@ -1698,7 +1732,7 @@ void ktest_finish() {
     }
     ktest.numObjects = filtered_i;
 
-    result = kTest_toFile(&ktest, ktest_network_file);
+    result = kTest_toFile(&ktest, ktest_network_file, 0);
     if (!result) {
       perror("ktest_finish error");
       exit(1);

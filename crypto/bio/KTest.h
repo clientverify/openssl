@@ -42,6 +42,7 @@ static char* ktest_object_names[] = {
   int pty_dup_socket;
   typedef struct KTestObject KTestObject;
   struct KTestObject {
+    int record;
     char *name;
     struct timeval timestamp;
     unsigned numBytes;
@@ -60,9 +61,11 @@ static char* ktest_object_names[] = {
     unsigned symArgvLen;
 
     unsigned numObjects;
+    unsigned numUnrecordedObjects;
     KTestObject *objects;
   };
 
+  void do_not_record_this_record(void);
   /* returns the current .ktest file format version */
   unsigned kTest_getCurrentVersion();
   
@@ -73,7 +76,7 @@ static char* ktest_object_names[] = {
   KTest* kTest_fromFile(const char *path);
 
   /* returns 1 on success, 0 on (unspecified) error */
-  int   kTest_toFile(KTest *, const char *path);
+  int   kTest_toFile(KTest *, const char *path, int unrecording);
   
   /* returns total number of object bytes */
   unsigned kTest_numBytes(KTest *);
@@ -91,6 +94,7 @@ static char* ktest_object_names[] = {
 typedef struct KTestObjectVector {
   KTestObject *objects;
   int size;
+  int unrecorded;
   int capacity; // capacity >= size
   int playback_index; // starts at 0
 } KTestObjectVector;
