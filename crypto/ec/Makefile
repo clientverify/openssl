@@ -119,8 +119,7 @@ ec_ameth.o: ../../include/openssl/opensslconf.h
 ec_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 ec_ameth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-ec_ameth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ec_ameth.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
+ec_ameth.o: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h ../cryptlib.h
 ec_ameth.o: ec_ameth.c
 ec_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 ec_asn1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
@@ -205,8 +204,7 @@ ec_pmeth.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 ec_pmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 ec_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-ec_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ec_pmeth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h ../evp/evp_locl.h
+ec_pmeth.o: ../../include/openssl/symhacks.h ../cryptlib.h ../evp/evp_locl.h
 ec_pmeth.o: ec_pmeth.c
 ec_print.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ec_print.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h

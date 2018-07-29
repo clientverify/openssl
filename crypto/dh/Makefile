@@ -88,8 +88,7 @@ dh_ameth.o: ../../include/openssl/opensslconf.h
 dh_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dh_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 dh_ameth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-dh_ameth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-dh_ameth.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
+dh_ameth.o: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h ../cryptlib.h
 dh_ameth.o: dh_ameth.c
 dh_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 dh_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
@@ -141,19 +140,13 @@ dh_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dh_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 dh_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 dh_key.o: ../../include/openssl/symhacks.h ../cryptlib.h dh_key.c
-dh_lib.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-dh_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-dh_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
-dh_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-dh_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-dh_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-dh_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-dh_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+dh_lib.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
+dh_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dh_lib.o: ../../include/openssl/dh.h ../../include/openssl/e_os2.h
+dh_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dh_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-dh_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-dh_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+dh_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 dh_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-dh_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 dh_lib.o: ../cryptlib.h dh_lib.c
 dh_pmeth.o: ../../e_os.h ../../include/openssl/asn1.h
 dh_pmeth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
@@ -167,8 +160,7 @@ dh_pmeth.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 dh_pmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dh_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 dh_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-dh_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-dh_pmeth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h ../evp/evp_locl.h
+dh_pmeth.o: ../../include/openssl/symhacks.h ../cryptlib.h ../evp/evp_locl.h
 dh_pmeth.o: dh_pmeth.c
 dh_prn.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dh_prn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

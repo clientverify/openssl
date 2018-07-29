@@ -97,8 +97,7 @@ cm_pmeth.o: ../../include/openssl/opensslconf.h
 cm_pmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 cm_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 cm_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-cm_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-cm_pmeth.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+cm_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509v3.h
 cm_pmeth.o: ../cryptlib.h ../evp/evp_locl.h cm_pmeth.c
 cmac.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 cmac.o: ../../include/openssl/buffer.h ../../include/openssl/cmac.h
