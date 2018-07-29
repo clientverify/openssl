@@ -70,7 +70,7 @@ NM= nm
 PERL= perl
 TAR= tar
 TARFLAGS= --no-recursion --record-size=10240
-MAKEDEPPROG=makedepend
+MAKEDEPPROG=$(CC) -M
 LIBDIR=lib
 
 # We let the C compiler driver to take care of .s files. This is done in
