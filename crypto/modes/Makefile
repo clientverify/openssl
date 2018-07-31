@@ -44,27 +44,6 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-ghash-ia64.s:	asm/ghash-ia64.pl
-	$(PERL) asm/ghash-ia64.pl $@ $(CFLAGS)
-ghash-x86.s:	asm/ghash-x86.pl
-	$(PERL) asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-ghash-x86_64.s:	asm/ghash-x86_64.pl
-	$(PERL) asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
-ghash-sparcv9.s:	asm/ghash-sparcv9.pl
-	$(PERL) asm/ghash-sparcv9.pl $@ $(CFLAGS)
-ghash-alpha.s:	asm/ghash-alpha.pl
-	(preproc=/tmp/$$$$.$@; trap "rm $$preproc" INT; \
-	$(PERL) asm/ghash-alpha.pl > $$preproc && \
-	$(CC) -E $$preproc > $@ && rm $$preproc)
-
-ghash-parisc.s:	asm/ghash-parisc.pl
-	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
-
-# GNU make "catch all"
-ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
-
-ghash-armv4.o:	ghash-armv4.S
-
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 

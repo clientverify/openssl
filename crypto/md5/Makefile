@@ -42,16 +42,6 @@ lib:    $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-md5-586.s:	asm/md5-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
-
-md5-x86_64.s:	asm/md5-x86_64.pl
-	$(PERL) asm/md5-x86_64.pl $(PERLASM_SCHEME) > $@
-
-md5-ia64.s: asm/md5-ia64.S
-	$(CC) $(CFLAGS) -E asm/md5-ia64.S | \
-	$(PERL) -ne 's/;\s+/;\n/g; print;' > $@
-
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 

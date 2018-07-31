@@ -42,9 +42,6 @@ lib:    $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-rmd-586.s:	asm/rmd-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/rmd-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
-
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
