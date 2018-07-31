@@ -1,0 +1,140 @@
+./Makefile:MAKEDEPPROG=$(CC) -M
+./Makefile:AS=$(CC) -c
+./Makefile:		CC='$(CC)' CFLAG='$(CFLAG)' 			\
+./Makefile:		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
+./Makefile:	[ -z "$(FIPSCANLIB)" ] || $(CC) $(CFLAG) -Iinclude \
+./Makefile:			FIPSLD_CC="$(CC)"; CC=$(FIPSDIR)/bin/fipsld; \
+./Makefile:		$(MAKE) -e SHLIBDIRS=crypto  CC=$${CC:-$(CC)} build-shared; \
+./apps/Makefile:	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
+./apps/Makefile:	  FIPSLD_CC="$(CC)"; CC=$(FIPSDIR)/bin/fipsld; export CC FIPSLD_CC; \
+./crypto/Makefile:	echo '  #define CFLAGS "$(CC) $(CFLAG)"'; \
+./crypto/Makefile:	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/applink.c
+./crypto/Makefile:	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
+./crypto/whrlpool/Makefile:CPP=	$(CC) -E
+./crypto/md5/Makefile:CPP=    $(CC) -E
+./crypto/srp/Makefile:	$(CC) $(CFLAGS) -Wall -Werror -g -o srptest srptest.c $(LIB)
+./crypto/seed/Makefile:CPP=	$(CC) -E
+./crypto/cast/Makefile:CPP=	$(CC) -E
+./crypto/des/Makefile:CPP=	$(CC) -E
+./crypto/des/Makefile:	$(CC) $(CFLAGS) -o des des.o cbc3_enc.o $(LIB)
+./crypto/md4/Makefile:CPP=    $(CC) -E
+./crypto/jpake/Makefile:	$(CC) $(CFLAGS) -Wall -Werror -g -o jpaketest jpaketest.c $(LIB)
+./crypto/bf/Makefile:CPP=	$(CC) -E
+./crypto/rc5/Makefile:CPP=	$(CC) -E
+./crypto/pkcs7/Makefile:	$(CC) $(CFLAGS) -o enc enc.o $(PEX_LIBS) $(LIB) $(EX_LIBS)
+./crypto/pkcs7/Makefile:	$(CC) $(CFLAGS) -o dec dec.o $(PEX_LIBS) $(LIB) $(EX_LIBS)
+./crypto/pkcs7/Makefile:	$(CC) $(CFLAGS) -o sign sign.o $(PEX_LIBS) $(LIB) $(EX_LIBS)
+./crypto/pkcs7/Makefile:	$(CC) $(CFLAGS) -o verify verify.o $(PEX_LIBS) example.o $(LIB) $(EX_LIBS)
+./crypto/rc4/Makefile:CPP=    $(CC) -E
+./crypto/aes/Makefile:CPP=	$(CC) -E
+./crypto/camellia/Makefile:CPP=	$(CC) -E
+./crypto/bn/Makefile:CPP=    $(CC) -E
+./crypto/bn/Makefile:	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
+./crypto/ripemd/Makefile:CPP=    $(CC) -E
+./crypto/sha/Makefile:CPP=    $(CC) -E
+./test/Makefile:		FIPSLD_CC="$(CC)"; CC=$(FIPSDIR)/bin/fipsld; export CC FIPSLD_CC; \
+./test/Makefile:#	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
+./test/Makefile:#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(DLIBCRYPTO) $(EX_LIBS) ; \
+./test/Makefile:#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS) $(AESTEST).o $(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS) ; \
+./demos/tunala/Makefile:COMPILE=$(CC) $(CFLAGS) -c
+./demos/tunala/Makefile:	$(CC) -o tunala $(OBJS) $(LINK_FLAGS)
+./demos/easy_tls/Makefile:	$(CC) $(OBJS) $(LDFLAGS) -o test
+./demos/bio/Makefile:	$(CC) -o saccept saccept.o $(LIBS)
+./demos/bio/Makefile:	$(CC) -o sconnect sconnect.o $(LIBS)
+./demos/maurice/Makefile:	$(CC) -o example1 example1.o loadkeys.o $(LIBS)
+./demos/maurice/Makefile:	$(CC) -o example2 example2.o loadkeys.o $(LIBS)
+./demos/maurice/Makefile:	$(CC) -o example3 example3.o $(LIBS)
+./demos/maurice/Makefile:	$(CC) -o example4 example4.o $(LIBS)
+./demos/state_machine/Makefile:	$(CC) -o state_machine state_machine.o -L../.. -lssl -lcrypto
+./demos/eay/Makefile:	$(CC) -o base64 base64.o $(LIBS)
+./demos/eay/Makefile:#	$(CC) -o conn conn.o $(LIBS)
+./demos/eay/Makefile:	$(CC) -o loadrsa loadrsa.o $(LIBS)
+./demos/prime/Makefile:	$(CC) -o prime prime.o $(LIBS)
+./demos/engines/cluster_labs/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/cluster_labs/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/cluster_labs/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/cluster_labs/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/cluster_labs/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/ibmca/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/ibmca/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/ibmca/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/ibmca/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/ibmca/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/zencod/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/zencod/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/zencod/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/zencod/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/zencod/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/rsaref/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/rsaref/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/rsaref/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/rsaref/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/rsaref/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/rsaref/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/engines/rsaref/Makefile:		SHAREDCMD='$(CC)'; \
+./demos/sign/Makefile:	$(CC) -o sign sign.o $(LIBS)
+./Makefile:		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
+./ssl/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/ui/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/rc2/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/dsa/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/Makefile:	[ -z "$(FIPSLIBDIR)" ] || $(AR) $(LIB) $(FIPSLIBDIR)fipscanister.o
+./crypto/rsa/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/x509v3/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/whrlpool/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/buffer/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/evp/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/pkcs12/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/md5/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/idea/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/objects/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/srp/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/seed/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/cast/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/dso/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/krb5/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/cmac/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/ecdh/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/des/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/asn1/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/md4/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/jpake/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/cms/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/ecdsa/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/bf/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/bio/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/modes/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/stack/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/store/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/conf/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/rc5/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/pkcs7/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/hmac/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/rand/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/ec/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/dh/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/ts/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/comp/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/pem/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/rc4/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/aes/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/camellia/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/md2/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/bn/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/ocsp/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/lhash/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/engine/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/ripemd/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/sha/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/err/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/x509/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/pqueue/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/mdc2/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./crypto/txt_db/Makefile:	$(AR) $(LIB) $(LIBOBJ)
+./demos/engines/cluster_labs/Makefile:		$(AR) $(LIB) $(OBJ)
+./demos/engines/ibmca/Makefile:		$(AR) $(LIB) $(OBJ)
+./demos/engines/zencod/Makefile:		$(AR) $(LIB) $(OBJ)
+./demos/engines/rsaref/Makefile:		$(AR) $(LIB) $(OBJ)
+./engines/Makefile:		$(AR) $(LIB) $(LIBOBJ); \
+./engines/ccgost/Makefile:		$(AR) $(LIB) $(LIBOBJ); \
