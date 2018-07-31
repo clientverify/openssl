@@ -60,26 +60,11 @@ buildinf.h: ../Makefile
 	echo "  #define DATE \"`LC_ALL=C LC_TIME=C date`\""; \
 	echo '#endif' ) >buildinf.h
 
-x86cpuid.s:	x86cpuid.pl perlasm/x86asm.pl
-	$(PERL) x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-
 applink.o:	$(TOP)/ms/applink.c
 	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/applink.c
 
 uplink.o:	$(TOP)/ms/uplink.c applink.o
 	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
-
-uplink-x86.s:	$(TOP)/ms/uplink-x86.pl
-	$(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
-
-x86_64cpuid.s: x86_64cpuid.pl;	$(PERL) x86_64cpuid.pl $(PERLASM_SCHEME) > $@
-ia64cpuid.s: ia64cpuid.S;	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
-ppccpuid.s:	ppccpuid.pl;	$(PERL) ppccpuid.pl $(PERLASM_SCHEME) $@
-pariscid.s:	pariscid.pl;	$(PERL) pariscid.pl $(PERLASM_SCHEME) $@
-alphacpuid.s:	alphacpuid.pl
-	(preproc=/tmp/$$$$.$@; trap "rm $$preproc" INT; \
-	$(PERL) alphacpuid.pl > $$preproc && \
-	$(CC) -E $$preproc > $@ && rm $$preproc)
 
 testapps:
 	[ -z "$(THIS)" ] || (	if echo $(SDIRS) | fgrep ' des '; \
