@@ -466,6 +466,9 @@ report:
 depend:
 	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
 
+tasescan:
+	@set -e; target=tasescan; $(RECURSIVE_BUILD_CMD)
+
 lint:
 	@set -e; target=lint; $(RECURSIVE_BUILD_CMD)
 

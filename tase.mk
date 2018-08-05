@@ -2,7 +2,6 @@ TASE_PLUGIN_PATH=$(abspath $(dir $(CC))../lib/LLVMTase.so)
 OPT=$(dir $(CC))opt
 LLC=$(dir $(CC))llc
 DISAS=$(dir $(CC))llvm-dis
-LLC=$(dir $(CC))/llc
 OBJDUMP=objdump -d -w -M suffix -j .text
 
 TASE_CORE=$(abspath $(TOP))/core_instrumented
@@ -15,7 +14,7 @@ DEF_MODE_PERF         = -DNOVERIFY
 DEF_MODE_REFERENCE    = -DNOTSX -DNOVERIFY
 DEF_MODE_VERIFY_DUMMY = -DVERIFY_DUMMY
 DEF_MODE=$(DEF_MODE_PERF)
-EXTCPPFLAGS=$(CPPFLAGS) $(TASE_INCLUDES) $(DEF_MODE)
+EXTCPPFLAGS=$(CPPFLAGS) -I $(TASE_INCLUDES) $(DEF_MODE)
 
 #$(PROJECT_TASE_ALL): $(PROJECT_TASES) $(TASE_CORE)
 #	cat $^ | sort | uniq > $@
