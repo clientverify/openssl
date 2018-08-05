@@ -79,15 +79,30 @@ clean:
 
 rc2_cbc.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
 rc2_cbc.o: rc2_cbc.c rc2_locl.h
+rc2_cbc.bc: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
+rc2_cbc.bc: rc2_cbc.c rc2_locl.h
 rc2_ecb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 rc2_ecb.o: ../../include/openssl/rc2.h rc2_ecb.c rc2_locl.h
+rc2_ecb.bc: ../../include/openssl/opensslconf.h
+rc2_ecb.bc: ../../include/openssl/opensslv.h ../../include/openssl/rc2.h
+rc2_ecb.bc: rc2_ecb.c rc2_locl.h
 rc2_skey.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 rc2_skey.o: ../../include/openssl/opensslconf.h
 rc2_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rc2_skey.o: ../../include/openssl/rc2.h ../../include/openssl/safestack.h
 rc2_skey.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rc2_skey.o: rc2_locl.h rc2_skey.c
+rc2_skey.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+rc2_skey.bc: ../../include/openssl/opensslconf.h
+rc2_skey.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+rc2_skey.bc: ../../include/openssl/rc2.h ../../include/openssl/safestack.h
+rc2_skey.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+rc2_skey.bc: rc2_locl.h rc2_skey.c
 rc2cfb64.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
 rc2cfb64.o: rc2_locl.h rc2cfb64.c
+rc2cfb64.bc: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
+rc2cfb64.bc: rc2_locl.h rc2cfb64.c
 rc2ofb64.o: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
 rc2ofb64.o: rc2_locl.h rc2ofb64.c
+rc2ofb64.bc: ../../include/openssl/opensslconf.h ../../include/openssl/rc2.h
+rc2ofb64.bc: rc2_locl.h rc2ofb64.c

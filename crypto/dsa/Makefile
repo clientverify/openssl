@@ -94,6 +94,21 @@ dsa_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 dsa_ameth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 dsa_ameth.o: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h ../cryptlib.h
 dsa_ameth.o: dsa_ameth.c
+dsa_ameth.bc: ../../e_os.h ../../include/openssl/asn1.h
+dsa_ameth.bc: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dsa_ameth.bc: ../../include/openssl/buffer.h ../../include/openssl/cms.h
+dsa_ameth.bc: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+dsa_ameth.bc: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+dsa_ameth.bc: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+dsa_ameth.bc: ../../include/openssl/err.h ../../include/openssl/evp.h
+dsa_ameth.bc: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+dsa_ameth.bc: ../../include/openssl/objects.h
+dsa_ameth.bc: ../../include/openssl/opensslconf.h
+dsa_ameth.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_ameth.bc: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+dsa_ameth.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dsa_ameth.bc: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h
+dsa_ameth.bc: ../cryptlib.h dsa_ameth.c
 dsa_asn1.o: ../../e_os.h ../../include/openssl/KTest.h
 dsa_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 dsa_asn1.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
@@ -104,6 +119,16 @@ dsa_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_asn1.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 dsa_asn1.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 dsa_asn1.o: ../cryptlib.h dsa_asn1.c
+dsa_asn1.bc: ../../e_os.h ../../include/openssl/KTest.h
+dsa_asn1.bc: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+dsa_asn1.bc: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+dsa_asn1.bc: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+dsa_asn1.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+dsa_asn1.bc: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+dsa_asn1.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_asn1.bc: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+dsa_asn1.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+dsa_asn1.bc: ../cryptlib.h dsa_asn1.c
 dsa_depr.o: ../../e_os.h ../../include/openssl/KTest.h
 dsa_depr.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dsa_depr.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -116,6 +141,18 @@ dsa_depr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_depr.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 dsa_depr.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 dsa_depr.o: ../../include/openssl/symhacks.h ../cryptlib.h dsa_depr.c
+dsa_depr.bc: ../../e_os.h ../../include/openssl/KTest.h
+dsa_depr.bc: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+dsa_depr.bc: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+dsa_depr.bc: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+dsa_depr.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+dsa_depr.bc: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+dsa_depr.bc: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+dsa_depr.bc: ../../include/openssl/opensslconf.h
+dsa_depr.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_depr.bc: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+dsa_depr.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dsa_depr.bc: ../../include/openssl/symhacks.h ../cryptlib.h dsa_depr.c
 dsa_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 dsa_err.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
 dsa_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
@@ -123,6 +160,13 @@ dsa_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dsa_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 dsa_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 dsa_err.o: dsa_err.c
+dsa_err.bc: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+dsa_err.bc: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+dsa_err.bc: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dsa_err.bc: ../../include/openssl/opensslconf.h
+dsa_err.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_err.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dsa_err.bc: ../../include/openssl/symhacks.h dsa_err.c
 dsa_gen.o: ../../e_os.h ../../include/openssl/KTest.h
 dsa_gen.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dsa_gen.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -135,6 +179,18 @@ dsa_gen.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 dsa_gen.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 dsa_gen.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 dsa_gen.o: ../cryptlib.h dsa_gen.c dsa_locl.h
+dsa_gen.bc: ../../e_os.h ../../include/openssl/KTest.h
+dsa_gen.bc: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+dsa_gen.bc: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+dsa_gen.bc: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+dsa_gen.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+dsa_gen.bc: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+dsa_gen.bc: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+dsa_gen.bc: ../../include/openssl/opensslconf.h
+dsa_gen.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_gen.bc: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+dsa_gen.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dsa_gen.bc: ../../include/openssl/symhacks.h ../cryptlib.h dsa_gen.c dsa_locl.h
 dsa_key.o: ../../e_os.h ../../include/openssl/KTest.h
 dsa_key.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 dsa_key.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -144,6 +200,16 @@ dsa_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dsa_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 dsa_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 dsa_key.o: ../../include/openssl/symhacks.h ../cryptlib.h dsa_key.c
+dsa_key.bc: ../../e_os.h ../../include/openssl/KTest.h
+dsa_key.bc: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dsa_key.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dsa_key.bc: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+dsa_key.bc: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dsa_key.bc: ../../include/openssl/opensslconf.h
+dsa_key.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_key.bc: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+dsa_key.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+dsa_key.bc: ../cryptlib.h dsa_key.c
 dsa_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 dsa_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 dsa_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -153,6 +219,15 @@ dsa_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 dsa_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 dsa_lib.o: ../../include/openssl/symhacks.h ../cryptlib.h dsa_lib.c
+dsa_lib.bc: ../../e_os.h ../../include/openssl/asn1.h
+dsa_lib.bc: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dsa_lib.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dsa_lib.bc: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+dsa_lib.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+dsa_lib.bc: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+dsa_lib.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_lib.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dsa_lib.bc: ../../include/openssl/symhacks.h ../cryptlib.h dsa_lib.c
 dsa_ossl.o: ../../e_os.h ../../include/openssl/KTest.h
 dsa_ossl.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dsa_ossl.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -163,6 +238,16 @@ dsa_ossl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_ossl.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 dsa_ossl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 dsa_ossl.o: ../../include/openssl/symhacks.h ../cryptlib.h dsa_ossl.c
+dsa_ossl.bc: ../../e_os.h ../../include/openssl/KTest.h
+dsa_ossl.bc: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+dsa_ossl.bc: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+dsa_ossl.bc: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+dsa_ossl.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+dsa_ossl.bc: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+dsa_ossl.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_ossl.bc: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+dsa_ossl.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dsa_ossl.bc: ../../include/openssl/symhacks.h ../cryptlib.h dsa_ossl.c
 dsa_pmeth.o: ../../e_os.h ../../include/openssl/asn1.h
 dsa_pmeth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 dsa_pmeth.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -178,6 +263,21 @@ dsa_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 dsa_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 dsa_pmeth.o: ../../include/openssl/symhacks.h ../cryptlib.h ../evp/evp_locl.h
 dsa_pmeth.o: dsa_locl.h dsa_pmeth.c
+dsa_pmeth.bc: ../../e_os.h ../../include/openssl/asn1.h
+dsa_pmeth.bc: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+dsa_pmeth.bc: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+dsa_pmeth.bc: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+dsa_pmeth.bc: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+dsa_pmeth.bc: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+dsa_pmeth.bc: ../../include/openssl/err.h ../../include/openssl/evp.h
+dsa_pmeth.bc: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+dsa_pmeth.bc: ../../include/openssl/objects.h
+dsa_pmeth.bc: ../../include/openssl/opensslconf.h
+dsa_pmeth.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_pmeth.bc: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+dsa_pmeth.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dsa_pmeth.bc: ../../include/openssl/symhacks.h ../cryptlib.h ../evp/evp_locl.h
+dsa_pmeth.bc: dsa_locl.h dsa_pmeth.c
 dsa_prn.o: ../../e_os.h ../../include/openssl/asn1.h
 dsa_prn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 dsa_prn.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
@@ -188,6 +288,16 @@ dsa_prn.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dsa_prn.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 dsa_prn.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 dsa_prn.o: ../cryptlib.h dsa_prn.c
+dsa_prn.bc: ../../e_os.h ../../include/openssl/asn1.h
+dsa_prn.bc: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+dsa_prn.bc: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+dsa_prn.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+dsa_prn.bc: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+dsa_prn.bc: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+dsa_prn.bc: ../../include/openssl/opensslconf.h
+dsa_prn.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_prn.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dsa_prn.bc: ../../include/openssl/symhacks.h ../cryptlib.h dsa_prn.c
 dsa_sign.o: ../../e_os.h ../../include/openssl/KTest.h
 dsa_sign.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 dsa_sign.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -198,6 +308,16 @@ dsa_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_sign.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 dsa_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 dsa_sign.o: ../cryptlib.h dsa_sign.c
+dsa_sign.bc: ../../e_os.h ../../include/openssl/KTest.h
+dsa_sign.bc: ../../include/openssl/bio.h ../../include/openssl/bn.h
+dsa_sign.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dsa_sign.bc: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+dsa_sign.bc: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dsa_sign.bc: ../../include/openssl/opensslconf.h
+dsa_sign.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_sign.bc: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+dsa_sign.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+dsa_sign.bc: ../cryptlib.h dsa_sign.c
 dsa_vrf.o: ../../e_os.h ../../include/openssl/bio.h
 dsa_vrf.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dsa_vrf.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
@@ -206,3 +326,11 @@ dsa_vrf.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dsa_vrf.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 dsa_vrf.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 dsa_vrf.o: ../cryptlib.h dsa_vrf.c
+dsa_vrf.bc: ../../e_os.h ../../include/openssl/bio.h
+dsa_vrf.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dsa_vrf.bc: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+dsa_vrf.bc: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dsa_vrf.bc: ../../include/openssl/opensslconf.h
+dsa_vrf.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dsa_vrf.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dsa_vrf.bc: ../../include/openssl/symhacks.h ../cryptlib.h dsa_vrf.c

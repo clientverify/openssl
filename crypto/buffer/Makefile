@@ -84,6 +84,13 @@ buf_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 buf_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 buf_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 buf_err.o: buf_err.c
+buf_err.bc: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+buf_err.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+buf_err.bc: ../../include/openssl/err.h ../../include/openssl/lhash.h
+buf_err.bc: ../../include/openssl/opensslconf.h
+buf_err.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+buf_err.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+buf_err.bc: ../../include/openssl/symhacks.h buf_err.c
 buf_str.o: ../../e_os.h ../../include/openssl/bio.h
 buf_str.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 buf_str.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -91,6 +98,13 @@ buf_str.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 buf_str.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 buf_str.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 buf_str.o: ../../include/openssl/symhacks.h ../cryptlib.h buf_str.c
+buf_str.bc: ../../e_os.h ../../include/openssl/bio.h
+buf_str.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+buf_str.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+buf_str.bc: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+buf_str.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+buf_str.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+buf_str.bc: ../../include/openssl/symhacks.h ../cryptlib.h buf_str.c
 buffer.o: ../../e_os.h ../../include/openssl/bio.h
 buffer.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 buffer.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -98,3 +112,10 @@ buffer.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 buffer.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 buffer.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 buffer.o: ../../include/openssl/symhacks.h ../cryptlib.h buffer.c
+buffer.bc: ../../e_os.h ../../include/openssl/bio.h
+buffer.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+buffer.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+buffer.bc: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+buffer.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+buffer.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+buffer.bc: ../../include/openssl/symhacks.h ../cryptlib.h buffer.c

@@ -84,3 +84,10 @@ pqueue.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 pqueue.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 pqueue.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 pqueue.o: ../../include/openssl/symhacks.h ../cryptlib.h pqueue.c pqueue.h
+pqueue.bc: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
+pqueue.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+pqueue.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+pqueue.bc: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+pqueue.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+pqueue.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+pqueue.bc: ../../include/openssl/symhacks.h ../cryptlib.h pqueue.c pqueue.h

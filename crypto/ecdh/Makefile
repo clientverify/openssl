@@ -86,6 +86,14 @@ ech_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 ech_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 ech_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ech_err.o: ech_err.c
+ech_err.bc: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+ech_err.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ech_err.bc: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+ech_err.bc: ../../include/openssl/err.h ../../include/openssl/lhash.h
+ech_err.bc: ../../include/openssl/opensslconf.h
+ech_err.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ech_err.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+ech_err.bc: ../../include/openssl/symhacks.h ech_err.c
 ech_key.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ech_key.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ech_key.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
@@ -93,6 +101,13 @@ ech_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 ech_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 ech_key.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ech_key.o: ech_key.c ech_locl.h
+ech_key.bc: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+ech_key.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ech_key.bc: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+ech_key.bc: ../../include/openssl/opensslconf.h
+ech_key.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ech_key.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+ech_key.bc: ../../include/openssl/symhacks.h ech_key.c ech_locl.h
 ech_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ech_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ech_lib.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
@@ -101,6 +116,14 @@ ech_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 ech_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 ech_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ech_lib.o: ech_lib.c ech_locl.h
+ech_lib.bc: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+ech_lib.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ech_lib.bc: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+ech_lib.bc: ../../include/openssl/err.h ../../include/openssl/lhash.h
+ech_lib.bc: ../../include/openssl/opensslconf.h
+ech_lib.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ech_lib.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+ech_lib.bc: ../../include/openssl/symhacks.h ech_lib.c ech_locl.h
 ech_ossl.o: ../../e_os.h ../../include/openssl/asn1.h
 ech_ossl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ech_ossl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -112,3 +135,14 @@ ech_ossl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ech_ossl.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 ech_ossl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ech_ossl.o: ../cryptlib.h ech_locl.h ech_ossl.c
+ech_ossl.bc: ../../e_os.h ../../include/openssl/asn1.h
+ech_ossl.bc: ../../include/openssl/bio.h ../../include/openssl/bn.h
+ech_ossl.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+ech_ossl.bc: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+ech_ossl.bc: ../../include/openssl/ecdh.h ../../include/openssl/err.h
+ech_ossl.bc: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+ech_ossl.bc: ../../include/openssl/opensslconf.h
+ech_ossl.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+ech_ossl.bc: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+ech_ossl.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+ech_ossl.bc: ../cryptlib.h ech_locl.h ech_ossl.c

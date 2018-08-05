@@ -88,17 +88,34 @@ sha1_one.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 sha1_one.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 sha1_one.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha1_one.o: sha1_one.c
+sha1_one.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha1_one.bc: ../../include/openssl/opensslconf.h
+sha1_one.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+sha1_one.bc: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+sha1_one.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+sha1_one.bc: sha1_one.c
 sha1dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 sha1dgst.o: ../../include/openssl/opensslconf.h
 sha1dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 sha1dgst.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 sha1dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha1dgst.o: ../md32_common.h sha1dgst.c sha_locl.h
+sha1dgst.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha1dgst.bc: ../../include/openssl/opensslconf.h
+sha1dgst.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+sha1dgst.bc: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+sha1dgst.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+sha1dgst.bc: ../md32_common.h sha1dgst.c sha_locl.h
 sha256.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 sha256.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 sha256.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 sha256.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 sha256.o: ../../include/openssl/symhacks.h ../md32_common.h sha256.c
+sha256.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha256.bc: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+sha256.bc: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+sha256.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
+sha256.bc: ../../include/openssl/symhacks.h ../md32_common.h sha256.c
 sha512.o: ../../e_os.h ../../include/openssl/bio.h
 sha512.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 sha512.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -107,14 +124,34 @@ sha512.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 sha512.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 sha512.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha512.o: ../cryptlib.h sha512.c
+sha512.bc: ../../e_os.h ../../include/openssl/bio.h
+sha512.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+sha512.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+sha512.bc: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+sha512.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+sha512.bc: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+sha512.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+sha512.bc: ../cryptlib.h sha512.c
 sha_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 sha_dgst.o: ../../include/openssl/opensslconf.h
 sha_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 sha_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 sha_dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha_dgst.o: ../md32_common.h sha_dgst.c sha_locl.h
+sha_dgst.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha_dgst.bc: ../../include/openssl/opensslconf.h
+sha_dgst.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+sha_dgst.bc: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+sha_dgst.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+sha_dgst.bc: ../md32_common.h sha_dgst.c sha_locl.h
 sha_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 sha_one.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 sha_one.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 sha_one.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 sha_one.o: ../../include/openssl/symhacks.h sha_one.c
+sha_one.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha_one.bc: ../../include/openssl/opensslconf.h
+sha_one.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+sha_one.bc: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+sha_one.bc: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+sha_one.bc: sha_one.c

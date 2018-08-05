@@ -87,15 +87,29 @@ clean:
 
 bf_cfb64.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
 bf_cfb64.o: ../../include/openssl/opensslconf.h bf_cfb64.c bf_locl.h
+bf_cfb64.bc: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
+bf_cfb64.bc: ../../include/openssl/opensslconf.h bf_cfb64.c bf_locl.h
 bf_ecb.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
 bf_ecb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 bf_ecb.o: bf_ecb.c bf_locl.h
+bf_ecb.bc: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
+bf_ecb.bc: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+bf_ecb.bc: bf_ecb.c bf_locl.h
 bf_enc.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
 bf_enc.o: ../../include/openssl/opensslconf.h bf_enc.c bf_locl.h
+bf_enc.bc: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
+bf_enc.bc: ../../include/openssl/opensslconf.h bf_enc.c bf_locl.h
 bf_ofb64.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
 bf_ofb64.o: ../../include/openssl/opensslconf.h bf_locl.h bf_ofb64.c
+bf_ofb64.bc: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
+bf_ofb64.bc: ../../include/openssl/opensslconf.h bf_locl.h bf_ofb64.c
 bf_skey.o: ../../include/openssl/blowfish.h ../../include/openssl/crypto.h
 bf_skey.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 bf_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bf_skey.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bf_skey.o: ../../include/openssl/symhacks.h bf_locl.h bf_pi.h bf_skey.c
+bf_skey.bc: ../../include/openssl/blowfish.h ../../include/openssl/crypto.h
+bf_skey.bc: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+bf_skey.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+bf_skey.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bf_skey.bc: ../../include/openssl/symhacks.h bf_locl.h bf_pi.h bf_skey.c

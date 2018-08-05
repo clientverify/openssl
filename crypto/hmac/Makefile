@@ -87,6 +87,17 @@ hm_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hm_ameth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 hm_ameth.o: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h ../cryptlib.h
 hm_ameth.o: hm_ameth.c
+hm_ameth.bc: ../../e_os.h ../../include/openssl/asn1.h
+hm_ameth.bc: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+hm_ameth.bc: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+hm_ameth.bc: ../../include/openssl/err.h ../../include/openssl/evp.h
+hm_ameth.bc: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+hm_ameth.bc: ../../include/openssl/objects.h
+hm_ameth.bc: ../../include/openssl/opensslconf.h
+hm_ameth.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+hm_ameth.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+hm_ameth.bc: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h ../cryptlib.h
+hm_ameth.bc: hm_ameth.c
 hm_pmeth.o: ../../e_os.h ../../include/openssl/asn1.h
 hm_pmeth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 hm_pmeth.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -101,6 +112,20 @@ hm_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 hm_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 hm_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509v3.h
 hm_pmeth.o: ../cryptlib.h ../evp/evp_locl.h hm_pmeth.c
+hm_pmeth.bc: ../../e_os.h ../../include/openssl/asn1.h
+hm_pmeth.bc: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+hm_pmeth.bc: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+hm_pmeth.bc: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+hm_pmeth.bc: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+hm_pmeth.bc: ../../include/openssl/err.h ../../include/openssl/evp.h
+hm_pmeth.bc: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
+hm_pmeth.bc: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+hm_pmeth.bc: ../../include/openssl/opensslconf.h
+hm_pmeth.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+hm_pmeth.bc: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+hm_pmeth.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
+hm_pmeth.bc: ../../include/openssl/symhacks.h ../../include/openssl/x509v3.h
+hm_pmeth.bc: ../cryptlib.h ../evp/evp_locl.h hm_pmeth.c
 hmac.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 hmac.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 hmac.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -110,3 +135,12 @@ hmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hmac.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 hmac.o: ../../include/openssl/symhacks.h ../cryptlib.h hmac.c
+hmac.bc: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+hmac.bc: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+hmac.bc: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+hmac.bc: ../../include/openssl/evp.h ../../include/openssl/hmac.h
+hmac.bc: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+hmac.bc: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+hmac.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+hmac.bc: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+hmac.bc: ../../include/openssl/symhacks.h ../cryptlib.h hmac.c
