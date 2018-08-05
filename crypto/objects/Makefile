@@ -31,6 +31,8 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
+include $(TASE_MKFILE)
+
 all:	obj_dat.h obj_xref.h lib
 
 lib:	$(LIBOBJ)

@@ -54,6 +54,8 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
+include $(TASE_MKFILE)
+
 test:	test.c
 	cc -g -I../../include -c test.c
 	cc -g -I../../include -o test test.o -L../.. -lcrypto

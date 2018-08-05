@@ -34,6 +34,8 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
+include $(TASE_MKFILE)
+
 test:
 
 all:	lib

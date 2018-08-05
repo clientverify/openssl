@@ -50,6 +50,8 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
+include $(TASE_MKFILE)
+
 all: shared
 
 buildinf.h: ../Makefile

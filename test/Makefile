@@ -104,6 +104,8 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) TESTS=$(TESTS) all)
 
+include $(TASE_MKFILE)
+
 all:	exe
 
 exe:	$(EXE) dummytest$(EXE_EXT)
