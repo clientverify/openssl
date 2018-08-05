@@ -35,6 +35,8 @@ foreach $file (sort keys %files) {
     my $origfile=$file;
     $origfile=~s/\.o$/.c/;
     $file=~s/^\.\///;
+    my $bcfile=$file;
+    $bcfile=~s/\.o$/.bc/;
     push @{$files{$file}},$origfile;
     my $prevdep="";
 
@@ -42,16 +44,31 @@ foreach $file (sort keys %files) {
     my @deps = map { $_ =~ s/^\.\///; $_ } @{$files{$file}};
 
     foreach $dep (sort @deps) {
-	$dep=~s/^\.\///;
-	next if $prevdep eq $dep; # to exterminate duplicates...
-	$prevdep = $dep;
-	$len=0 if $len+length($dep)+1 >= 80;
-	if($len == 0) {
-	    print "\n$file:";
-	    $len=length($file)+1;
-	}
-	print " $dep";
-	$len+=length($dep)+1;
+        $dep=~s/^\.\///;
+        next if $prevdep eq $dep; # to exterminate duplicates...
+        $prevdep = $dep;
+        $len=0 if $len+length($dep)+1 >= 80;
+        if($len == 0) {
+            print "\n$file:";
+            $len=length($file)+1;
+        }
+        print " $dep";
+        $len+=length($dep)+1;
+    }
+
+    $prevdep="";
+    $len=0;
+    foreach $dep (sort @deps) {
+        $dep=~s/^\.\///;
+        next if $prevdep eq $dep; # to exterminate duplicates...
+        $prevdep = $dep;
+        $len=0 if $len+length($dep)+1 >= 80;
+        if($len == 0) {
+            print "\n$bcfile:";
+            $len=length($bcfile)+1;
+        }
+        print " $dep";
+        $len+=length($dep)+1;
     }
 }
 
