@@ -156,6 +156,8 @@ SDIRS=  \
 TESTS = alltests
 
 MAKEFILE= Makefile
+TASE_MKFILE=$(abspath $(TOP))/tase.mk
+TASE_INCLUDES=$(abspath $(TOP)/../klee/include)
 
 MANDIR=$(OPENSSLDIR)/man
 MAN1=1
@@ -236,6 +238,8 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		FIPSLIBDIR='${FIPSLIBDIR}'			\
 		FIPSDIR='${FIPSDIR}'				\
 		FIPSCANLIB="$${FIPSCANLIB:-$(FIPSCANLIB)}"	\
+		TASE_MKFILE='$(TASE_MKFILE)'		\
+		TASE_INCLUDES='$(TASE_INCLUDES)'		\
 		THIS=$${THIS:-$@} MAKEFILE=Makefile MAKEOVERRIDES=
 # MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
 # which in turn eliminates ambiguities in variable treatment with -e.
