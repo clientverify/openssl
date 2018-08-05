@@ -77,4 +77,6 @@ Makefile.save
 *.bak
 
 # LLVM/Klee/Cliver files
-.*.bc
+*.bc
+*.tase
+*.ll

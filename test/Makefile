@@ -337,6 +337,7 @@ dclean:
 			testreq.pem
 
 clean:
+	rm -f *.ll *.bc *.tase
 	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss *.srl log dummytest
 
 $(DLIBSSL):

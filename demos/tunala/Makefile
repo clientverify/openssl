@@ -25,6 +25,7 @@ TARGETS=tunala
 default: $(TARGETS)
 
 clean:
+	rm -f *.ll *.bc *.tase
 	$(RM) $(OBJS) $(TARGETS) *.bak core
 
 .c.o:

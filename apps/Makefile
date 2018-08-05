@@ -142,6 +142,7 @@ dclean:
 	rm -f CA.pl
 
 clean:
+	rm -f *.ll *.bc *.tase
 	rm -f *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
 	rm -f req
 

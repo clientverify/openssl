@@ -111,6 +111,7 @@ CFLAGS=$(SYSCFLAGS) $(EXTRACFLAGS) $(INCLUDES)
 OBJS=easy-tls.o test.o
 
 clean:
+	rm -f *.ll *.bc *.tase
 	@rm -f test
 	@rm -f TAGS
 	@rm -f *.o

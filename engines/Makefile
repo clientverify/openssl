@@ -161,6 +161,7 @@ dclean:
 	@target=dclean; $(RECURSIVE_MAKE)
 
 clean:
+	rm -f *.ll *.bc *.tase
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@target=clean; $(RECURSIVE_MAKE)
 

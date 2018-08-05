@@ -52,6 +52,7 @@ dclean:
 	rm -f c_rehash
 
 clean:
+	rm -f *.ll *.bc *.tase
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 errors:
