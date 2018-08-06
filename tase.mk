@@ -18,6 +18,7 @@ EXTCPPFLAGS=$(CPPFLAGS) -I $(TASE_INCLUDES) $(DEF_MODE)
 
 #$(PROJECT_TASE_ALL): $(PROJECT_TASES) $(TASE_CORE)
 #	cat $^ | sort | uniq > $@
+# find $(TOP) -mindepth 2 -iname "*.tase" | xargs cat | LC_COLLATE=C sort | uniq > openssl.tase
 
 
 $(LIBOBJ): %.o: %.bc | $(PROJECT_TASE_ALL)
