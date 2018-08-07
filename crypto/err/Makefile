@@ -101,14 +101,16 @@ err_all.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
 err_all.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
 err_all.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 err_all.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-err_all.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-err_all.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pem2.h
-err_all.o: ../../include/openssl/pkcs12.h ../../include/openssl/pkcs7.h
-err_all.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
-err_all.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-err_all.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-err_all.o: ../../include/openssl/ts.h ../../include/openssl/ui.h
-err_all.o: ../../include/openssl/x509v3.h err_all.c
+err_all.o: ../../include/openssl/ocsp.h ../../include/openssl/opensslconf.h
+err_all.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+err_all.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs12.h
+err_all.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+err_all.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+err_all.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+err_all.o: ../../include/openssl/symhacks.h ../../include/openssl/ts.h
+err_all.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
+err_all.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+err_all.o: err_all.c
 err_all.bc: ../../include/openssl/KTest.h ../../include/openssl/asn1.h
 err_all.bc: ../../include/openssl/bio.h ../../include/openssl/bn.h
 err_all.bc: ../../include/openssl/buffer.h ../../include/openssl/cms.h
@@ -119,14 +121,16 @@ err_all.bc: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
 err_all.bc: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
 err_all.bc: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 err_all.bc: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-err_all.bc: ../../include/openssl/opensslconf.h
+err_all.bc: ../../include/openssl/ocsp.h ../../include/openssl/opensslconf.h
 err_all.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 err_all.bc: ../../include/openssl/pem2.h ../../include/openssl/pkcs12.h
 err_all.bc: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 err_all.bc: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 err_all.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
 err_all.bc: ../../include/openssl/symhacks.h ../../include/openssl/ts.h
-err_all.bc: ../../include/openssl/ui.h ../../include/openssl/x509v3.h err_all.c
+err_all.bc: ../../include/openssl/ui.h ../../include/openssl/x509.h
+err_all.bc: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+err_all.bc: err_all.c
 err_prn.o: ../../e_os.h ../../include/openssl/bio.h
 err_prn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 err_prn.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

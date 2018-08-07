@@ -152,7 +152,8 @@ conf_mall.o: ../../include/openssl/opensslconf.h
 conf_mall.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_mall.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 conf_mall.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-conf_mall.o: ../../include/openssl/symhacks.h ../cryptlib.h conf_mall.c
+conf_mall.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+conf_mall.o: ../../include/openssl/x509_vfy.h ../cryptlib.h conf_mall.c
 conf_mall.bc: ../../e_os.h ../../include/openssl/asn1.h
 conf_mall.bc: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf_mall.bc: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -165,7 +166,8 @@ conf_mall.bc: ../../include/openssl/opensslconf.h
 conf_mall.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_mall.bc: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 conf_mall.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
-conf_mall.bc: ../../include/openssl/symhacks.h ../cryptlib.h conf_mall.c
+conf_mall.bc: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+conf_mall.bc: ../../include/openssl/x509_vfy.h ../cryptlib.h conf_mall.c
 conf_mod.o: ../../e_os.h ../../include/openssl/asn1.h
 conf_mod.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf_mod.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -178,7 +180,8 @@ conf_mod.o: ../../include/openssl/opensslconf.h
 conf_mod.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_mod.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 conf_mod.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-conf_mod.o: ../../include/openssl/symhacks.h ../cryptlib.h conf_mod.c
+conf_mod.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+conf_mod.o: ../../include/openssl/x509_vfy.h ../cryptlib.h conf_mod.c
 conf_mod.bc: ../../e_os.h ../../include/openssl/asn1.h
 conf_mod.bc: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf_mod.bc: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -191,7 +194,8 @@ conf_mod.bc: ../../include/openssl/opensslconf.h
 conf_mod.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_mod.bc: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 conf_mod.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
-conf_mod.bc: ../../include/openssl/symhacks.h ../cryptlib.h conf_mod.c
+conf_mod.bc: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+conf_mod.bc: ../../include/openssl/x509_vfy.h ../cryptlib.h conf_mod.c
 conf_sap.o: ../../e_os.h ../../include/openssl/asn1.h
 conf_sap.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf_sap.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -204,7 +208,8 @@ conf_sap.o: ../../include/openssl/opensslconf.h
 conf_sap.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_sap.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 conf_sap.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-conf_sap.o: ../../include/openssl/symhacks.h ../cryptlib.h conf_sap.c
+conf_sap.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+conf_sap.o: ../../include/openssl/x509_vfy.h ../cryptlib.h conf_sap.c
 conf_sap.bc: ../../e_os.h ../../include/openssl/asn1.h
 conf_sap.bc: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf_sap.bc: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -217,4 +222,5 @@ conf_sap.bc: ../../include/openssl/opensslconf.h
 conf_sap.bc: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 conf_sap.bc: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 conf_sap.bc: ../../include/openssl/sha.h ../../include/openssl/stack.h
-conf_sap.bc: ../../include/openssl/symhacks.h ../cryptlib.h conf_sap.c
+conf_sap.bc: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+conf_sap.bc: ../../include/openssl/x509_vfy.h ../cryptlib.h conf_sap.c
