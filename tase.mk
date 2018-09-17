@@ -23,13 +23,13 @@ EXTCPPFLAGS=$(CPPFLAGS) -I $(TASE_INCLUDES) $(DEF_MODE)
 
 $(LIBOBJ): %.o: %.bc | $(PROJECT_TASE_ALL)
 	$(LLC) $(LLC_FLAGS) -tase-instrumented-functions $(PROJECT_TASE_ALL) $(TASE_MODELED_FLAGS) -o $*.s $<
-	$(CC) $(CFLAGS) $(EXTCPPFLAGS) $(DEF_MODE) -O2 -o $@ -c $*.s
+	$(CC) $(CFLAGS) $(EXTCPPFLAGS) -Qunused-arguments -O2 -o $@ -c $*.s
 
 tasescan: $(LIBOBJ:.o=.bc)
 	@target=tasescan; $(RECURSIVE_MAKE)
 
 $(LIBOBJ:.o=.bc): %.bc: %.c
-	$(CC) $(CFLAGS) $(EXTCPPFLAGS) $(DEF_MODE) -emit-llvm -o $*.init.bc -c $<
+	$(CC) $(CFLAGS) $(EXTCPPFLAGS) -O0 -emit-llvm -o $*.init.bc -c $<
 	$(DISAS) $*.init.bc
 	$(OPT) -load $(TASE_PLUGIN_PATH) -function-wrapper -tase-instrumented-functions $*.tase $(TASE_MODELED_FLAGS) -o $@ $*.init.bc
 	$(DISAS) $*.bc
