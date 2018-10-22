@@ -13,6 +13,8 @@ RM=		rm -f
 # KRB5 stuff
 KRB5_INCLUDES=
 LIBKRB5=
+AR=		ar r
+
 
 PEX_LIBS=
 EX_LIBS= 
@@ -29,15 +31,15 @@ DLIBSSL=../libssl.a
 LIBCRYPTO=-L.. -lcrypto
 LIBSSL=-L.. -lssl
 
-#Changed to s_client from openssl
-PROGRAM= s_client
+
+PROGRAM= openssl
 
 SCRIPTS=CA.sh CA.pl tsget
 
 EXE= $(PROGRAM)$(EXE_EXT)
 
 
-E_EXE= 
+E_EXE= s_client
 #verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
 ca crl rsa rsautl dsa dsaparam ec ecparam \
 x509 genrsa gendsa genpkey s_server s_client speed \
@@ -53,8 +55,8 @@ S_SRC=	s_cb.c s_socket.c
 RAND_OBJ=app_rand.o
 RAND_SRC=app_rand.c
 
-#ABH: Also removed s_client.o 
-E_OBJ=  $(A_OBJ) $(S_OBJ) $(RAND_OBJ) 
+
+E_OBJ= s_client.o  $(A_OBJ) $(S_OBJ) $(RAND_OBJ) 
 #verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o errstr.o \
 ca.o pkcs7.o crl2p7.o crl.o \
 rsa.o rsautl.o dsa.o dsaparam.o ec.o ecparam.o \
@@ -152,11 +154,17 @@ clean:
 	rm -f *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
 	rm -f req
 
+
+
 $(DLIBSSL):
 	(cd ..; $(MAKE) DIRS=ssl all)
 
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) DIRS=crypto all)
+
+libtasessl.a:  $(E_OBJ) $(DLIBCRYPTO) $(DLIBSSL)
+	$(AR) $@ $^
+	$(RANLIB) $@ || echo Never mind.
 
 $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(EXE)
