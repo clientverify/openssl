@@ -21,14 +21,14 @@ EXTCPPFLAGS=$(CPPFLAGS) -I $(TASE_INCLUDES) $(DEF_MODE)
 # find $(TOP) -mindepth 2 -iname "*.tase" | xargs cat | LC_COLLATE=C sort | uniq > openssl.tase
 
 
-$(LIBOBJ): %.o: %.bc | $(PROJECT_TASE_ALL)
+$(LIBOBJ) $(E_OBJ): %.o: %.bc | $(PROJECT_TASE_ALL) $(TASE_MODELED)
 	$(LLC) $(LLC_FLAGS) -tase-instrumented-functions $(PROJECT_TASE_ALL) $(TASE_MODELED_FLAGS) -o $*.s $<
 	$(CC) $(CFLAGS) $(EXTCPPFLAGS) -Qunused-arguments -O2 -o $@ -c $*.s
 
-tasescan: $(LIBOBJ:.o=.bc)
+tasescan: $(LIBOBJ:.o=.bc) $(E_OBJ:.o=.bc)
 	@target=tasescan; $(RECURSIVE_MAKE)
 
-$(LIBOBJ:.o=.bc): %.bc: %.c
+$(LIBOBJ:.o=.bc) $(E_OBJ:.o=.bc): %.bc: %.c $(TASE_MODELED)
 	$(CC) $(CFLAGS) $(EXTCPPFLAGS) -O0 -emit-llvm -o $*.init.bc -c $<
 	$(DISAS) $*.init.bc
 	$(OPT) -load $(TASE_PLUGIN_PATH) -function-wrapper -tase-instrumented-functions $*.tase $(TASE_MODELED_FLAGS) -o $@ $*.init.bc

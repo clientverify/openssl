@@ -413,7 +413,8 @@ static void KTOV_append(KTestObjectVector *ov,
   // KTO_print(stdout, &ov->objects[i]);
 }
 
-static KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
+//ABH: removed static so we can call externally from tase models
+KTestObject* KTOV_next_object(KTestObjectVector *ov, const char *name)
 {
   if (ov->playback_index >= ov->size) {
     fprintf(stderr, "ERROR: ktest playback %s - no more recorded events", name);
@@ -1014,3 +1015,4 @@ void ktest_finish() {
     // TODO: nothing except maybe cleanup?
   }
 }
+
