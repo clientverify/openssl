@@ -19,8 +19,8 @@ EX_LIBS=
 EXE_EXT= 
 
 SHLIB_TARGET=
-
-CFLAGS= -DMONOLITH $(INCLUDES) $(CFLAG)
+#ABH removed -DMONOLITH
+CFLAGS=  $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile makeapps.com install.com
 
@@ -29,7 +29,7 @@ DLIBSSL=../libssl.a
 LIBCRYPTO=-L.. -lcrypto
 LIBSSL=-L.. -lssl
 
-
+#Changed to s_client from openssl
 PROGRAM= s_client
 
 SCRIPTS=CA.sh CA.pl tsget
@@ -37,7 +37,7 @@ SCRIPTS=CA.sh CA.pl tsget
 EXE= $(PROGRAM)$(EXE_EXT)
 
 
-E_EXE= s_client
+E_EXE= 
 #verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
 ca crl rsa rsautl dsa dsaparam ec ecparam \
 x509 genrsa gendsa genpkey s_server s_client speed \
@@ -53,7 +53,8 @@ S_SRC=	s_cb.c s_socket.c
 RAND_OBJ=app_rand.o
 RAND_SRC=app_rand.c
 
-E_OBJ= s_client.o $(A_OBJ) $(S_OBJ) $(RAND_OBJ) 
+#ABH: Also removed s_client.o 
+E_OBJ=  $(A_OBJ) $(S_OBJ) $(RAND_OBJ) 
 #verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o errstr.o \
 ca.o pkcs7.o crl2p7.o crl.o \
 rsa.o rsautl.o dsa.o dsaparam.o ec.o ecparam.o \

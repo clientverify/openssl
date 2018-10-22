@@ -20,6 +20,8 @@ EXTCPPFLAGS=$(CPPFLAGS) -I $(TASE_INCLUDES) $(DEF_MODE)
 #	cat $^ | sort | uniq > $@
 # find $(TOP) -mindepth 2 -iname "*.tase" | xargs cat | LC_COLLATE=C sort | uniq > openssl.tase
 
+# Overriding these particular files (across all of OpenSSL) to compile with sse/floating point support.
+apps.bc speed.bc s_time.bc b_print.bc : private EXTCPPFLAGS+=-msse -msse2
 
 $(LIBOBJ) $(E_OBJ): %.o: %.bc | $(PROJECT_TASE_ALL) $(TASE_MODELED)
 	$(LLC) $(LLC_FLAGS) -tase-instrumented-functions $(PROJECT_TASE_ALL) $(TASE_MODELED_FLAGS) -o $*.s $<
