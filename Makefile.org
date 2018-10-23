@@ -288,6 +288,11 @@ build_tests:
 	@dir=test; target=all; $(BUILD_ONE_CMD)
 build_tools:
 	@dir=tools; target=all; $(BUILD_ONE_CMD)
+build_taseall:  build_libs build_taseobj build_tests build_tools
+
+build_taseobj:
+	@dir=apps; target=libtasessl.a; $(BUILD_ONE_CMD)
+
 
 all_testapps: build_libs build_testapps
 build_testapps:
