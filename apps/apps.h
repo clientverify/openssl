@@ -139,7 +139,12 @@ long app_RAND_load_files(char *file); /* `file' is a list of files to read,
 
 #ifndef MONOLITH
 
+//ABH: added check to standalone_applib
+#ifndef STANDALONE_APPLIP
 #define MAIN(a,v)	main(a,v)
+#else
+#define MAIN(a,v)       PROG(a,v)
+#endif
 
 #ifndef NON_MAIN
 CONF *config=NULL;
