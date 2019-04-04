@@ -139,7 +139,11 @@ long app_RAND_load_files(char *file); /* `file' is a list of files to read,
 
 #ifndef MONOLITH
 
+#ifdef  TASE_TSX
+#define MAIN(a,v)	PROG(a,v)
+#else
 #define MAIN(a,v)	main(a,v)
+#endif
 
 #ifndef NON_MAIN
 CONF *config=NULL;

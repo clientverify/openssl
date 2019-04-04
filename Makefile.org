@@ -269,6 +269,7 @@ reflect:
 
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
+build_taseall: build_libs build_taseobj
 
 build_libs: build_crypto build_ssl build_engines
 
@@ -284,6 +285,8 @@ build_tests:
 	@dir=test; target=all; $(BUILD_ONE_CMD)
 build_tools:
 	@dir=tools; target=all; $(BUILD_ONE_CMD)
+build_taseobj:
+	@dir=apps; target=libtasessl; $(BUILD_ONE_CMD)
 
 all_testapps: build_libs build_testapps
 build_testapps:

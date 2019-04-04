@@ -13,6 +13,7 @@ RM=		rm -f
 # KRB5 stuff
 KRB5_INCLUDES=
 LIBKRB5=
+AR= ar r
 
 PEX_LIBS=
 EX_LIBS= 
@@ -20,12 +21,15 @@ EXE_EXT=
 
 SHLIB_TARGET=
 
-CFLAGS= -DMONOLITH $(INCLUDES) $(CFLAG)
+# Removed -DMONOLITH in order to build only one specific application binary.
+CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile makeapps.com install.com
 
 DLIBCRYPTO=../libcrypto.a
 DLIBSSL=../libssl.a
+DLIBTASESSL=../libtasessl.a
+DLIBTASEAPPS=../libtaseapps.a
 LIBCRYPTO=-L.. -lcrypto
 LIBSSL=-L.. -lssl
 
@@ -35,7 +39,8 @@ SCRIPTS=CA.sh CA.pl tsget
 
 EXE= $(PROGRAM)$(EXE_EXT)
 
-E_EXE=	verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
+E_EXE=s_client
+#verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
 	ca crl rsa rsautl dsa dsaparam ec ecparam \
 	x509 genrsa gendsa genpkey s_server s_client speed \
 	s_time version pkcs7 cms crl2pkcs7 sess_id ciphers nseq pkcs12 \
@@ -50,7 +55,8 @@ S_SRC=	s_cb.c s_socket.c
 RAND_OBJ=app_rand.o
 RAND_SRC=app_rand.c
 
-E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o errstr.o \
+E_OBJ=	s_client.o $(A_OBJ) $(S_OBJ) $(RAND_OBJ)
+#verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o errstr.o \
 	ca.o pkcs7.o crl2p7.o crl.o \
 	rsa.o rsautl.o dsa.o dsaparam.o ec.o ecparam.o \
 	x509.o genrsa.o gendsa.o genpkey.o s_server.o s_client.o speed.o \
@@ -58,7 +64,8 @@ E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o er
 	ciphers.o nseq.o pkcs12.o pkcs8.o pkey.o pkeyparam.o pkeyutl.o \
 	spkac.o smime.o cms.o rand.o engine.o ocsp.o prime.o ts.o srp.o
 
-E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c ca.c \
+E_SRC=	s_client.c $(A_SRC) $(S_SRC) $(RAND_SRC)
+# verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c ca.c \
 	pkcs7.c crl2p7.c crl.c \
 	rsa.c rsautl.c dsa.c dsaparam.c ec.c ecparam.c \
 	x509.c genrsa.c gendsa.c genpkey.c s_server.c s_client.c speed.c \
@@ -80,6 +87,8 @@ top:
 
 all:	exe
 
+libtasessl: $(DLIBTASESSL)
+
 exe:	$(EXE)
 
 req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
@@ -91,6 +100,7 @@ req: sreq.o $(A_OBJ) $(DLIBCRYPTO)
 		LIBDEPS="$(PEX_LIBS) $(LIBCRYPTO) $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
+# TODO: If this rule gives you shit, just comment it out.
 sreq.o: req.c 
 	$(CC) -c $(INCLUDES) $(CFLAG) -o sreq.o req.c
 
@@ -148,6 +158,27 @@ $(DLIBSSL):
 
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) DIRS=crypto all)
+
+$(DLIBTASEAPPS): $(E_OBJ)
+	$(AR) $@ $^
+	$(RANLIB) $@ || echo Never mind ranlib error.
+
+$(TASE_TEMP_DIR) := $(shell mktemp -d)
+
+#Workaround to drop all tase objects into a temp dir and ar them together
+$(DLIBTASESSL): $(DLIBTASEAPPS) $(DLIBCRYPTO) $(DLIBSSL)
+	echo Doing the archive lulz in $(TASE_TEMP_DIR)
+	cp $^ $(TASE_TEMP_DIR)
+	(set -e; \
+	cd $(TASE_TEMP_DIR); \
+	for f in $^; \
+	do \
+	ar x $$(basename $$f); \
+	done; \
+	find . -iname '*.o' | xargs $(AR) temparchive.a)
+	cp $(TASE_TEMP_DIR)/temparchive.a $@
+	$(RANLIB) $@ || echo Never mind.
+	rm -r $(TASE_TEMP_DIR)
 
 $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(EXE)
