@@ -84,12 +84,11 @@ err.o: ../cryptlib.h err.c
 err_all.o: ../../include/openssl/KTest.h ../../include/openssl/asn1.h
 err_all.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 err_all.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
-err_all.o: ../../include/openssl/comp.h ../../include/openssl/conf.h
-err_all.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
-err_all.o: ../../include/openssl/dsa.h ../../include/openssl/dso.h
-err_all.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-err_all.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-err_all.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+err_all.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+err_all.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+err_all.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
+err_all.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+err_all.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
 err_all.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 err_all.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 err_all.o: ../../include/openssl/ocsp.h ../../include/openssl/opensslconf.h

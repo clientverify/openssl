@@ -158,7 +158,7 @@ const char RAND_version[]="RAND" OPENSSL_VERSION_PTEXT;
 
 static void ssleay_rand_cleanup(void);
 static void ssleay_rand_seed(const void *buf, int num);
-static void ssleay_rand_add(const void *buf, int num, double add_entropy);
+static void ssleay_rand_add(const void *buf, int num, long add_entropy);
 static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo);
 static int ssleay_rand_nopseudo_bytes(unsigned char *buf, int num);
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
@@ -190,7 +190,7 @@ static void ssleay_rand_cleanup(void)
 	initialized=0;
 	}
 
-static void ssleay_rand_add(const void *buf, int num, double add)
+static void ssleay_rand_add(const void *buf, int num, long add)
 	{
 	int i,j,k,st_idx;
 	long md_c[2];
@@ -328,7 +328,7 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 
 static void ssleay_rand_seed(const void *buf, int num)
 	{
-	ssleay_rand_add(buf, num, (double)num);
+	  ssleay_rand_add(buf, num, num);
 	}
 
 static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
@@ -439,7 +439,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo)
 #define DUMMY_SEED "...................." /* at least MD_DIGEST_LENGTH */
 			/* Note that the seed does not matter, it's just that
 			 * ssleay_rand_add expects to have something to hash. */
-			ssleay_rand_add(DUMMY_SEED, MD_DIGEST_LENGTH, 0.0);
+			ssleay_rand_add(DUMMY_SEED, MD_DIGEST_LENGTH, 0);
 			n -= MD_DIGEST_LENGTH;
 			}
 		if (ok)
