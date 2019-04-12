@@ -150,7 +150,7 @@ void RAND_seed(const void *buf, int num)
 		meth->seed(buf,num);
 	}
 
-void RAND_add(const void *buf, int num, double entropy)
+void RAND_add(const void *buf, int num, long entropy)
 	{
 	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->add)
@@ -242,7 +242,7 @@ static size_t drbg_get_adin(DRBG_CTX *ctx, unsigned char **pout)
  */
 
 static int drbg_rand_add(DRBG_CTX *ctx, const void *in, int inlen,
-				double entropy)
+				long entropy)
 	{
 	RAND_SSLeay()->add(in, inlen, entropy);
 	return 1;

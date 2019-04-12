@@ -140,7 +140,7 @@ static int state_num=0,state_index=0;
 static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
-static double entropy=0;
+static long entropy=0; //ABH Hacked to rm double
 static int initialized=0;
 
 static unsigned int crypto_lock_rand = 0; /* may be set only when a thread

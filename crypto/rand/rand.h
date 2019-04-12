@@ -83,7 +83,7 @@ struct rand_meth_st
 	void (*seed)(const void *buf, int num);
 	int (*bytes)(unsigned char *buf, int num);
 	void (*cleanup)(void);
-	void (*add)(const void *buf, int num, double entropy);
+	  void (*add)(const void *buf, int num, long entropy); //ABH Hacked to rm double
 	int (*pseudorand)(unsigned char *buf, int num);
 	int (*status)(void);
 	};
@@ -102,7 +102,7 @@ void RAND_cleanup(void );
 int  RAND_bytes(unsigned char *buf,int num);
 int  RAND_pseudo_bytes(unsigned char *buf,int num);
 void RAND_seed(const void *buf,int num);
-void RAND_add(const void *buf,int num,double entropy);
+void RAND_add(const void *buf,int num, long entropy);
 int  RAND_load_file(const char *file,long max_bytes);
 int  RAND_write_file(const char *file);
 const char *RAND_file_name(char *file,size_t num);

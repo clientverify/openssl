@@ -231,6 +231,18 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
 
 	BIO_snprintf(p,len,"%02d%02d%02d%02d%02d%02dZ",ts->tm_year%100,
 		     ts->tm_mon+1,ts->tm_mday,ts->tm_hour,ts->tm_min,ts->tm_sec);
+
+	//This is a hack to get through the snprintf copying bc we don't support
+	//varargs yet
+
+	//Set date to 12/18
+	p[0] = '1';
+	p[1] = '8';
+	p[2] = '1';
+	p[3] = '2';
+	
+
+	
 	s->length=strlen(p);
 	s->type=V_ASN1_UTCTIME;
 #ifdef CHARSET_EBCDIC_not

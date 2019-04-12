@@ -322,7 +322,7 @@ bad:
 #define START	0
 #define STOP	1
 
-static double tm_Time_F(int s)
+static long tm_Time_F(int s)
 	{
 	return app_tminterval(s,1);
 	}
@@ -335,7 +335,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	double totalTime = 0.0;
+	long totalTime = 0;
 	int nConn = 0;
 	SSL *scon=NULL;
 	long finishtime=0;
@@ -450,7 +450,7 @@ int MAIN(int argc, char **argv)
 	totalTime += tm_Time_F(STOP); /* Add the time for this iteration */
 
 	i=(int)((long)time(NULL)-finishtime+maxTime);
-	printf( "\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((double)nConn/totalTime),bytes_read);
+	printf( "\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((long)nConn/totalTime),bytes_read);
 	printf( "%d connections in %ld real seconds, %ld bytes read per connection\n",nConn,(long)time(NULL)-finishtime+maxTime,bytes_read/nConn);
 
 	/* Now loop and time connections using the same session id over and over */
@@ -481,7 +481,7 @@ next:
 	SHUTDOWN2(SSL_get_fd(scon));
 
 	nConn = 0;
-	totalTime = 0.0;
+	totalTime = 0;
 
 	finishtime=(long)time(NULL)+maxTime;
 
@@ -540,7 +540,7 @@ next:
 	totalTime += tm_Time_F(STOP); /* Add the time for this iteration*/
 
 
-	printf( "\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((double)nConn/totalTime),bytes_read);
+	printf( "\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((long)nConn/totalTime),bytes_read);
 	printf( "%d connections in %ld real seconds, %ld bytes read per connection\n",nConn,(long)time(NULL)-finishtime+maxTime,bytes_read/nConn);
 
 	ret=0;

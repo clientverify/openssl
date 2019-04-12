@@ -129,7 +129,7 @@ int RAND_load_file(const char *file, long bytes)
 	memset(&sb, 0, sizeof(sb));
 #endif
 	if (stat(file,&sb) < 0) return(0);
-	RAND_add(&sb,sizeof(sb),0.0);
+	RAND_add(&sb,sizeof(sb),0);
 #endif
 	if (bytes == 0) return(ret);
 
@@ -160,10 +160,10 @@ int RAND_load_file(const char *file, long bytes)
 		i=fread(buf,1,n,in);
 		if (i <= 0) break;
 #ifdef PURIFY
-		RAND_add(buf,i,(double)i);
+		RAND_add(buf,i,(long)i); //ABH Hacked
 #else
 		/* even if n != i, use the full array */
-		RAND_add(buf,n,(double)i);
+		RAND_add(buf,n,(long)i); //ABH Hacked
 #endif
 		ret+=i;
 		if (bytes > 0)

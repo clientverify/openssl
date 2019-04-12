@@ -2830,10 +2830,10 @@ ok:
 
 /* app_tminterval section */
 #if defined(_WIN32)
-double app_tminterval(int stop,int usertime)
+long app_tminterval(int stop,int usertime)
 	{
 	FILETIME		now;
-	double			ret=0;
+	long			ret=0;
 	static ULARGE_INTEGER	tmstart;
 	static int		warning=1;
 #ifdef _WIN32_WINNT
@@ -2887,9 +2887,9 @@ double app_tminterval(int stop,int usertime)
 #elif defined(OPENSSL_SYS_NETWARE)
 #include <time.h>
 
-double app_tminterval(int stop,int usertime)
+long app_tminterval(int stop,int usertime)
 	{
-	double		ret=0;
+	long		ret=0;
 	static clock_t	tmstart;
 	static int	warning=1;
 
@@ -2901,7 +2901,7 @@ double app_tminterval(int stop,int usertime)
 		}
 
 	if (stop==TM_START)	tmstart = clock();
-	else			ret     = (clock()-tmstart)/(double)CLOCKS_PER_SEC;
+	else			ret     = (clock()-tmstart)/(long)CLOCKS_PER_SEC;
 
 	return (ret);
 	}
@@ -2909,9 +2909,9 @@ double app_tminterval(int stop,int usertime)
 #elif defined(OPENSSL_SYSTEM_VXWORKS)
 #include <time.h>
 
-double app_tminterval(int stop,int usertime)
+long app_tminterval(int stop,int usertime)
 	{
-	double ret=0;
+	long ret=0;
 #ifdef CLOCK_REALTIME
 	static struct timespec	tmstart;
 	struct timespec		now;
@@ -2936,7 +2936,7 @@ double app_tminterval(int stop,int usertime)
 #else
 	now = tickGet();
 	if (stop==TM_START)	tmstart = now;
-	else			ret = (now - tmstart)/(double)sysClkRateGet();
+	else			ret = (now - tmstart)/(long)sysClkRateGet();
 #endif
 	return (ret);
 	}
@@ -2945,10 +2945,10 @@ double app_tminterval(int stop,int usertime)
 #include <time.h>
 #include <times.h>
 
-double app_tminterval(int stop,int usertime)
+long app_tminterval(int stop,int usertime)
 	{
 	static clock_t	tmstart;
-	double		ret = 0;
+	long		ret = 0;
 	clock_t		now;
 #ifdef __TMS
 	struct tms	rus;
@@ -2968,7 +2968,7 @@ double app_tminterval(int stop,int usertime)
 		}
 #endif
 	if (stop==TM_START)	tmstart = now;
-	else			ret = (now - tmstart)/(double)(CLK_TCK);
+	else			ret = (now - tmstart)/(long)(CLK_TCK);
 
 	return (ret);
 	}
@@ -2976,9 +2976,9 @@ double app_tminterval(int stop,int usertime)
 #elif defined(_SC_CLK_TCK)	/* by means of unistd.h */
 #include <sys/times.h>
 
-double app_tminterval(int stop,int usertime)
+long app_tminterval(int stop,int usertime)
 	{
-	double		ret = 0;
+	long		ret = 0;
 	struct tms	rus;
 	clock_t		now = times(&rus);
 	static clock_t	tmstart;
@@ -2989,7 +2989,7 @@ double app_tminterval(int stop,int usertime)
 	else
 		{
 		long int tck = sysconf(_SC_CLK_TCK);
-		ret = (now - tmstart)/(double)tck;
+		ret = (now - tmstart)/(long)tck;
 		}
 
 	return (ret);
@@ -2999,9 +2999,9 @@ double app_tminterval(int stop,int usertime)
 #include <sys/time.h>
 #include <sys/resource.h>
 
-double app_tminterval(int stop,int usertime)
+long app_tminterval(int stop,int usertime)
 	{
-	double		ret = 0;
+	long		ret = 0;
 	struct rusage	rus;
 	struct timeval	now;
 	static struct timeval tmstart;

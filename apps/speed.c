@@ -230,11 +230,11 @@ int run=0;
 static int mr=0;
 static int usertime=1;
 
-static double Time_F(int s);
+static long Time_F(int s);
 static void print_message(const char *s,long num,int length);
 static void pkey_print_message(const char *str, const char *str2,
 	long num, int bits, int sec);
-static void print_result(int alg,int run_no,int count,double time_used);
+static void print_result(int alg,int run_no,int count,long time_used);
 #ifndef NO_FORK
 static int do_multi(int multi);
 #endif
@@ -255,19 +255,19 @@ static const char *names[ALGOR_NUM]={
   "camellia-128 cbc","camellia-192 cbc","camellia-256 cbc",
   "evp","sha256","sha512","whirlpool",
   "aes-128 ige","aes-192 ige","aes-256 ige","ghash" };
-static double results[ALGOR_NUM][SIZE_NUM];
+static long results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 #ifndef OPENSSL_NO_RSA
-static double rsa_results[RSA_NUM][2];
+static long rsa_results[RSA_NUM][2];
 #endif
 #ifndef OPENSSL_NO_DSA
-static double dsa_results[DSA_NUM][2];
+static long dsa_results[DSA_NUM][2];
 #endif
 #ifndef OPENSSL_NO_ECDSA
-static double ecdsa_results[EC_NUM][2];
+static long ecdsa_results[EC_NUM][2];
 #endif
 #ifndef OPENSSL_NO_ECDH
-static double ecdh_results[EC_NUM][1];
+static long ecdh_results[EC_NUM][1];
 #endif
 
 #if defined(OPENSSL_NO_DSA) && !(defined(OPENSSL_NO_ECDSA) && defined(OPENSSL_NO_ECDH))
@@ -313,7 +313,7 @@ static DWORD WINAPI sleepy(VOID *arg)
 	return 0;
 	}
 
-static double Time_F(int s)
+static long Time_F(int s)
 	{
 	if (s == START)
 		{
@@ -334,7 +334,7 @@ static double Time_F(int s)
 	}
 #else
 
-static double Time_F(int s)
+static long Time_F(int s)
 	{
 	return app_tminterval(s,usertime);
 	}
@@ -498,7 +498,7 @@ int MAIN(int argc, char **argv)
 #define D_IGE_192_AES   27
 #define D_IGE_256_AES   28
 #define D_GHASH		29
-	double d=0.0;
+	long d=0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0
 #define	R_DSA_1024	1
@@ -2037,7 +2037,7 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,mr ? "+R1:%ld:%d:%.2f\n"
 				   : "%ld %d bit private RSA's in %.2fs\n",
 				   count,rsa_bits[j],d);
-			rsa_results[j][0]=d/(double)count;
+			rsa_results[j][0]=d/(long)count;
 			rsa_count=count;
 			}
 
@@ -2072,7 +2072,7 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,mr ? "+R2:%ld:%d:%.2f\n"
 				   : "%ld %d bit public RSA's in %.2fs\n",
 				   count,rsa_bits[j],d);
-			rsa_results[j][1]=d/(double)count;
+			rsa_results[j][1]=d/(long)count;
 			}
 #endif
 
@@ -2131,7 +2131,7 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,mr ? "+R3:%ld:%d:%.2f\n"
 				   : "%ld %d bit DSA signs in %.2fs\n",
 				   count,dsa_bits[j],d);
-			dsa_results[j][0]=d/(double)count;
+			dsa_results[j][0]=d/(long)count;
 			rsa_count=count;
 			}
 
@@ -2166,7 +2166,7 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,mr ? "+R4:%ld:%d:%.2f\n"
 				   : "%ld %d bit DSA verify in %.2fs\n",
 				   count,dsa_bits[j],d);
-			dsa_results[j][1]=d/(double)count;
+			dsa_results[j][1]=d/(long)count;
 			}
 
 		if (rsa_count <= 1)
@@ -2239,7 +2239,7 @@ int MAIN(int argc, char **argv)
 				BIO_printf(bio_err, mr ? "+R5:%ld:%d:%.2f\n" :
 					"%ld %d bit ECDSA signs in %.2fs \n", 
 					count, test_curves_bits[j], d);
-				ecdsa_results[j][0]=d/(double)count;
+				ecdsa_results[j][0]=d/(long)count;
 				rsa_count=count;
 				}
 
@@ -2274,7 +2274,7 @@ int MAIN(int argc, char **argv)
 				BIO_printf(bio_err, mr? "+R6:%ld:%d:%.2f\n"
 						: "%ld %d bit ECDSA verify in %.2fs\n",
 				count, test_curves_bits[j], d);
-				ecdsa_results[j][1]=d/(double)count;
+				ecdsa_results[j][1]=d/(long)count;
 				}
 
 			if (rsa_count <= 1) 
@@ -2374,7 +2374,7 @@ int MAIN(int argc, char **argv)
 				d=Time_F(STOP);
 				BIO_printf(bio_err, mr ? "+R7:%ld:%d:%.2f\n" :"%ld %d-bit ECDH ops in %.2fs\n",
 				count, test_curves_bits[j], d);
-				ecdh_results[j][0]=d/(double)count;
+				ecdh_results[j][0]=d/(long)count;
 				rsa_count=count;
 				}
 			}
@@ -2608,11 +2608,11 @@ static void pkey_print_message(const char *str, const char *str2, long num,
 #endif
 	}
 
-static void print_result(int alg,int run_no,int count,double time_used)
+static void print_result(int alg,int run_no,int count,long time_used)
 	{
 	BIO_printf(bio_err,mr ? "+R:%d:%s:%f\n"
 		   : "%d %s's in %.2fs\n",count,names[alg],time_used);
-	results[alg][run_no]=((double)count)/time_used*lengths[run_no];
+	results[alg][run_no]=((long)count)/time_used*lengths[run_no];
 	}
 
 #ifndef NO_FORK
@@ -2721,7 +2721,7 @@ static int do_multi(int multi)
 			else if(!strncmp(buf,"+F2:",4))
 				{
 				int k;
-				double d;
+				long d;
 				
 				p=buf+4;
 				k=atoi(sstrsep(&p,sep));
@@ -2742,7 +2742,7 @@ static int do_multi(int multi)
 			else if(!strncmp(buf,"+F2:",4))
 				{
 				int k;
-				double d;
+				long d;
 				
 				p=buf+4;
 				k=atoi(sstrsep(&p,sep));
@@ -2764,7 +2764,7 @@ static int do_multi(int multi)
 			else if(!strncmp(buf,"+F3:",4))
 				{
 				int k;
-				double d;
+				long d;
 				
 				p=buf+4;
 				k=atoi(sstrsep(&p,sep));
@@ -2787,7 +2787,7 @@ static int do_multi(int multi)
 			else if(!strncmp(buf,"+F4:",4))
 				{
 				int k;
-				double d;
+				long d;
 				
 				p=buf+4;
 				k=atoi(sstrsep(&p,sep));
@@ -2811,7 +2811,7 @@ static int do_multi(int multi)
 			else if(!strncmp(buf,"+F5:",4))
 				{
 				int k;
-				double d;
+				long d;
 				
 				p=buf+4;
 				k=atoi(sstrsep(&p,sep));
