@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/ebcdic.c */
 
 #ifndef CHARSET_EBCDIC

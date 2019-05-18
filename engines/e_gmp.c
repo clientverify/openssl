@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/engine/e_gmp.c */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2003.

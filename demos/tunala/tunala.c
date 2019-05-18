@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 #if defined(NO_BUFFER) || defined(NO_IP) || defined(NO_OPENSSL)
 #error "Badness, NO_BUFFER, NO_IP or NO_OPENSSL is defined, turn them *off*"
 #endif

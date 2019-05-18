@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/store/str_mem.c -*- mode:C; c-file-style: "eay" -*- */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2003.

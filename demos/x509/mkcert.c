@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* Certificate creation. Demonstrates some certificate related
  * operations.
  */

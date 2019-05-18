@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/ec/ec_asn1.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.

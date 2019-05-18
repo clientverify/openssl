@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/cms/cms_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.

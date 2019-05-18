@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* ede_cbcm_enc.c */
 /* Written by Ben Laurie <ben@algroup.co.uk> for the OpenSSL
  * project 13 Feb 1999.

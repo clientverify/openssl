@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* apps/s_time.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.

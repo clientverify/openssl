@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /**********************************************************************
  *                          gost_keyx.c                               *
  *             Copyright (c) 2005-2006 Cryptocom LTD                  *

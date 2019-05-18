@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* NOCW */
 /* sgibug.c */
 /* bug found by Eric Young (eay@mincom.oz.au) May 95 */

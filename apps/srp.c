@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* apps/srp.c */
 /* Written by Peter Sylvester (peter.sylvester@edelweb.fr)  
  * for the EdelKey project and contributed to the OpenSSL project 2004.

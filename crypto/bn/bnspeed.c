@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* unused */
 
 /* crypto/bn/bnspeed.c */

@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* asn_moid.c */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.

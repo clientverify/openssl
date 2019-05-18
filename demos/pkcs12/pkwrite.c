@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* pkwrite.c */
 
 #include <stdio.h>

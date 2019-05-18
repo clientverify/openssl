@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* hw_cluster_labs_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.

@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* apps/s_client.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -224,7 +225,7 @@ static int ocsp_resp_cb(SSL *s, void *arg);
 static BIO *bio_c_out=NULL;
 static int c_quiet=0;
 static int c_ign_eof=0;
-static int c_special_cmds=1;
+int c_special_cmds=0;  //ABH changed for debug
 
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */

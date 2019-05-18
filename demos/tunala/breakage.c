@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 #include "tunala.h"
 
 int int_strtoul(const char *str, unsigned long *val)

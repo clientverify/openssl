@@ -1,3 +1,13 @@
+AESencrypt
+ECDHcomputekey
+ECPOINTpoint2oct
+ECKEYgeneratekey
+SHA1Update
+SHA1Final
+SHA256Update
+SHA256Final
+gcmgmult4bit
+gcmghash4bit
 ktest_start
 ktest_writesocket
 ktest_readsocket

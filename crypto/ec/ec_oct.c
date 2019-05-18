@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/ec/ec_lib.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.

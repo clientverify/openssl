@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 #include <stdio.h>
 
 unsigned char ebits_to_num[256]={

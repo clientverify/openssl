@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* NOCW */
 #include <stdio.h>
 #ifdef _OSD_POSIX

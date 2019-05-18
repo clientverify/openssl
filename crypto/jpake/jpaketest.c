@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 #include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_NO_JPAKE

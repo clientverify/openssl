@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* Written by Stephen henson (steve@openssl.org) for the OpenSSL
  * project 2011.
  */

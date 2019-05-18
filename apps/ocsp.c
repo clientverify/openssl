@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* ocsp.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.

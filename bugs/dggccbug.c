@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* NOCW */
 /* dggccbug.c */
 /* bug found by Eric Young (eay@cryptsoft.com) - May 1995 */

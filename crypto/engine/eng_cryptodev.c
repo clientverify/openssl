@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /*
  * Copyright (c) 2002 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2002 Theo de Raadt

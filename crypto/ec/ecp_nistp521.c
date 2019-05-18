@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/ec/ecp_nistp521.c */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project

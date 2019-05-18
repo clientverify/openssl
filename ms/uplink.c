@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 #if (defined(_WIN64) || defined(_WIN32_WCE)) && !defined(UNICODE)
 #define UNICODE
 #endif

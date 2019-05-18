@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* NOCW */
 /* demos/eay/conn.c */
 

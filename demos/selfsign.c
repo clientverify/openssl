@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* NOCW */
 /* cc -o ssdemo -I../include selfsign.c ../libcrypto.a */
 

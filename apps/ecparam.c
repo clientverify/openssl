@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* apps/ecparam.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.

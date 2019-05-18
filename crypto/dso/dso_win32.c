@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* dso_win32.c -*- mode:C; c-file-style: "eay" -*- */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.

@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* pkread.c */
 
 #include <stdio.h>

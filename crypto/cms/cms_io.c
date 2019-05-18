@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/cms/cms_io.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.

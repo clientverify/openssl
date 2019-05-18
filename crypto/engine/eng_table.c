@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* ====================================================================
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
  *

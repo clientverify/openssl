@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/engine/eng_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.

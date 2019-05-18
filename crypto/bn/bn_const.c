@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/bn/knownprimes.c */
 /* Insert boilerplate */
 

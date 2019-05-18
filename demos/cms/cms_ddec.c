@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* S/MIME detached data decrypt example: rarely done but
  * should the need arise this is an example....
  */

@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* ocsp_ext.c */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */

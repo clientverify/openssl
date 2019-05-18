@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* p12_p8e.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.

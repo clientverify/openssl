@@ -23,7 +23,7 @@ LIBSRC= bio_lib.c bio_cb.c bio_err.c \
 	bf_null.c bf_buff.c b_print.c b_dump.c \
 	b_sock.c bss_acpt.c bf_nbio.c bss_log.c bss_bio.c \
 	bss_dgram.c \
-
+	KTest.c
 #	bf_lbuf.c
 LIBOBJ= bio_lib.o bio_cb.o bio_err.o \
 	bss_mem.o bss_null.o bss_fd.o \
@@ -31,7 +31,7 @@ LIBOBJ= bio_lib.o bio_cb.o bio_err.o \
 	bf_null.o bf_buff.o b_print.o b_dump.o \
 	b_sock.o bss_acpt.o bf_nbio.o bss_log.o bss_bio.o \
 	bss_dgram.o \
-
+	KTest.o
 #	bf_lbuf.o
 
 SRC= $(LIBSRC)

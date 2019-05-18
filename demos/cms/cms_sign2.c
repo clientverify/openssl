@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* S/MIME signing example: 2 signers */
 #include <openssl/pem.h>
 #include <openssl/cms.h>

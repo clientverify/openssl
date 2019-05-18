@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* Demo of how to construct your own engine and using it.  The basis of this
    engine is RSAref, an old reference of the RSA algorithm which can still
    be found a little here and there. */

@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* Simple S/MIME decryption example */
 #include <openssl/pem.h>
 #include <openssl/cms.h>

@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* NOCW */
 /* demos/spkigen.c
  * 18-Mar-1997 - eay - A quick hack :-) 

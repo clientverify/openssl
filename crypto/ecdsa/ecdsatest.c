@@ -1,3 +1,4 @@
+#include "/playpen/humphries/other/tasetraps.h"
 /* crypto/ecdsa/ecdsatest.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
