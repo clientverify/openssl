@@ -109,7 +109,8 @@ int SHA224_Final (unsigned char *md, SHA256_CTX *c)
 #define	HASH_FINAL		SHA256_Final
 #define	HASH_BLOCK_DATA_ORDER	sha256_block_data_order
 #ifndef SHA256_ASM
-static
+//ABH Removed for debugging
+//static
 #endif
 void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
 
@@ -200,8 +201,8 @@ static void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num
 	s1 = X[(i+14)&0x0f];	s1 = sigma1(s1);	\
 	T1 = X[(i)&0x0f] += s0 + s1 + X[(i+9)&0x0f];	\
 	ROUND_00_15(i,a,b,c,d,e,f,g,h);		} while (0)
-
-static void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num)
+//ABH Removed static keyword for debugging
+ void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num)
 	{
 	unsigned MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1;
 	SHA_LONG	X[16];

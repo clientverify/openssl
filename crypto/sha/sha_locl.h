@@ -106,7 +106,8 @@ static void sha_block_data_order (SHA_CTX *c, const void *p,size_t num);
 # endif
 
 #ifndef SHA1_ASM
-static
+//ABH Removed for debugging
+//static
 #endif
 void sha1_block_data_order (SHA_CTX *c, const void *p,size_t num);
 
@@ -209,7 +210,8 @@ fips_md_init_ctx(SHA1, SHA)
 #endif
 
 #if !defined(SHA_1) || !defined(SHA1_ASM)
-static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
+//ABH Removed static for debugging
+ void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	{
 	const unsigned char *data=p;
 	register unsigned MD32_REG_T A,B,C,D,E,T,l;
