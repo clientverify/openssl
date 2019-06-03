@@ -28,7 +28,7 @@ GENERAL=Makefile makeapps.com install.com
 
 DLIBCRYPTO=../libcrypto.a
 DLIBSSL=../libssl.a
-DLIBTASESSL=../libtasessl.a
+DLIBTASESSL=../libtasessl.o
 DLIBTASEAPPS=../libtaseapps.a
 LIBCRYPTO=-L.. -lcrypto
 LIBSSL=-L.. -lssl
@@ -163,22 +163,8 @@ $(DLIBTASEAPPS): $(E_OBJ)
 	$(AR) $@ $^
 	$(RANLIB) $@ || echo Never mind ranlib error.
 
-$(TASE_TEMP_DIR) := $(shell mktemp -d)
-
-#Workaround to drop all tase objects into a temp dir and ar them together
 $(DLIBTASESSL): $(DLIBTASEAPPS) $(DLIBCRYPTO) $(DLIBSSL)
-	echo Doing the archive lulz in $(TASE_TEMP_DIR)
-	cp $^ $(TASE_TEMP_DIR)
-	(set -e; \
-	cd $(TASE_TEMP_DIR); \
-	for f in $^; \
-	do \
-	ar x $$(basename $$f); \
-	done; \
-	find . -iname '*.o' | xargs $(AR) temparchive.a)
-	cp $(TASE_TEMP_DIR)/temparchive.a $@
-	$(RANLIB) $@ || echo Never mind.
-	rm -r $(TASE_TEMP_DIR)
+	$(LD) -nostdlib -r -o $@ $^
 
 $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(EXE)
