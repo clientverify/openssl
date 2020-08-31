@@ -1592,6 +1592,8 @@ static int internal_verify(X509_STORE_CTX *ctx)
 	EVP_PKEY *pkey=NULL;
 	int (*cb)(int xok,X509_STORE_CTX *xctx);
 
+
+	
 	cb=ctx->verify_cb;
 
 	n=sk_X509_num(ctx->chain);
@@ -1623,6 +1625,8 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		{
 		ctx->error_depth=n;
 
+
+		
 		/* Skip signature check for self signed certificates unless
 		 * explicitly asked for. It doesn't add any security and
 		 * just wastes time.
@@ -1634,7 +1638,10 @@ static int internal_verify(X509_STORE_CTX *ctx)
 				ctx->error=X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
 				ctx->current_cert=xi;
 				ok=(*cb)(0,ctx);
-				if (!ok) goto end;
+				if (!ok) {
+
+				  goto end;
+				}
 				}
 			else if (X509_verify(xs,pkey) <= 0)
 				{
@@ -1644,6 +1651,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 				if (!ok)
 					{
 					EVP_PKEY_free(pkey);
+
 					goto end;
 					}
 				}
@@ -1654,15 +1662,19 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		xs->valid = 1;
 
 		ok = check_cert_time(ctx, xs);
-		if (!ok)
-			goto end;
+		if (!ok) {
 
+		  goto end;
+		}
+			
 		/* The last error (if any) is still in the error value */
 		ctx->current_issuer=xi;
 		ctx->current_cert=xs;
 		ok=(*cb)(1,ctx);
-		if (!ok) goto end;
+		if (!ok) {
 
+		  goto end;
+		}
 		n--;
 		if (n >= 0)
 			{

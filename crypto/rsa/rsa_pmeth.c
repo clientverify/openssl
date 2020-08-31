@@ -368,11 +368,16 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
 							
 			}
 #endif
-		if (rctx->pad_mode == RSA_PKCS1_PADDING)
+		if (rctx->pad_mode == RSA_PKCS1_PADDING) {
+
+		  
 			return RSA_verify(EVP_MD_type(rctx->md), tbs, tbslen,
 					sig, siglen, rsa);
+		}
 		if (rctx->pad_mode == RSA_X931_PADDING)
 			{
+
+			  
 			if (pkey_rsa_verifyrecover(ctx, NULL, &rslen,
 					sig, siglen) <= 0)
 				return 0;
@@ -380,6 +385,8 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
 		else if (rctx->pad_mode == RSA_PKCS1_PSS_PADDING)
 			{
 			int ret;
+
+			
 			if (!setup_tbuf(rctx, ctx))
 				return -1;
 			ret = RSA_public_decrypt(siglen, sig, rctx->tbuf,
@@ -398,6 +405,8 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
 		}
 	else
 		{
+
+		  
 		if (!setup_tbuf(rctx, ctx))
 			return -1;
 		rslen = RSA_public_decrypt(siglen, sig, rctx->tbuf,
@@ -406,6 +415,8 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
 			return 0;
 		}
 
+
+	
 	if ((rslen != tbslen) || memcmp(tbs, rctx->tbuf, rslen))
 		return 0;
 

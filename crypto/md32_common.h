@@ -279,6 +279,23 @@
  * Time for some action:-)
  */
 
+
+//Made for TASE for situations when memcpys outside of
+//prohibitive functions should be trapped on.
+
+#ifndef MEMCPY_INTERNAL
+#define MEMCPY_INTERNAL
+static void * memcpy_internal (void * dst, void * src, size_t n) {
+  for (int i = 0; i < n; i++) {
+    *((unsigned char *) dst + i) = *((unsigned char *) src + i);
+  }
+
+  return dst;
+
+}
+#endif
+
+
 int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 	{
 	const unsigned char *data=data_;
@@ -303,7 +320,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 
 		if (len >= HASH_CBLOCK || len+n >= HASH_CBLOCK)
 			{
-			memcpy (p+n,data,HASH_CBLOCK-n);
+			  memcpy_internal (p+n,data,HASH_CBLOCK-n); //ABH changed
 			HASH_BLOCK_DATA_ORDER (c,p,1);
 			n      = HASH_CBLOCK-n;
 			data  += n;
@@ -313,7 +330,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 			}
 		else
 			{
-			memcpy (p+n,data,len);
+			  memcpy_internal (p+n,data,len);  //ABH changed
 			c->num += (unsigned int)len;
 			return 1;
 			}
@@ -332,7 +349,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 		{
 		p = (unsigned char *)c->data;
 		c->num = (unsigned int)len;
-		memcpy (p,data,len);
+		memcpy_internal (p,data,len); //ABH changed
 		}
 	return 1;
 	}

@@ -178,6 +178,8 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 		type=EVP_get_digestbynid(mdnid);
 		if (type == NULL)
 			{
+
+			  
 			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
 			goto err;
 			}
@@ -185,12 +187,16 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 		/* Check public key OID matches public key type */
 		if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id)
 			{
+
+			  
 			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ASN1_R_WRONG_PUBLIC_KEY_TYPE);
 			goto err;
 			}
 
 		if (!EVP_DigestVerifyInit(&ctx, NULL, type, NULL, pkey))
 			{
+
+			  
 			ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
 			ret=0;
 			goto err;
@@ -202,12 +208,15 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 	
 	if (buf_in == NULL)
 		{
+
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
 	if (!EVP_DigestVerifyUpdate(&ctx,buf_in,inl))
 		{
+
+		  
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
 		ret=0;
 		goto err;
@@ -219,6 +228,8 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 	if (EVP_DigestVerifyFinal(&ctx,signature->data,
 			(size_t)signature->length) <= 0)
 		{
+
+		  
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
 		ret=0;
 		goto err;

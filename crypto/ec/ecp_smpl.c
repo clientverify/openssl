@@ -643,6 +643,7 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_P
 
 int ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx)
 	{
+
 	int (*field_mul)(const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
 	int (*field_sqr)(const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
 	const BIGNUM *p;
@@ -801,6 +802,7 @@ int ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, con
 		BN_CTX_end(ctx);
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
+
 	return ret;
 	}
 

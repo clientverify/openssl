@@ -881,6 +881,8 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
 
 	BIO_snprintf(buf, len,"error:%08lX:%s:%s:%s", e, ls?ls:lsbuf, 
 		fs?fs:fsbuf, rs?rs:rsbuf);
+	printf("TASE_DBG_STR: Err message is %s \n", buf);
+	
 	if (strlen(buf) == len-1)
 		{
 		/* output may be truncated; make sure we always have 5 
